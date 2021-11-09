@@ -3921,7 +3921,7 @@
             },
             {
                 "module": "soupsieve",
-                "input_file": "wheels/soupsieve-2.2.1-py3-none-any.whl"
+                "input_file": "wheels/soupsieve-2.3-py3-none-any.whl"
             },
             {
                 "module": "sqlparse",
