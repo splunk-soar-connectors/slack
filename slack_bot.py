@@ -13,14 +13,14 @@
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
 import os
+import shlex
 import sys
 import time
-import shlex
+from argparse import ArgumentParser
+
 import requests
 import simplejson as json
 import six
-
-from argparse import ArgumentParser
 from websocket import create_connection
 
 app_dir = os.path.dirname(os.path.abspath(__file__))  # noqa

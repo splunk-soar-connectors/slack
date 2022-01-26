@@ -17,26 +17,26 @@
 # Phantom App imports
 import phantom.app as phantom
 import phantom.rules as ph_rules
+
 try:
     from urllib.parse import unquote
 except:
     from urllib import unquote
 
-# Imports local to this App
-from slack_consts import *
-
-from django.http import HttpResponse
-from bs4 import BeautifulSoup
-from bs4 import UnicodeDammit
-import simplejson as json
-import subprocess
-import requests
+import os
 import shlex
+import subprocess
+import sys
 import time
 import uuid
-import os
+
+import requests
 import sh
-import sys
+import simplejson as json
+from bs4 import BeautifulSoup, UnicodeDammit
+from django.http import HttpResponse
+
+from slack_consts import *
 
 
 class RetVal(tuple):
