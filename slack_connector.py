@@ -404,7 +404,8 @@ class SlackConnector(phantom.BaseConnector):
             response = requests.post("{}{}".format(self._base_url, endpoint),
                     data=body,
                     headers=headers,
-                    files=files)
+                    files=files,
+                    timeout=SLACK_DEFAULT_TIMEOUT)
         except Exception as e:
             return RetVal(action_result.set_status(phantom.APP_ERROR, "{}. {}".format(
                 SLACK_ERR_SERVER_CONNECTION, self._get_error_message_from_exception(e))), None)
@@ -563,7 +564,7 @@ class SlackConnector(phantom.BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _paginator(self, action_result, endpoint, key, body={}, limit=None):
+    def _paginator(self, action_result, endpoint, key, body=None, limit=None):
         """Fetch results from multiple API calls using pagination for the given endpoint
 
         Args:
@@ -574,7 +575,8 @@ class SlackConnector(phantom.BaseConnector):
         Returns:
             results : The aggregated response
         """
-
+        if body is None:
+            body = {}
         body.update({"limit": SLACK_DEFAULT_LIMIT})
         results = {}
 
@@ -1211,7 +1213,7 @@ if __name__ == '__main__':
 
     if len(sys.argv) < 2:
         print("No test json specified as input")
-        exit(0)
+        sys.exit(0)
 
     with open(sys.argv[1]) as f:
         in_json = f.read()
@@ -1223,4 +1225,4 @@ if __name__ == '__main__':
         ret_val = connector._handle_action(json.dumps(in_json), None)
         print(json.dumps(json.loads(ret_val), indent=4))
 
-    exit(0)
+    sys.exit(0)

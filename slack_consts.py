@@ -136,3 +136,5 @@ SLACK_RESP_POLL_INTERVAL_KEY = "'How often to poll for a response (in seconds)' 
 SLACK_TIMEOUT_KEY = "'Question timeout (in minutes)' configuration"
 SLACK_TOTAL_RESP_KEY = "'Total number of responses to keep' configuration"
 SLACK_LIMIT_KEY = "'limit' action"
+
+SLACK_DEFAULT_TIMEOUT = 30
