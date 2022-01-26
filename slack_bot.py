@@ -216,7 +216,8 @@ class SlackBot(object):
         self.action_parser.add_argument("--parameters", nargs='+')
 
         self.playbook_parser = ArgumentParser()
-        self.playbook_parser.add_argument("--repo", dest="repo", help="Name of the repo the playbook is in (required if playbook argument is a name, and not an ID)")
+        self.playbook_parser.add_argument("--repo", dest="repo",
+            help="Name of the repo the playbook is in (required if playbook argument is a name, and not an ID)")
         self.playbook_parser.add_argument("playbook", help="Name or ID of the playbook to run")
         self.playbook_parser.add_argument("container", help="ID of container to run playbook on")
 
@@ -417,13 +418,15 @@ class SlackBot(object):
 
         self._post_message('Container URL: {}'.format(action_url), channel, code_block=False)
 
-        return "Playbook: {0}\nPlaybook run ID: {1}\nPlaybook queueing result: Playbook run successfully queued".format(playbook_id, resp['playbook_run_id'])
+        return "Playbook: {0}\nPlaybook run ID: {1}\nPlaybook queueing result: Playbook run successfully queued".format(
+            playbook_id, resp['playbook_run_id'])
 
     def _add_to_app_queue(self, action_run_id, channel):
 
         try:
 
-            r = requests.get(self.base_url + "rest/action_run/{}/app_runs".format(action_run_id), headers=self.headers, auth=self.auth, verify=self.verify)
+            r = requests.get(self.base_url + "rest/action_run/{}/app_runs".format(
+                action_run_id), headers=self.headers, auth=self.auth, verify=self.verify)
 
             resp = r.json()
 
@@ -439,7 +442,8 @@ class SlackBot(object):
 
             try:
 
-                r = requests.get(self.base_url + "rest/action_run/{}".format(action_id), headers=self.headers, auth=self.auth, verify=self.verify)
+                r = requests.get(self.base_url + "rest/action_run/{}".format(
+                    action_id), headers=self.headers, auth=self.auth, verify=self.verify)
 
                 resp = r.json()
 
@@ -521,7 +525,8 @@ class SlackBot(object):
 
             try:
 
-                r = requests.get(self.base_url + "rest/playbook_run/{}".format(playbook_id), headers=self.headers, auth=self.auth, verify=self.verify)
+                r = requests.get(self.base_url + "rest/playbook_run/{}".format(
+                    playbook_id), headers=self.headers, auth=self.auth, verify=self.verify)
 
                 resp = r.json()
 
@@ -685,7 +690,8 @@ class SlackBot(object):
                     continue
 
             if (not container):
-                total_message += '\nThis help message was printed because no container ID was provided.\nPlease specify a container if you would like to run this action.'
+                total_message += ('\nThis help message was printed because no container ID was provided.'
+                    '\nPlease specify a container if you would like to run this action.')
 
             return False, total_message
 
@@ -865,7 +871,8 @@ class SlackBot(object):
                 container = int(container)
 
                 try:
-                    r = requests.get(self.base_url + "rest/container/{}".format(container), headers=self.headers, auth=self.auth, verify=self.verify)
+                    r = requests.get(self.base_url + "rest/container/{}".format(container), headers=self.headers,
+                        auth=self.auth, verify=self.verify)
                 except Exception as e:
                     return False, "Could not retrieve container data. Could not connect to REST endpoint: {}".format(e)
 
@@ -932,7 +939,8 @@ class SlackBot(object):
 
                 try:
 
-                    r = requests.get(self.base_url + "rest/container/{}".format(container), headers=self.headers, auth=self.auth, verify=self.verify)
+                    r = requests.get(self.base_url + "rest/container/{}".format(container), headers=self.headers,
+                        auth=self.auth, verify=self.verify)
 
                     resp_text = r.text.encode('utf-8')
                     info = json.loads(resp_text)
@@ -1211,7 +1219,8 @@ if __name__ == '__main__':
         has_basic = False
 
     if (not (has_token or has_basic)):
-        print("Please specify a form of authorization. Either PHANTOM_TOKEN or PHANTOM_USERNAME and PHANTOM_PASSWORD need to be included in the bot_config file.")
+        print("Please specify a form of authorization. "
+            "Either PHANTOM_TOKEN or PHANTOM_USERNAME and PHANTOM_PASSWORD need to be included in the bot_config file.")
         fail = True
 
     try:
@@ -1238,5 +1247,6 @@ if __name__ == '__main__':
         print("Config file failed verification, exiting")
         exit(1)
 
-    sb = SlackBot(bot_config.BOT_TOKEN, bot_username, base_url=bot_config.PHANTOM_URL, verify=bot_config.VERIFY_CERT, auth_token=pt, auth_basic=auth)
+    sb = SlackBot(bot_config.BOT_TOKEN, bot_username, base_url=bot_config.PHANTOM_URL,
+        verify=bot_config.VERIFY_CERT, auth_token=pt, auth_basic=auth)
     sb._from_on_poll()
