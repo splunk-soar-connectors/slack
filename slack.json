@@ -5,7 +5,7 @@
     "publisher": "Splunk",
     "package_name": "phantom_slack",
     "type": "information",
-    "license": "Copyright (c) 2016-2021 Splunk Inc.",
+    "license": "Copyright (c) 2016-2022 Splunk Inc.",
     "main_module": "slack_connector.py",
     "app_version": "2.2.2",
     "utctime_updated": "2022-01-07T22:08:46.000000Z",
@@ -14,6 +14,7 @@
     "product_version_regex": ".*",
     "min_phantom_version": "4.10.0.40961",
     "python_version": "3",
+    "fips_compliant": true,
     "latest_tested_versions": [
         "Cloud API, April 26, 2021"
     ],
