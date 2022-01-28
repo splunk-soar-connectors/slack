@@ -5,15 +5,16 @@
     "publisher": "Splunk",
     "package_name": "phantom_slack",
     "type": "information",
-    "license": "Copyright (c) 2016-2021 Splunk Inc.",
+    "license": "Copyright (c) 2016-2022 Splunk Inc.",
     "main_module": "slack_connector.py",
     "app_version": "2.2.2",
     "utctime_updated": "2022-01-07T22:08:46.000000Z",
     "product_vendor": "Slack Technologies",
     "product_name": "Slack",
     "product_version_regex": ".*",
-    "min_phantom_version": "4.10.0.40961",
+    "min_phantom_version": "5.1.0",
     "python_version": "3",
+    "fips_compliant": true,
     "latest_tested_versions": [
         "Cloud API, April 26, 2021"
     ],
@@ -3921,7 +3922,7 @@
             },
             {
                 "module": "soupsieve",
-                "input_file": "wheels/soupsieve-2.3-py3-none-any.whl"
+                "input_file": "wheels/soupsieve-2.3.1-py3-none-any.whl"
             },
             {
                 "module": "sqlparse",
@@ -3929,11 +3930,11 @@
             },
             {
                 "module": "typing_extensions",
-                "input_file": "wheels/typing_extensions-3.10.0.2-py3-none-any.whl"
+                "input_file": "wheels/typing_extensions-4.0.1-py3-none-any.whl"
             },
             {
                 "module": "urllib3",
-                "input_file": "wheels/urllib3-1.26.7-py2.py3-none-any.whl"
+                "input_file": "wheels/urllib3-1.26.8-py2.py3-none-any.whl"
             },
             {
                 "module": "websocket_client",

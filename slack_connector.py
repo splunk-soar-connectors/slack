@@ -17,26 +17,26 @@
 # Phantom App imports
 import phantom.app as phantom
 import phantom.rules as ph_rules
+
 try:
     from urllib.parse import unquote
 except:
     from urllib import unquote
 
-# Imports local to this App
-from slack_consts import *
-
-from django.http import HttpResponse
-from bs4 import BeautifulSoup
-from bs4 import UnicodeDammit
-import simplejson as json
-import subprocess
-import requests
+import os
 import shlex
+import subprocess
+import sys
 import time
 import uuid
-import os
+
+import requests
 import sh
-import sys
+import simplejson as json
+from bs4 import BeautifulSoup, UnicodeDammit
+from django.http import HttpResponse
+
+from slack_consts import *
 
 
 class RetVal(tuple):
@@ -287,7 +287,8 @@ class SlackConnector(phantom.BaseConnector):
         try:
             resp_json = r.json()
         except Exception as e:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, SLACK_ERR_UNABLE_TO_PARSE_JSON_RESPONSE.format(error=self._get_error_message_from_exception(e))), None)
+            return RetVal(action_result.set_status(phantom.APP_ERROR, SLACK_ERR_UNABLE_TO_PARSE_JSON_RESPONSE.format(
+                error=self._get_error_message_from_exception(e))), None)
 
         # The 'ok' parameter in a response from slack says if the call passed or failed
         if resp_json.get('ok', '') is not False:
@@ -369,7 +370,8 @@ class SlackConnector(phantom.BaseConnector):
         try:
             r = method(rest_url, verify=verify, headers=headers, data=json.dumps(body))
         except Exception as e:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "{0}. {1}".format(SLACK_ERR_REST_CALL_FAILED, self._get_error_message_from_exception(e))), None)
+            return RetVal(action_result.set_status(phantom.APP_ERROR, "{0}. {1}".format(
+                SLACK_ERR_REST_CALL_FAILED, self._get_error_message_from_exception(e))), None)
 
         try:
             resp_json = r.json()
@@ -377,7 +379,8 @@ class SlackConnector(phantom.BaseConnector):
             return RetVal(action_result.set_status(phantom.APP_ERROR, SLACK_ERR_UNABLE_TO_DECODE_JSON_RESPONSE), None)
 
         if 'failed' in resp_json:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "{0}. Message: {1}".format(SLACK_ERR_REST_CALL_FAILED, resp_json.get('message', 'NA'))), None)
+            return RetVal(action_result.set_status(phantom.APP_ERROR, "{0}. Message: {1}".format(
+                SLACK_ERR_REST_CALL_FAILED, resp_json.get('message', 'NA'))), None)
 
         if 200 <= r.status_code <= 399:
             return RetVal(phantom.APP_SUCCESS, resp_json)
@@ -389,7 +392,8 @@ class SlackConnector(phantom.BaseConnector):
 
         details = self._handle_py_ver_compat_for_input_str(details)
 
-        return RetVal(action_result.set_status(phantom.APP_ERROR, "Error from server: Status code: {0} Details: {1}".format(r.status_code, details)), None)
+        return RetVal(action_result.set_status(phantom.APP_ERROR, "Error from server: Status code: {0} Details: {1}".format(
+            r.status_code, details)), None)
 
     def _make_slack_rest_call(self, action_result, endpoint, body, headers={}, files={}):
 
@@ -400,9 +404,11 @@ class SlackConnector(phantom.BaseConnector):
             response = requests.post("{}{}".format(self._base_url, endpoint),
                     data=body,
                     headers=headers,
-                    files=files)
+                    files=files,
+                    timeout=SLACK_DEFAULT_TIMEOUT)
         except Exception as e:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "{}. {}".format(SLACK_ERR_SERVER_CONNECTION, self._get_error_message_from_exception(e))), None)
+            return RetVal(action_result.set_status(phantom.APP_ERROR, "{}. {}".format(
+                SLACK_ERR_SERVER_CONNECTION, self._get_error_message_from_exception(e))), None)
 
         return self._process_response(response, action_result)
 
@@ -558,7 +564,7 @@ class SlackConnector(phantom.BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _paginator(self, action_result, endpoint, key, body={}, limit=None):
+    def _paginator(self, action_result, endpoint, key, body=None, limit=None):
         """Fetch results from multiple API calls using pagination for the given endpoint
 
         Args:
@@ -569,7 +575,8 @@ class SlackConnector(phantom.BaseConnector):
         Returns:
             results : The aggregated response
         """
-
+        if body is None:
+            body = {}
         body.update({"limit": SLACK_DEFAULT_LIMIT})
         results = {}
 
@@ -583,7 +590,8 @@ class SlackConnector(phantom.BaseConnector):
 
             if not results:
                 if not key_result_value:
-                    return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_DATA_NOT_FOUND_IN_OUTPUT.format(key=("users" if key == "members" else key))), None
+                    return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_DATA_NOT_FOUND_IN_OUTPUT.format(
+                        key=("users" if key == "members" else key))), None
                 results = resp_json
             else:
                 results[key].extend(key_result_value)
@@ -807,7 +815,8 @@ class SlackConnector(phantom.BaseConnector):
                 vault_meta_info = list(vault_meta_info)
                 if not success or not vault_meta_info:
                     error_msg = " Error Details: {}".format(unquote(message)) if message else ''
-                    return action_result.set_status(phantom.APP_ERROR, "{}.{}".format(SLACK_ERR_UNABLE_TO_FETCH_FILE.format(key="info"), error_msg))
+                    return action_result.set_status(phantom.APP_ERROR, "{}.{}".format(
+                        SLACK_ERR_UNABLE_TO_FETCH_FILE.format(key="info"), error_msg))
             except Exception as e:
                 err = self._get_error_message_from_exception(e)
                 return action_result.set_status(phantom.APP_ERROR, "{}. {}".format(SLACK_ERR_UNABLE_TO_FETCH_FILE.format(key="info"), err))
@@ -1067,7 +1076,8 @@ class SlackConnector(phantom.BaseConnector):
         if len(callback_id) > 255:
             path_json['confirmation'] = ''
             valid_length = 255 - len(json.dumps(path_json))
-            return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_LENGTH_LIMIT_EXCEEDED.format(asset_length=len(self.get_asset_id()), valid_length=valid_length))
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_LENGTH_LIMIT_EXCEEDED.format(
+                asset_length=len(self.get_asset_id()), valid_length=valid_length))
 
         self.save_progress('Asking question with ID: {0}'.format(qid))
 
@@ -1203,7 +1213,7 @@ if __name__ == '__main__':
 
     if len(sys.argv) < 2:
         print("No test json specified as input")
-        exit(0)
+        sys.exit(0)
 
     with open(sys.argv[1]) as f:
         in_json = f.read()
@@ -1215,4 +1225,4 @@ if __name__ == '__main__':
         ret_val = connector._handle_action(json.dumps(in_json), None)
         print(json.dumps(json.loads(ret_val), indent=4))
 
-    exit(0)
+    sys.exit(0)
