@@ -1,8 +1,19 @@
 # File: slack_consts.py
-# Copyright (c) 2016-2021 Splunk Inc.
 #
-# Licensed under Apache 2.0 (https://www.apache.org/licenses/LICENSE-2.0.txt)
-
+# Copyright (c) 2016-2022 Splunk Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed under
+# the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the License for the specific language governing permissions
+# and limitations under the License.
+#
+#
 # Action IDs
 ACTION_ID_TEST_CONNECTIVITY = "test_connectivity"
 ACTION_ID_LIST_CHANNELS = "list_channels"
@@ -51,7 +62,8 @@ SLACK_ERR_FROM_SERVER = "Got unknown error from the Slack server"
 SLACK_ERR_NOT_IN_VAULT = "No item in vault has the supplied ID"
 SLACK_ERR_CODE_UNAVAILABLE = "Error code unavailable"
 SLACK_ERR_MESSAGE_UNKNOWN = "Unknown error occurred. Please check the asset configuration and|or action parameters"
-SLACK_UNICODE_DAMMIT_TYPE_ERR_MESSAGE = "Error occurred while connecting to the Slack server. Please check the asset configuration and|or the action parameters"
+SLACK_UNICODE_DAMMIT_TYPE_ERR_MESSAGE = ("Error occurred while connecting to the Slack server. "
+"Please check the asset configuration and|or the action parameters")
 SLACK_ERR_INVALID_INT = "Please provide a valid integer value in the {key} parameter"
 SLACK_ERR_NEGATIVE_AND_ZERO_INT = "Please provide a valid non-zero positive integer value in the {key} parameter"
 SLACK_ERR_NEGATIVE_INT = "Please provide a valid non-negative integer value in the {key} parameter"
@@ -80,7 +92,8 @@ SLACK_ERR_UNABLE_TO_DECODE_JSON_RESPONSE = "Unable to decode the response as JSO
 SLACK_ERR_REST_CALL_FAILED = "REST call failed"
 SLACK_ERR_TEST_CONN_FAILED = "Test Connectivity Failed"
 SLACK_SUCC_TEST_CONN_PASSED = "Test Connectivity Passed"
-SLACK_ERR_USER_TOKEN_NOT_PROVIDED = "'OAuth Access Token' is required for this action. Navigate to the asset's configuration and add a token now and try again."
+SLACK_ERR_USER_TOKEN_NOT_PROVIDED = ("'OAuth Access Token' is required for this action. "
+"Navigate to the asset's configuration and add a token now and try again.")
 SLACK_ERR_CREATING_CHANNEL = "Error creating channel"
 SLACK_SUCC_CHANNEL_CREATED = "Channel created successfully"
 SLACK_ERR_DATA_NOT_FOUND_IN_OUTPUT = "{key} data not found in json output"
@@ -108,16 +121,20 @@ SLACK_INGESTION_DISABLED = "{message} Ingestion has been disabled."
 SLACK_ERR_COULD_NOT_GET_BOT_ID = "Could not get bot ID from Slack"
 SLACK_SUCC_SLACKBOT_RUNNING = "SlackBot already running"
 SLACK_ERR_AUTH_TOKEN_NOT_PROVIDED = "The 'ph_auth_token' asset configuration parameter is required to run the on_poll action"
-SLACK_ERR_SLACKBOT_RUNNING_WITH_SAME_BOT_TOKEN = "Detected an instance of SlackBot running with the same bot token. Not going to start new instance."
+SLACK_ERR_SLACKBOT_RUNNING_WITH_SAME_BOT_TOKEN = ("Detected an instance of SlackBot running with the same bot token. "
+"Not going to start new instance.")
 SLACK_SUCC_SLACKBOT_STARTED = "SlackBot started"
 SLACK_ERR_UNABLE_TO_SEND_QUESTION_TO_CHANNEL = "Questions may only be sent as direct messages to users. They may not be sent to channels."
 SLACK_ERR_UNABLE_TO_PARSE_RESPONSE = "Error occurred while parsing the response"
 SLACK_ERR_QUESTION_RESPONSE_NOT_AVAILABLE = "Response to question not available"
 SLACK_ERR_NO_RESPONSE_FROM_SERVER = "Got no response from the Slack server"
 SLACK_ERR_INVALID_CHANNEL_TYPE = "Please provide a valid value in the 'channel_type' action parameter"
-SLACK_ERR_LENGTH_LIMIT_EXCEEDED = "Based on your asset_id length ({asset_length}), valid length for the 'confirmation' parameter is {valid_length}"
+SLACK_ERR_LENGTH_LIMIT_EXCEEDED = ("Based on your asset_id length ({asset_length}), "
+"valid length for the 'confirmation' parameter is {valid_length}")
 
 SLACK_RESP_POLL_INTERVAL_KEY = "'How often to poll for a response (in seconds)' configuration"
 SLACK_TIMEOUT_KEY = "'Question timeout (in minutes)' configuration"
 SLACK_TOTAL_RESP_KEY = "'Total number of responses to keep' configuration"
 SLACK_LIMIT_KEY = "'limit' action"
+
+SLACK_DEFAULT_TIMEOUT = 30
