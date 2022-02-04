@@ -2,16 +2,16 @@
 # Slack
 
 Publisher: Splunk  
-Connector Version: 2\.2\.1  
+Connector Version: 2\.2\.3  
 Product Vendor: Slack Technologies  
 Product Name: Slack  
 Product Version Supported (regex): "\.\*"  
-Minimum Product Version: 4\.10\.0\.40961  
+Minimum Product Version: 5\.1\.0  
 
 Integrate with Slack to post messages and attachments to channels
 
-[comment]: # " File: readme.md"
-[comment]: # "  Copyright (c) 2016-2021 Splunk Inc."
+[comment]: # " File: README.md"
+[comment]: # "  Copyright (c) 2016-2022 Splunk Inc."
 [comment]: # ""
 [comment]: # "  Licensed under Apache 2.0 (https://www.apache.org/licenses/LICENSE-2.0.txt)"
 [comment]: # ""
