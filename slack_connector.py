@@ -24,6 +24,7 @@ except:
     from urllib import unquote
 
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -166,7 +167,8 @@ def handle_request(request, path):
         if not qid:
             return HttpResponse(SLACK_ERR_ANSWER_FILE_NOT_FOUND, content_type="text/plain", status=400)
 
-        answer_filename = '{0}.json'.format(qid)
+        # Sanitizing qid input to avoid path traversal
+        answer_filename = re.sub(r'[^\w\-_\. ]+', '_', '{0}.json'.format(qid))
         answer_path = "{0}/{1}".format(local_data_directory, answer_filename)
         try:
             answer_file = open(answer_path, 'w')
