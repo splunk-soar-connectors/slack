@@ -64,6 +64,7 @@ SLACK_ERR_CODE_UNAVAILABLE = "Error code unavailable"
 SLACK_ERR_MESSAGE_UNKNOWN = "Unknown error occurred. Please check the asset configuration and|or action parameters"
 SLACK_UNICODE_DAMMIT_TYPE_ERR_MESSAGE = ("Error occurred while connecting to the Slack server. "
 "Please check the asset configuration and|or the action parameters")
+SLACK_ERR_INVALID_FILE_PATH = "The file path is invalid"
 SLACK_ERR_INVALID_INT = "Please provide a valid integer value in the {key} parameter"
 SLACK_ERR_NEGATIVE_AND_ZERO_INT = "Please provide a valid non-zero positive integer value in the {key} parameter"
 SLACK_ERR_NEGATIVE_INT = "Please provide a valid non-negative integer value in the {key} parameter"

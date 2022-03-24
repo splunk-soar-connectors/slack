@@ -24,7 +24,6 @@ except:
     from urllib import unquote
 
 import os
-import re
 import shlex
 import subprocess
 import sys
@@ -120,6 +119,18 @@ def _save_app_state(state, asset_id, app_connector=None):
     return phantom.APP_SUCCESS
 
 
+def _is_safe_path(basedir, path, follow_symlinks=True):
+    """
+    This function checks the given file path against the actual app directory
+    path to combat path traversal attacks
+    """
+    if follow_symlinks:
+        matchpath = os.path.realpath(path)
+    else:
+        matchpath = os.path.abspath(path)
+    return basedir == os.path.commonpath((basedir, matchpath))
+
+
 def handle_request(request, path):
 
     try:
@@ -167,9 +178,11 @@ def handle_request(request, path):
         if not qid:
             return HttpResponse(SLACK_ERR_ANSWER_FILE_NOT_FOUND, content_type="text/plain", status=400)
 
-        # Sanitizing qid input to avoid path traversal
-        answer_filename = re.sub(r'[^\w\-_\. ]+', '_', '{0}.json'.format(qid))
+        answer_filename = '{0}.json'.format(qid)
         answer_path = "{0}/{1}".format(local_data_directory, answer_filename)
+        if not _is_safe_path(local_data_directory, answer_path):
+            return HttpResponse(SLACK_ERR_INVALID_FILE_PATH, contenct_type="text/plain", status=400)
+
         try:
             answer_file = open(answer_path, 'w')
         except Exception as e:
