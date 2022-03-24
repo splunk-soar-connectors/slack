@@ -181,7 +181,7 @@ def handle_request(request, path):
         answer_filename = '{0}.json'.format(qid)
         answer_path = "{0}/{1}".format(local_data_directory, answer_filename)
         if not _is_safe_path(local_data_directory, answer_path):
-            return HttpResponse(SLACK_ERR_INVALID_FILE_PATH, contenct_type="text/plain", status=400)
+            return HttpResponse(SLACK_ERR_INVALID_FILE_PATH, content_type="text/plain", status=400)
 
         try:
             answer_file = open(answer_path, 'w')
