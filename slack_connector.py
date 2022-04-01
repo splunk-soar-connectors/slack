@@ -556,6 +556,7 @@ class SlackConnector(phantom.BaseConnector):
     def _list_channels(self, param):
 
         self.debug_print("param", param)
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         limit = self._validate_integers(action_result, param.get("limit", SLACK_DEFAULT_LIMIT), SLACK_LIMIT_KEY)
