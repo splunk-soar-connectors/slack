@@ -630,6 +630,7 @@ class SlackConnector(phantom.BaseConnector):
     def _list_users(self, param):
 
         self.debug_print("param", param)
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         limit = self._validate_integers(action_result, param.get("limit", SLACK_DEFAULT_LIMIT), SLACK_LIMIT_KEY)
@@ -656,6 +657,7 @@ class SlackConnector(phantom.BaseConnector):
     def _get_user(self, param):
 
         self.debug_print("param", param)
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         user_id = param['user_id']
@@ -739,6 +741,7 @@ class SlackConnector(phantom.BaseConnector):
 
     def _send_message(self, param):
 
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         message = self._handle_py_ver_compat_for_input_str(param['message'])
@@ -777,6 +780,7 @@ class SlackConnector(phantom.BaseConnector):
 
     def _add_reaction(self, param):
 
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         emoji = self._handle_py_ver_compat_for_input_str(param['emoji'])
@@ -799,6 +803,7 @@ class SlackConnector(phantom.BaseConnector):
 
     def _upload_file(self, param):
 
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         caption = param.get('caption', '')
@@ -1051,6 +1056,7 @@ class SlackConnector(phantom.BaseConnector):
 
     def _ask_question(self, param):
 
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
         config = self.get_config()
 
