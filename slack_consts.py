@@ -40,6 +40,8 @@ SLACK_PHANTOM_ASSET_INFO_URL = "{url}rest/asset/{asset_id}"
 SLACK_PHANTOM_SYS_INFO_URL = "{url}rest/system_info"
 SLACK_PHANTOM_ICON = "https://www.phantom.us/img/phantom_icon_160x160.png"
 
+SLACK_APP_ID = "3ac26c7f-baa4-4583-86ff-5aac82778a86"
+
 SLACK_ADD_REACTION = "reactions.add"
 SLACK_CHANNEL_CREATE_ENDPOINT = "conversations.create"
 SLACK_INVITE_TO_CHANNEL = "conversations.invite"
@@ -64,6 +66,7 @@ SLACK_ERR_CODE_UNAVAILABLE = "Error code unavailable"
 SLACK_ERR_MESSAGE_UNKNOWN = "Unknown error occurred. Please check the asset configuration and|or action parameters"
 SLACK_UNICODE_DAMMIT_TYPE_ERR_MESSAGE = ("Error occurred while connecting to the Slack server. "
 "Please check the asset configuration and|or the action parameters")
+SLACK_ERR_INVALID_FILE_PATH = "The file path is invalid"
 SLACK_ERR_INVALID_INT = "Please provide a valid integer value in the {key} parameter"
 SLACK_ERR_NEGATIVE_AND_ZERO_INT = "Please provide a valid non-zero positive integer value in the {key} parameter"
 SLACK_ERR_NEGATIVE_INT = "Please provide a valid non-negative integer value in the {key} parameter"

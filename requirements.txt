@@ -1,5 +1,5 @@
 beautifulsoup4==4.10.0
-django==3.2.12
+django==3.2.13
 requests==2.25.1
 sh==1.14.2
 simplejson==3.17.5

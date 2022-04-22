@@ -35,6 +35,7 @@ import sh
 import simplejson as json
 from bs4 import BeautifulSoup, UnicodeDammit
 from django.http import HttpResponse
+from phantom.base_connector import APPS_STATE_PATH
 
 from slack_consts import *
 
@@ -114,21 +115,32 @@ def _save_app_state(state, asset_id, app_connector=None):
     except Exception as e:
         if app_connector:
             app_connector.debug_print('Unable to save state file: {0}'.format(str(e)))
-        print('Unable to save state file: {0}'.format(str(e)))
 
     return phantom.APP_SUCCESS
+
+
+def _is_safe_path(basedir, path, follow_symlinks=True):
+    """
+    This function checks the given file path against the actual app directory
+    path to combat path traversal attacks
+    """
+    if follow_symlinks:
+        matchpath = os.path.realpath(path)
+    else:
+        matchpath = os.path.abspath(path)
+    return basedir == os.path.commonpath((basedir, matchpath))
 
 
 def handle_request(request, path):
 
     try:
 
-        payload = json.loads(request.POST.get('payload'))
+        payload = json.loads(request.body)
 
         if not payload:
             return HttpResponse(SLACK_ERR_PAYLOAD_NOT_FOUND, content_type="text/plain", status=400)
 
-        callback_id = dict(payload).get('callback_id')
+        callback_id = payload.get('callback_id')
         if not callback_id:
             return HttpResponse(SLACK_ERR_CALLBACK_ID_NOT_FOUND, content_type="text/plain", status=400)
 
@@ -137,14 +149,16 @@ def handle_request(request, path):
         except Exception as e:
             return HttpResponse(SLACK_ERR_PARSE_JSON_FROM_CALLBACK_ID.format(error=e), content_type="text/plain", status=400)
 
-        apps_directory = os.path.dirname(os.path.abspath(__file__))
-
-        asset_id = dict(callback_json).get('asset_id')
-        if not asset_id:
+        asset_id = callback_json.get('asset_id')
+        try:
+            int(asset_id)
+        except ValueError:
             return HttpResponse(SLACK_ERR_STATE_FILE_NOT_FOUND, content_type="text/plain", status=400)
 
         state_filename = "{0}_state.json".format(asset_id)
-        state_path = "{0}/{1}".format(apps_directory, state_filename)
+        state_dir = "{0}/{1}".format(APPS_STATE_PATH, SLACK_APP_ID)
+        state_path = "{0}/{1}".format(state_dir, state_filename)
+
         try:
             with open(state_path, 'r') as state_file_obj:
                 state_file_data = state_file_obj.read()
@@ -152,22 +166,21 @@ def handle_request(request, path):
         except Exception as e:
             return HttpResponse(SLACK_ERR_UNABLE_TO_READ_STATE_FILE.format(error=e), content_type="text/plain", status=400)
 
-        local_data_directory = dict(state).get('local_data_path')
-        if not local_data_directory:
-            return HttpResponse(SLACK_ERR_STATE_DIR_NOT_FOUND, content_type="text/plain", status=400)
-
-        my_token = dict(state).get('token', 'my token does not exist')
-        their_token = dict(payload).get('token', 'their token is missing')
+        my_token = state.get('token', 'my token does not exist')
+        their_token = callback_json.get('token', 'their token is missing')
 
         if my_token != their_token:
             return HttpResponse(SLACK_ERR_AUTH_FAILED, content_type="text/plain", status=400)
 
-        qid = dict(callback_json).get('qid')
+        qid = callback_json.get('qid')
         if not qid:
             return HttpResponse(SLACK_ERR_ANSWER_FILE_NOT_FOUND, content_type="text/plain", status=400)
 
         answer_filename = '{0}.json'.format(qid)
-        answer_path = "{0}/{1}".format(local_data_directory, answer_filename)
+        answer_path = "{0}/{1}".format(state_dir, answer_filename)
+        if not _is_safe_path(state_dir, answer_path):
+            return HttpResponse(SLACK_ERR_INVALID_FILE_PATH, content_type="text/plain", status=400)
+
         try:
             answer_file = open(answer_path, 'w')
         except Exception as e:
@@ -179,7 +192,7 @@ def handle_request(request, path):
         except Exception as e:
             return HttpResponse(SLACK_ERR_WHILE_WRITING_ANSWER_FILE.format(error=e), content_type="text/plain", status=400)
 
-        confirmation = dict(callback_json).get('confirmation')
+        confirmation = callback_json.get('confirmation')
 
     except Exception as e:
         return HttpResponse(SLACK_ERR_PROCESS_RESPONSE.format(error=e), content_type="text/plain", status=500)
@@ -541,6 +554,7 @@ class SlackConnector(phantom.BaseConnector):
     def _list_channels(self, param):
 
         self.debug_print("param", param)
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         limit = self._validate_integers(action_result, param.get("limit", SLACK_DEFAULT_LIMIT), SLACK_LIMIT_KEY)
@@ -615,6 +629,7 @@ class SlackConnector(phantom.BaseConnector):
     def _list_users(self, param):
 
         self.debug_print("param", param)
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         limit = self._validate_integers(action_result, param.get("limit", SLACK_DEFAULT_LIMIT), SLACK_LIMIT_KEY)
@@ -641,6 +656,7 @@ class SlackConnector(phantom.BaseConnector):
     def _get_user(self, param):
 
         self.debug_print("param", param)
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         user_id = param['user_id']
@@ -724,6 +740,7 @@ class SlackConnector(phantom.BaseConnector):
 
     def _send_message(self, param):
 
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         message = self._handle_py_ver_compat_for_input_str(param['message'])
@@ -762,6 +779,7 @@ class SlackConnector(phantom.BaseConnector):
 
     def _add_reaction(self, param):
 
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         emoji = self._handle_py_ver_compat_for_input_str(param['emoji'])
@@ -784,6 +802,7 @@ class SlackConnector(phantom.BaseConnector):
 
     def _upload_file(self, param):
 
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         caption = param.get('caption', '')
@@ -1036,6 +1055,7 @@ class SlackConnector(phantom.BaseConnector):
 
     def _ask_question(self, param):
 
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
         config = self.get_config()
 
