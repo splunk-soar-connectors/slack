@@ -1,1 +1,3 @@
 **Unreleased**
+* Made request handler compatible with Python 3 [PAPP-25258]
+* Addressed file path traversal vulnerability [PAPP-24779]
