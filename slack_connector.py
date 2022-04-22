@@ -115,7 +115,6 @@ def _save_app_state(state, asset_id, app_connector=None):
     except Exception as e:
         if app_connector:
             app_connector.debug_print('Unable to save state file: {0}'.format(str(e)))
-        print('Unable to save state file: {0}'.format(str(e)))
 
     return phantom.APP_SUCCESS
 
