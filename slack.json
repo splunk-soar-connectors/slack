@@ -7,7 +7,7 @@
     "type": "information",
     "license": "Copyright (c) 2016-2022 Splunk Inc.",
     "main_module": "slack_connector.py",
-    "app_version": "2.2.5",
+    "app_version": "2.2.6",
     "utctime_updated": "2022-02-04T18:14:51.000000Z",
     "product_vendor": "Slack Technologies",
     "product_name": "Slack",
@@ -1864,6 +1864,11 @@
                     "description": "Used in conjunction with 'parent_message_ts' and indicates whether reply should be made visible to everyone in the channel or conversation",
                     "data_type": "boolean",
                     "order": 3
+                },
+                "link_names": {
+                    "description": "Link names added in message as <!group>. e.g. @group will notify the group.",
+                    "data_type": "boolean",
+                    "order": 4
                 }
             },
             "output": [
