@@ -755,6 +755,7 @@ class SlackConnector(phantom.BaseConnector):
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_MESSAGE_TOO_LONG.format(limit=SLACK_MESSAGE_LIMIT))
 
         params = {'channel': param['destination'], 'text': message}
+        params['link_names'] = param.get('link_names', False)
 
         if 'parent_message_ts' in param:
             # Support for replying in thread
