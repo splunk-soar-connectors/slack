@@ -29,23 +29,150 @@ Creating a Slack App is required to get the proper bot token for authenticating 
     <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_your_apps.png">
 </a>
 <br><br>
-In the pop up window, give the app name and associate it with a Slack team/your Workspace, then click <b>Create App</b>.
+In the pop up window, there are two options, select <b>From scratch</b>.This would open another pop up, give the app name and associate it with a Slack team/your Workspace, then click <b>Create App</b>.
 <br><br>
 <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_create_an_app.png">
     <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_create_an_app.png">
 </a>
+
 <br><br>
 On the next page, there is a <b>Verification Token</b>. This token will be needed during asset configuration.
 <br><br>
 <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_basic_info.png">
     <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_basic_info.png">
 </a>
+
+<br><br>
+On the same page, there is a <b>App Level tokens</b>. This dialog box will have a <b>Generate Token and Scope</b> button, click on it. It would again open an pop up, give token name <b>socket_token</b>. Just below this would be the <b>Add Scope</b> button, add <b>connection:write & authorization:read</b> and click on <b>Generate</b>. This token will be needed during asset configuration.
+<br><br>
+<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_socket_token.png">
+  <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_socket_token.png">
+</a>
+
 <br><br>
 In the menu bar on the left, select <b>OAuth & Permissions</b>. On that page, Scroll down to the <b>Scopes</b> section and click <b>Add an OAuth Scope</b> to add scopes to your <b>Bot Token</b> and <b>User Token</b>.
 <br><br>
 <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_add_scopes.png">
     <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_add_scopes.png">
 </a>
+
+<br><br>
+The required scopes are given below, please add the particular scope to use that specific action.
+<br><br>
+
+<table>
+  <th>Required Action Scopes</th>
+  <tr>
+    <td>Action Name</td>
+    <td>Bot Token Scopes</td>
+    <td>User Token Scopes</td>
+  </tr>
+  <tr>
+    <td>Create Channel</td>
+    <td>
+      <li>channels:manage</li>
+      <li>groups:write</li>
+      <li>im:write</li>
+      <li>mpim:write</li>
+    </td>
+    <td>
+      <li>channels:write</li>
+      <li>groups:write</li>
+      <li>im:write</li>
+      <li>mpim:write</li>
+    </td>
+  </tr>
+  <tr>
+    <td>List Channels</td>
+    <td>
+      <li>channels:read</li>
+      <li>groups:read</li>
+      <li>im:read</li>
+      <li>mpim:read</li>
+    </td>
+    <td>
+      <li>channels:read</li>
+      <li>groups:read</li>
+      <li>im:read</li>
+      <li>mpim:read</li>
+    </td>
+  </tr>
+  <tr>
+    <td>List Users</td>
+    <td>
+      <li>users:read</li>
+    </td>
+    <td>
+      <li>users:read</li>
+    </td>
+  </tr>
+  <tr>
+    <td>Get User</td>
+    <td>
+      <li>users:read</li>
+    </td>
+    <td>
+      <li>users:read</li>
+    </td>
+  </tr>
+  <tr>
+    <td>Invite User</td>
+    <td>
+      <li>channels:manage</li>
+      <li>groups:write</li>
+      <li>im:write</li>
+      <li>mpim:write</li>
+    </td>
+    <td>
+      <li>channels:write</li>
+      <li>groups:write</li>
+      <li>im:write</li>
+      <li>mpim:write</li>
+    </td>
+  </tr>
+  <tr>
+    <td>Send Message</td>
+    <td>
+      <li>chat:write</li>
+    </td>
+    <td>
+      <li>chat:write</li>
+      <li>chat:write:user</li>
+      <li>chat:write:bot</li>
+    </td>
+  </tr>
+  <tr>
+    <td>Add Reaction</td>
+    <td>
+      <li>reactions:write</li>
+    </td>
+    <td>
+      <li>reactions:write</li>
+    </td>
+  </tr>
+  <tr>
+    <td>Upload File</td>
+    <td>
+      <li>files:write</li>
+    </td>
+    <td>
+      <li>files:write</li>
+      <li>files:write:user</li>
+    </td>
+  </tr>
+  <tr>
+    <td>Ask Question</td>
+    <td>
+      <li>chat:write</li>
+    </td>
+    <td>
+      <li>chat:write</li>
+      <li>chat:write:user</li>
+      <li>chat:write:bot</li>
+    </td>
+  </tr>
+</table>
+
 <br><br>
 Next, click on <b>Install App</b> in the side bar. On that page, click <b>Install to Workspace</b>.
 <br><br>
@@ -77,7 +204,7 @@ Fill out the required values in the <b>Asset Definition</b> tab.
     <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_asset_info.png">
 </a>
 <br><br>
-Fill out the <b>Bot User OAuth Access Token</b>, <b>OAuth Access Token</b> and <b>Verification Token</b> in the <b>Asset Settings</b> tab.
+Fill out the <b>Bot User OAuth Access Token</b>, <b>OAuth Access Token</b>,<b>Socket Token</b> and <b>Verification Token</b> in the <b>Asset Settings</b> tab.
 <br><br>
 <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_asset_settings.png">
     <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_asset_settings.png">
@@ -126,20 +253,18 @@ Now, on the <b>Asset Settings</b> page, click the <b>TEST CONNECTIVITY</b> butto
 <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_new_test_connectivity.png">
     <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_new_test_connectivity.png">
 </a>
-<h3>Interactive Messages</h3>
-In order for Phantom to receive responses to questions from Slack, the functionality needs to be configured. But first, you will need to create a user to allow Slack to authenticate with Phantom (This user is separate from the automation user created above).
+<h2>Set up Socket Mode in Slack</h2>
+Go to the <b>Your apps</b> option in Slack. From the menu on the left select the <b>Socket Mode</b>
+option.
 <br><br>
-Navigate back to the <b>Users</b> tab in <b>Administration</b>, and click on <b>+ USER</b>.
-<br><br>
-<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_users.png">
-    <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_users.png">
+<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_socket_mode.png">
+  <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_socket_mode.png">
 </a>
 <br><br>
-In the pop-up window, select the User Type <b>Local</b>. Fill out the required username and password fields. For security reasons DO NOT give the user any roles. This user should only be used to authenticate POST requests from Slack to Phantom.
+Once on this page, toggle on <b>Socket Mode</b>.
 <br><br>
-<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_add_user.png">
-    <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_add_user.png">
-</a>
+
+
 <h2>Set up Interactivity in Slack</h2>
 Go to the <b>Your apps</b> option in Slack. From the menu on the left select the <b>Interactivity & Shortcuts</b> option.
 <br><br>
@@ -154,14 +279,10 @@ Once on this page, toggle on <b>Interactivity</b>.
 <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_enable_interactive_messages.png">
     <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_enable_interactive_messages.png">
 </a>
-<br><br>
-In the <b>Request URL</b> text box, add the <b>POST incoming for Slack to this location</b> URL found in the <b>Asset Settings</b> window. Before saving these changes, add the username and password of the new user added to Phantom. The URL should end up in the format:
-<br><br>
-https://&lt;username&gt;:&lt;password&gt;@&lt;phantom_hostname&gt;/rest/handler/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/slack
-After adding the full URL, click <b>Enable Interactive Messages</b>
+
 <h2>Slack Bot</h2>
 <h3>Ingest Settings</h3>
-To run the Phantom SlackBot that will get Phantom to take commands from Slack, ingestion needs to be enabled on the Phantom Slack Asset. To do this go back to the INGEST SETTINGS tab and enable polling and specify the Polling interval as 10 minutes. The "Label to apply to objects from this source" setting is ignored by this app, so it can be set to anything.
+To run the Phantom SlackBot that will get Phantom to take commands from Slack, ingestion needs to be enabled on the Phantom Slack Asset. To do this go back to the INGEST SETTINGS tab and enable polling and specify the Polling interval as <b>off</b>. The "Label to apply to objects from this source" setting is ignored by this app, so it can be set to anything.
 <br><br>
 <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_polling_enabled.png">
     <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_polling_enabled.png">
