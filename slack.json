@@ -1846,16 +1846,20 @@
                     ]
                 },
                 "message": {
-                    "description": "Message to send",
+                    "description": "Message to send, required if 'blocks' is not set. If 'blocks' is set, this is used as fallback text",
                     "data_type": "string",
-                    "required": true,
                     "order": 1
+                },
+                "blocks": {
+                    "description": "Blocks to send, required if 'message' is not set",
+                    "data_type": "string",
+                    "order": 2
                 },
                 "parent_message_ts": {
                     "description": "Parent message timestamp to reply in thread",
                     "data_type": "string",
                     "primary": true,
-                    "order": 2,
+                    "order": 3,
                     "contains": [
                         "slack message ts"
                     ]
@@ -1863,7 +1867,7 @@
                 "reply_broadcast": {
                     "description": "Used in conjunction with 'parent_message_ts' and indicates whether reply should be made visible to everyone in the channel or conversation",
                     "data_type": "boolean",
-                    "order": 3
+                    "order": 4
                 }
             },
             "output": [
@@ -1885,6 +1889,10 @@
                     "contains": [
                         "slack message ts"
                     ]
+                },
+                {
+                    "data_path": "action_result.parameter.blocks",
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.parameter.message",
