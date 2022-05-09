@@ -134,6 +134,8 @@ SLACK_ERR_NO_RESPONSE_FROM_SERVER = "Got no response from the Slack server"
 SLACK_ERR_INVALID_CHANNEL_TYPE = "Please provide a valid value in the 'channel_type' action parameter"
 SLACK_ERR_LENGTH_LIMIT_EXCEEDED = ("Based on your asset_id length ({asset_length}), "
 "valid length for the 'confirmation' parameter is {valid_length}")
+SLACK_ERR_BLOCKS_OR_MSG_REQD = ("You must provide at least one of 'blocks' or 'message'")
+
 
 SLACK_RESP_POLL_INTERVAL_KEY = "'How often to poll for a response (in seconds)' configuration"
 SLACK_TIMEOUT_KEY = "'Question timeout (in minutes)' configuration"

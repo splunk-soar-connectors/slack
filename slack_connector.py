@@ -743,18 +743,28 @@ class SlackConnector(phantom.BaseConnector):
         self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
-        message = self._handle_py_ver_compat_for_input_str(param['message'])
+        params = {'channel': param['destination']}
 
-        if '\\' in message:
-            if self._python_version == 2:
-                message = message.decode('string_escape')
-            else:
-                message = bytes(message, "utf-8").decode("unicode_escape")
+        if 'message' not in param and 'blocks' not in param:
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_BLOCKS_OR_MSG_REQD)
 
-        if len(message) > SLACK_MESSAGE_LIMIT:
-            return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_MESSAGE_TOO_LONG.format(limit=SLACK_MESSAGE_LIMIT))
+        if 'message' in param:
+            message = self._handle_py_ver_compat_for_input_str(param['message'])
 
-        params = {'channel': param['destination'], 'text': message}
+            if '\\' in message:
+                if self._python_version == 2:
+                    message = message.decode('string_escape')
+                else:
+                    message = bytes(message, "utf-8").decode("unicode_escape")
+
+            if len(message) > SLACK_MESSAGE_LIMIT:
+                return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_MESSAGE_TOO_LONG.format(limit=SLACK_MESSAGE_LIMIT))
+
+            params['text'] = message
+
+        if 'blocks' in param:
+            params['blocks'] = param['blocks']
+
         params['link_names'] = param.get('link_names', False)
 
         if 'parent_message_ts' in param:
