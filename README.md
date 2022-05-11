@@ -187,7 +187,7 @@ In the **Request URL** text box, add the **POST incoming for Slack to this locat
 the **Asset Settings** window. Before saving these changes, add the username and password of the new
 user added to Phantom. The URL should end up in the format:  
   
-https://\<username>:\<password>@\<phantom_hostname>/rest/handler/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/slack
+https://\<username>:\<password>@\<phantom_hostname>/rest/handler/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/slack   <!-- pragma: allowlist secret -->
 After adding the full URL, click **Enable Interactive Messages**
 
 ## Slack Bot
