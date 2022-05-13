@@ -12,17 +12,19 @@
 # the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
-import urllib3
-import six
-import simplejson as json
-import requests
-from slack_consts import SLACK_DEFAULT_TIMEOUT
 import os
 import shlex
 import sys
 from argparse import ArgumentParser
+
+import requests
+import simplejson as json
+import six
+import urllib3
 from slack_bolt import App as slack_app
 from slack_bolt.adapter.socket_mode import SocketModeHandler
+
+from slack_consts import SLACK_DEFAULT_TIMEOUT
 
 urllib3.disable_warnings()
 

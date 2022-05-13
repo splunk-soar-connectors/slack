@@ -15,21 +15,23 @@
 #
 #
 # Phantom App imports
-from slack_consts import *
-from phantom.base_connector import APPS_STATE_PATH
-from django.http import HttpResponse
-from bs4 import BeautifulSoup, UnicodeDammit
-import simplejson as json
-import sh
-import requests
-import uuid
-import time
-import sys
-import subprocess
-import shlex
 import os
+import shlex
+import subprocess
+import sys
+import time
+import uuid
+
 import phantom.app as phantom
 import phantom.rules as ph_rules
+import requests
+import sh
+import simplejson as json
+from bs4 import BeautifulSoup, UnicodeDammit
+from django.http import HttpResponse
+from phantom.base_connector import APPS_STATE_PATH
+
+from slack_consts import *
 
 try:
     from urllib.parse import unquote
