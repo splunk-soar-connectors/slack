@@ -1897,7 +1897,9 @@
                 },
                 {
                     "data_path": "action_result.parameter.blocks",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "column_name": "Destination",
+                    "column_order": 2
                 },
                 {
                     "data_path": "action_result.parameter.message",
@@ -1931,7 +1933,7 @@
                         "slack message ts"
                     ],
                     "column_name": "Message Timestamp",
-                    "column_order": 3
+                    "column_order": 4
                 },
                 {
                     "data_path": "action_result.data.*.message.type",
@@ -2419,7 +2421,7 @@
                     "data_path": "action_result.status",
                     "data_type": "string",
                     "column_name": "Status",
-                    "column_order": 2,
+                    "column_order": 3,
                     "example_values": [
                         "success",
                         "failed"
