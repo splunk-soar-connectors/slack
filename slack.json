@@ -1898,7 +1898,7 @@
                 {
                     "data_path": "action_result.parameter.blocks",
                     "data_type": "string",
-                    "column_name": "Destination",
+                    "column_name": "Blocks",
                     "column_order": 2
                 },
                 {
