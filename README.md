@@ -715,6 +715,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **message** |  required  | Message to send | string | 
 **parent\_message\_ts** |  optional  | Parent message timestamp to reply in thread | string |  `slack message ts` 
 **reply\_broadcast** |  optional  | Used in conjunction with 'parent\_message\_ts' and indicates whether reply should be made visible to everyone in the channel or conversation | boolean | 
+**link\_names** |  optional  | Enables announcements in Slack messages using mentions. E.g.: Use @someone or @channel in the message in combination with this check to notify someone or a group. | boolean | 
 
 #### Action Output
 DATA PATH | TYPE | CONTAINS
