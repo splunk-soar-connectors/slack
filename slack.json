@@ -1833,7 +1833,7 @@
             "read_only": false,
             "parameters": {
                 "destination": {
-                    "description": "Channel (e.g. #channel or C1A1A1AAA) or user (e.g. @user or U1A1A1AAA) to send message to",
+                    "description": "Channel (e.g. #channel or C1A1A1AAA)",
                     "data_type": "string",
                     "primary": true,
                     "required": true,
@@ -1843,7 +1843,8 @@
                         "slack channel id",
                         "slack user name",
                         "slack user id"
-                    ]
+                    ],
+                    "verbose": "Passing a \"username\" as a channel value is deprecated, along with the whole concept of usernames on Slack. Please always use channel-like IDs instead to make sure your message gets to where it's going."
                 },
                 "message": {
                     "description": "Message to send, required if 'blocks' is not set. If 'blocks' is set, this is used as fallback text",
@@ -1886,6 +1887,9 @@
                         "slack channel id",
                         "slack user name",
                         "slack user id"
+                    ],
+                    "example_values": [
+                        "#channel_test"
                     ]
                 },
                 {
@@ -1893,23 +1897,35 @@
                     "data_type": "string",
                     "contains": [
                         "slack message ts"
+                    ],
+                    "example_values": [
+                        "1653377851.521129"
                     ]
                 },
                 {
                     "data_path": "action_result.parameter.blocks",
                     "data_type": "string",
                     "column_name": "Blocks",
-                    "column_order": 2
+                    "column_order": 2,
+                    "example_values": [
+                        "[{\"type\": \"section\", \"text\": {\"type\": \"plain_text\", \"text\": \"Hello world\"}}]"
+                    ]
                 },
                 {
                     "data_path": "action_result.parameter.message",
                     "data_type": "string",
                     "column_name": "Message",
-                    "column_order": 1
+                    "column_order": 1,
+                    "example_values": [
+                        "hello world"
+                    ]
                 },
                 {
                     "data_path": "action_result.parameter.reply_broadcast",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "example_values": [
+                        false
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.channel",
