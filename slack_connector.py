@@ -221,6 +221,9 @@ class SlackConnector(phantom.BaseConnector):
         self._bot_token = config[SLACK_JSON_BOT_TOKEN]
         self._base_url = SLACK_BASE_URL
         self._state = self.load_state()
+        if not isinstance(self._state, dict):
+            self.debug_print("Resetting the state file with the default format")
+            self._state = {"app_version": self.get_app_json().get("app_version")}
 
         self._interval = self._validate_integers(self, config.get("response_poll_interval", 30), SLACK_RESP_POLL_INTERVAL_KEY)
         if self._interval is None:
