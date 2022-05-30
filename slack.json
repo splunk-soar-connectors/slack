@@ -16,7 +16,7 @@
     "python_version": "3",
     "fips_compliant": true,
     "latest_tested_versions": [
-        "Cloud API, April 22, 2022"
+        "Cloud API, May 30, 2022"
     ],
     "logo": "logo_slack.svg",
     "logo_dark": "logo_slack_dark.svg",
@@ -1827,7 +1827,7 @@
         {
             "action": "send message",
             "description": "Send a message to Slack",
-            "verbose": "The <b>destination</b> parameter can be a channel ID (e.g. C1A1A1AAA), a channel name (e.g. #general), a username (e.g. @user), or a user ID (e.g. U1A1A1AAA). When sending a message to a channel, the configured bot user must have been added to the channel. Specifying a user will send a direct message. Messages are limited to 4000 characters. <b>Note:</b> It is recommended to use channel ID/user ID instead of channel name/username since the latter usage has been deprecated by Slack.",
+            "verbose": "The <b>destination</b> parameter can be a channel ID (e.g. C1A1A1AAA), a channel name (e.g. #general). When sending a message to a channel, the configured bot user must have been added to the channel. Specifying a user will send a direct message. Messages are limited to 4000 characters. Passing a \"username\" as a channel value is deprecated, along with the whole concept of usernames on Slack. Please always use channel-like IDs instead to make sure your message gets to where it's going.",
             "type": "generic",
             "identifier": "send_message",
             "read_only": false,
@@ -1843,8 +1843,7 @@
                         "slack channel id",
                         "slack user name",
                         "slack user id"
-                    ],
-                    "verbose": "Passing a \"username\" as a channel value is deprecated, along with the whole concept of usernames on Slack. Please always use channel-like IDs instead to make sure your message gets to where it's going."
+                    ]
                 },
                 "message": {
                     "description": "Message to send, required if 'blocks' is not set. If 'blocks' is set, this is used as fallback text",
@@ -1871,7 +1870,7 @@
                     "order": 4
                 },
                 "link_names": {
-                    "description": "Check this if you want to enable announcements in your Slack messages using mentions. E.g.: Use @someone or @channel in your message in combination with this check to notify people.",
+                    "description": "Check this if you want to enable announcements in your Slack messages using mentions. E.g.: Use @someone or @channel in your message in combination with this check to notify people",
                     "data_type": "boolean",
                     "order": 5
                 }

@@ -1,4 +1,3 @@
 **Unreleased**
 
-* Add `link_names` parameter to `send_message` action [PAPP-25672]
-* Add `blocks` parameter to `send_message` action [PAPP-25841]
+* Add `link_names`, `blocks` parameters to `send_message` action [PAPP-25672, PAPP-25841]
