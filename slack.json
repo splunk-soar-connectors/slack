@@ -1921,7 +1921,14 @@
                 },
                 {
                     "data_path": "action_result.parameter.reply_broadcast",
-                    "data_type": "string",
+                    "data_type": "boolean",
+                    "example_values": [
+                        false
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.link_names",
+                    "data_type": "boolean",
                     "example_values": [
                         false
                     ]
