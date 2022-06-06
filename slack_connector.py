@@ -130,26 +130,39 @@ def _is_safe_path(basedir, path, follow_symlinks=True):
         matchpath = os.path.abspath(path)
     return basedir == os.path.commonpath((basedir, matchpath))
 
+from pathlib import Path 
+
+def rest_log(msg):
+    state_dir = "{0}/{1}".format(APPS_STATE_PATH, SLACK_APP_ID)
+    path.unlink()
+    path = Path(state_dir) / Path(f'resthandler.log')
+    path.touch()  # default exists_ok=True
+    with path.open('a') as highscore:
+        highscore.write(msg + "\n")
 
 def handle_request(request, path):
 
     try:
-
-        payload = json.loads(request.body)
+        payload = request.POST.get('payload')
+        payload = json.loads(payload)
+        state_dir = "{0}/{1}".format(APPS_STATE_PATH, SLACK_APP_ID)
 
         if not payload:
             return HttpResponse(SLACK_ERR_PAYLOAD_NOT_FOUND, content_type="text/plain", status=400)
 
         callback_id = payload.get('callback_id')
+        #rest_log(f"Callback_id: {callback_id}")
         if not callback_id:
             return HttpResponse(SLACK_ERR_CALLBACK_ID_NOT_FOUND, content_type="text/plain", status=400)
 
         try:
             callback_json = json.loads(UnicodeDammit(callback_id).unicode_markup)
         except Exception as e:
+            #rest_log(f"Callback parse error")
             return HttpResponse(SLACK_ERR_PARSE_JSON_FROM_CALLBACK_ID.format(error=e), content_type="text/plain", status=400)
 
         asset_id = callback_json.get('asset_id')
+        #rest_log(f"Asset retrieved: {asset_id}")
         try:
             int(asset_id)
         except ValueError:
@@ -167,12 +180,15 @@ def handle_request(request, path):
             return HttpResponse(SLACK_ERR_UNABLE_TO_READ_STATE_FILE.format(error=e), content_type="text/plain", status=400)
 
         my_token = state.get('token', 'my token does not exist')
-        their_token = callback_json.get('token', 'their token is missing')
+        their_token = payload.get('token', 'their token is missing')
+        #rest_log(f"My token: {my_token}, Their token: {their_token}")
 
         if my_token != their_token:
             return HttpResponse(SLACK_ERR_AUTH_FAILED, content_type="text/plain", status=400)
 
         qid = callback_json.get('qid')
+        #rest_log(f"Question ID: {qid}")
+
         if not qid:
             return HttpResponse(SLACK_ERR_ANSWER_FILE_NOT_FOUND, content_type="text/plain", status=400)
 
@@ -192,12 +208,12 @@ def handle_request(request, path):
         except Exception as e:
             return HttpResponse(SLACK_ERR_WHILE_WRITING_ANSWER_FILE.format(error=e), content_type="text/plain", status=400)
 
-        confirmation = callback_json.get('confirmation')
+        confirmation = callback_json.get('confirmation', "Received response")
+        return HttpResponse(f"Response: {confirmation}", content_type="text/plain", status=200)
 
     except Exception as e:
         return HttpResponse(SLACK_ERR_PROCESS_RESPONSE.format(error=e), content_type="text/plain", status=500)
 
-    return HttpResponse(confirmation, content_type="text/plain")
 
 
 # Define the App Class
