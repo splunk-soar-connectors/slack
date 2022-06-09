@@ -187,7 +187,7 @@ In the **Request URL** text box, add the **POST incoming for Slack to this locat
 the **Asset Settings** window. Before saving these changes, add the username and password of the new
 user added to Phantom. The URL should end up in the format:  
   
-https://\<username>:\<password>@\<phantom_hostname>/rest/handler/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/slack
+https://\<username>:\<password>@\<phantom_hostname>/rest/handler/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/slack  <!-- pragma: allowlist secret -->
 After adding the full URL, click **Enable Interactive Messages**
 
 ## Slack Bot
@@ -715,6 +715,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **message** |  required  | Message to send | string | 
 **parent\_message\_ts** |  optional  | Parent message timestamp to reply in thread | string |  `slack message ts` 
 **reply\_broadcast** |  optional  | Used in conjunction with 'parent\_message\_ts' and indicates whether reply should be made visible to everyone in the channel or conversation | boolean | 
+**link\_names** |  optional  | Enables announcements in Slack messages using mentions. E.g.: Use @someone or @channel in the message in combination with this check to notify someone or a group. | boolean | 
 
 #### Action Output
 DATA PATH | TYPE | CONTAINS

@@ -7,7 +7,7 @@
     "type": "information",
     "license": "Copyright (c) 2016-2022 Splunk Inc.",
     "main_module": "slack_connector.py",
-    "app_version": "2.2.5",
+    "app_version": "2.3.0",
     "utctime_updated": "2022-02-04T18:14:51.000000Z",
     "product_vendor": "Slack Technologies",
     "product_name": "Slack",
@@ -16,7 +16,7 @@
     "python_version": "3",
     "fips_compliant": true,
     "latest_tested_versions": [
-        "Cloud API, April 22, 2022"
+        "Cloud API, May 30, 2022"
     ],
     "logo": "logo_slack.svg",
     "logo_dark": "logo_slack_dark.svg",
@@ -1827,13 +1827,13 @@
         {
             "action": "send message",
             "description": "Send a message to Slack",
-            "verbose": "The <b>destination</b> parameter can be a channel ID (e.g. C1A1A1AAA), a channel name (e.g. #general), a username (e.g. @user), or a user ID (e.g. U1A1A1AAA). When sending a message to a channel, the configured bot user must have been added to the channel. Specifying a user will send a direct message. Messages are limited to 4000 characters. <b>Note:</b> It is recommended to use channel ID/user ID instead of channel name/username since the latter usage has been deprecated by Slack.",
+            "verbose": "The <b>destination</b> parameter can be a channel ID (e.g. C1A1A1AAA), a channel name (e.g. #general). When sending a message to a channel, the configured bot user must have been added to the channel. Messages are limited to 4000 characters. Passing a \"username\" as a channel value is deprecated, along with the whole concept of usernames on Slack. Please always use channel-like IDs instead to make sure your message gets to where it's going.",
             "type": "generic",
             "identifier": "send_message",
             "read_only": false,
             "parameters": {
                 "destination": {
-                    "description": "Channel (e.g. #channel or C1A1A1AAA) or user (e.g. @user or U1A1A1AAA) to send message to",
+                    "description": "Channel (e.g. #channel or C1A1A1AAA)",
                     "data_type": "string",
                     "primary": true,
                     "required": true,
@@ -1846,16 +1846,20 @@
                     ]
                 },
                 "message": {
-                    "description": "Message to send",
+                    "description": "Message to send, required if 'blocks' is not set. If 'blocks' is set, this is used as fallback text",
                     "data_type": "string",
-                    "required": true,
                     "order": 1
+                },
+                "blocks": {
+                    "description": "Blocks to send, required if 'message' is not set",
+                    "data_type": "string",
+                    "order": 2
                 },
                 "parent_message_ts": {
                     "description": "Parent message timestamp to reply in thread",
                     "data_type": "string",
                     "primary": true,
-                    "order": 2,
+                    "order": 3,
                     "contains": [
                         "slack message ts"
                     ]
@@ -1863,7 +1867,12 @@
                 "reply_broadcast": {
                     "description": "Used in conjunction with 'parent_message_ts' and indicates whether reply should be made visible to everyone in the channel or conversation",
                     "data_type": "boolean",
-                    "order": 3
+                    "order": 4
+                },
+                "link_names": {
+                    "description": "Check this if you want to enable announcements in your Slack messages using mentions. E.g.: Use @someone or @channel in your message in combination with this check to notify people",
+                    "data_type": "boolean",
+                    "order": 5
                 }
             },
             "output": [
@@ -1877,6 +1886,9 @@
                         "slack channel id",
                         "slack user name",
                         "slack user id"
+                    ],
+                    "example_values": [
+                        "#channel_test"
                     ]
                 },
                 {
@@ -1884,17 +1896,42 @@
                     "data_type": "string",
                     "contains": [
                         "slack message ts"
+                    ],
+                    "example_values": [
+                        "1653377851.521129"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.blocks",
+                    "data_type": "string",
+                    "column_name": "Blocks",
+                    "column_order": 2,
+                    "example_values": [
+                        "[{\"type\": \"section\", \"text\": {\"type\": \"plain_text\", \"text\": \"Hello world\"}}]"
                     ]
                 },
                 {
                     "data_path": "action_result.parameter.message",
                     "data_type": "string",
                     "column_name": "Message",
-                    "column_order": 1
+                    "column_order": 1,
+                    "example_values": [
+                        "hello world"
+                    ]
                 },
                 {
                     "data_path": "action_result.parameter.reply_broadcast",
-                    "data_type": "string"
+                    "data_type": "boolean",
+                    "example_values": [
+                        false
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.link_names",
+                    "data_type": "boolean",
+                    "example_values": [
+                        false
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.channel",
@@ -1918,7 +1955,7 @@
                         "slack message ts"
                     ],
                     "column_name": "Message Timestamp",
-                    "column_order": 3
+                    "column_order": 4
                 },
                 {
                     "data_path": "action_result.data.*.message.type",
@@ -2406,7 +2443,7 @@
                     "data_path": "action_result.status",
                     "data_type": "string",
                     "column_name": "Status",
-                    "column_order": 2,
+                    "column_order": 3,
                     "example_values": [
                         "success",
                         "failed"
@@ -2568,7 +2605,7 @@
         {
             "action": "upload file",
             "description": "Upload file to Slack",
-            "verbose": "The <b>destination</b> parameter can be a channel ID (e.g.  C1A1A1AAA), a channel name (e.g. #general), or a username (e.g. @user or U1A1A1AAA). When uploading to a channel, the configured bot user must have been added to the channel. Specifying a user will send a direct message containing the file. The <b>file</b> parameter takes the vault ID of a file that will be uploaded to Slack. Only files in the vault can be uploaded to Slack. <b>Note:</b> It is recommended to use channel ID/user ID instead of channel name/username since the latter usage has been deprecated by Slack.",
+            "verbose": "The <b>destination</b> parameter can be a channel ID (e.g.  C1A1A1AAA), a channel name (e.g. #general). When uploading to a channel, the configured bot user must have been added to the channel.  The <b>file</b> parameter takes the vault ID of a file that will be uploaded to Slack. Only files in the vault can be uploaded to Slack.",
             "type": "generic",
             "identifier": "upload_file",
             "read_only": false,
@@ -3890,7 +3927,7 @@
             },
             {
                 "module": "certifi",
-                "input_file": "wheels/shared/certifi-2021.10.8-py2.py3-none-any.whl"
+                "input_file": "wheels/py3/certifi-2022.5.18.1-py3-none-any.whl"
             },
             {
                 "module": "chardet",
@@ -3950,7 +3987,7 @@
             },
             {
                 "module": "asgiref",
-                "input_file": "wheels/py3/asgiref-3.5.0-py3-none-any.whl"
+                "input_file": "wheels/py3/asgiref-3.5.2-py3-none-any.whl"
             },
             {
                 "module": "beautifulsoup4",
@@ -3958,7 +3995,7 @@
             },
             {
                 "module": "certifi",
-                "input_file": "wheels/shared/certifi-2021.10.8-py2.py3-none-any.whl"
+                "input_file": "wheels/py3/certifi-2022.5.18.1-py3-none-any.whl"
             },
             {
                 "module": "chardet",
