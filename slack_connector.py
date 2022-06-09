@@ -21,6 +21,7 @@ import subprocess
 import sys
 import time
 import uuid
+from pathlib import Path
 
 import phantom.app as phantom
 import phantom.rules as ph_rules
@@ -130,24 +131,37 @@ def _is_safe_path(basedir, path, follow_symlinks=True):
     return basedir == os.path.commonpath((basedir, matchpath))
 
 
+def rest_log(msg):
+    state_dir = "{0}/{1}".format(APPS_STATE_PATH, SLACK_APP_ID)
+    path.unlink()
+    path = Path(state_dir) / "resthandler.log"
+    path.touch()  # default exists_ok=True
+    with path.open('a') as highscore:
+        highscore.write(msg + "\n")
+
+
 def handle_request(request, path):
     try:
-
-        payload = json.loads(request.body)
+        payload = request.POST.get('payload')
+        payload = json.loads(payload)
+        state_dir = "{0}/{1}".format(APPS_STATE_PATH, SLACK_APP_ID)
 
         if not payload:
             return HttpResponse(SLACK_ERR_PAYLOAD_NOT_FOUND, content_type="text/plain", status=400)
 
         callback_id = payload.get('callback_id')
+        # rest_log(f"Callback_id: {callback_id}")
         if not callback_id:
             return HttpResponse(SLACK_ERR_CALLBACK_ID_NOT_FOUND, content_type="text/plain", status=400)
 
         try:
             callback_json = json.loads(UnicodeDammit(callback_id).unicode_markup)
         except Exception as e:
+            # rest_log(f"Callback parse error")
             return HttpResponse(SLACK_ERR_PARSE_JSON_FROM_CALLBACK_ID.format(error=e), content_type="text/plain", status=400)
 
         asset_id = callback_json.get('asset_id')
+        # rest_log(f"Asset retrieved: {asset_id}")
         try:
             int(asset_id)
         except ValueError:
@@ -158,19 +172,22 @@ def handle_request(request, path):
         state_path = "{0}/{1}".format(state_dir, state_filename)
 
         try:
-            with open(state_path, 'r') as state_file_obj:
+            with open(state_path, 'r') as state_file_obj:  # nosemgrep
                 state_file_data = state_file_obj.read()
                 state = json.loads(state_file_data)
         except Exception as e:
             return HttpResponse(SLACK_ERR_UNABLE_TO_READ_STATE_FILE.format(error=e), content_type="text/plain", status=400)
 
         my_token = state.get('token', 'my token does not exist')
-        their_token = callback_json.get('token', 'their token is missing')
+        their_token = payload.get('token', 'their token is missing')
+        # rest_log(f"My token: {my_token}, Their token: {their_token}")
 
         if my_token != their_token:
             return HttpResponse(SLACK_ERR_AUTH_FAILED, content_type="text/plain", status=400)
 
         qid = callback_json.get('qid')
+        # rest_log(f"Question ID: {qid}")
+
         if not qid:
             return HttpResponse(SLACK_ERR_ANSWER_FILE_NOT_FOUND, content_type="text/plain", status=400)
 
@@ -180,7 +197,7 @@ def handle_request(request, path):
             return HttpResponse(SLACK_ERR_INVALID_FILE_PATH, content_type="text/plain", status=400)
 
         try:
-            answer_file = open(answer_path, 'w')
+            answer_file = open(answer_path, 'w')  # nosemgrep
         except Exception as e:
             return HttpResponse(SLACK_ERR_COULD_NOT_OPEN_ANSWER_FILE.format(error=e), content_type="text/plain", status=400)
 
@@ -190,12 +207,11 @@ def handle_request(request, path):
         except Exception as e:
             return HttpResponse(SLACK_ERR_WHILE_WRITING_ANSWER_FILE.format(error=e), content_type="text/plain", status=400)
 
-        confirmation = callback_json.get('confirmation')
+        confirmation = callback_json.get('confirmation', "Received response")
+        return HttpResponse(f"Response: {confirmation}", content_type="text/plain", status=200)
 
     except Exception as e:
         return HttpResponse(SLACK_ERR_PROCESS_RESPONSE.format(error=e), content_type="text/plain", status=500)
-
-    return HttpResponse(confirmation, content_type="text/plain")
 
 
 # Define the App Class
@@ -221,6 +237,9 @@ class SlackConnector(phantom.BaseConnector):
         self._socket_token = config[SLACK_JSON_SOCKET_TOKEN]
         self._base_url = SLACK_BASE_URL
         self._state = self.load_state()
+        if not isinstance(self._state, dict):
+            self.debug_print("Resetting the state file with the default format")
+            self._state = {"app_version": self.get_app_json().get("app_version")}
 
         self._interval = self._validate_integers(self, config.get("response_poll_interval", 30), SLACK_RESP_POLL_INTERVAL_KEY)
         if self._interval is None:
@@ -764,18 +783,29 @@ class SlackConnector(phantom.BaseConnector):
         self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
-        message = self._handle_py_ver_compat_for_input_str(param['message'])
+        params = {'channel': param['destination']}
 
-        if '\\' in message:
-            if self._python_version == 2:
-                message = message.decode('string_escape')
-            else:
-                message = bytes(message, "utf-8").decode("unicode_escape")
+        if 'message' not in param and 'blocks' not in param:
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_BLOCKS_OR_MSG_REQD)
 
-        if len(message) > SLACK_MESSAGE_LIMIT:
-            return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_MESSAGE_TOO_LONG.format(limit=SLACK_MESSAGE_LIMIT))
+        if 'message' in param:
+            message = self._handle_py_ver_compat_for_input_str(param['message'])
 
-        params = {'channel': param['destination'], 'text': message}
+            if '\\' in message:
+                if self._python_version == 2:
+                    message = message.decode('string_escape')
+                else:
+                    message = bytes(message, "utf-8").decode("unicode_escape")
+
+            if len(message) > SLACK_MESSAGE_LIMIT:
+                return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_MESSAGE_TOO_LONG.format(limit=SLACK_MESSAGE_LIMIT))
+
+            params['text'] = message
+
+        if 'blocks' in param:
+            params['blocks'] = param['blocks']
+
+        params['link_names'] = param.get('link_names', False)
 
         if 'parent_message_ts' in param:
             # Support for replying in thread

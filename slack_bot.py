@@ -1182,10 +1182,6 @@ if __name__ == '__main__':  # noqa: C901
             base_url=config.get('base_url'),
             auth_token=config.get('ph_auth_token')
         )
-        # sb = SlackBot(bot_token=sys.argv[1], socket_token=sys.argv[2], bot_id=sys.argv[3], base_url=sys.argv[5], auth_token=sys.argv[6])
-        # state_data = _load_app_state(sys.argv[1])
-        # sb = SlackBot(bot_token=state_data.get('bot_token'), socket_token=state_data.get('socket_token'), bot_id=state_data.get(
-        #     'bot_id'), base_url=state_data.get('base_url'), auth_token=state_data.get('ph_auth_token'))
         sb._from_on_poll()
         sys.exit(0)
 

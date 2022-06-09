@@ -3,7 +3,7 @@
 # Slack
 
 Publisher: Splunk  
-Connector Version: 2\.2\.5  
+Connector Version: 2\.3\.0  
 Product Vendor: Slack Technologies  
 Product Name: Slack  
 Product Version Supported (regex): "\.\*"  
@@ -34,10 +34,15 @@ Integrate with Slack to post messages and attachments to channels
 
   - Send Message - 2 new action parameters 'reply_broadcast' and 'parent_message_ts' are added
     which can be used to reply in the thread based on the timestamp of the parent message.
+    <!-- -->
+    -   Send Message - 1 new action parameter 'blocks' is added which can be used to send richly
+        formatted "blocks" as Slack messages. See [Slack
+        Documentation](https://api.slack.com/messaging/composing/layouts#adding-blocks) for more
+        information.
 
-- New action 'Add Reaction' has been added. Hence, it is requested to the end-user to please
-  update their existing playbooks by inserting the corresponding action blocks for this action on
-  the earlier versions of the app.
+-   New action 'Add Reaction' has been added. Hence, it is requested to the end-user to please
+    update their existing playbooks by inserting the corresponding action blocks for this action on
+    the earlier versions of the app.
 
 ## Authentication
 
@@ -710,104 +715,103 @@ Send a message to Slack
 Type: **generic**  
 Read only: **False**
 
-The <b>destination</b> parameter can be a channel ID \(e\.g\. C1A1A1AAA\), a channel name \(e\.g\. \#general\), a username \(e\.g\. \@user\), or a user ID \(e\.g\. U1A1A1AAA\)\. When sending a message to a channel, the configured bot user must have been added to the channel\. Specifying a user will send a direct message\. Messages are limited to 4000 characters\. <b>Note\:</b> It is recommended to use channel ID/user ID instead of channel name/username since the latter usage has been deprecated by Slack\.
+The <b>destination</b> parameter can be a channel ID \(e\.g\. C1A1A1AAA\), a channel name \(e\.g\. \#general\)\. When sending a message to a channel, the configured bot user must have been added to the channel\. Messages are limited to 4000 characters\. Passing a "username" as a channel value is deprecated, along with the whole concept of usernames on Slack\. Please always use channel\-like IDs instead to make sure your message gets to where it's going\.
 
-#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**destination** |  required  | Channel \(e\.g\. \#channel or C1A1A1AAA\) | string |  `slack channel name`  `slack channel id`  `slack user name`  `slack user id` 
+**message** |  optional  | Message to send, required if 'blocks' is not set\. If 'blocks' is set, this is used as fallback text | string | 
+**blocks** |  optional  | Blocks to send, required if 'message' is not set | string | 
+**parent\_message\_ts** |  optional  | Parent message timestamp to reply in thread | string |  `slack message ts` 
+**reply\_broadcast** |  optional  | Used in conjunction with 'parent\_message\_ts' and indicates whether reply should be made visible to everyone in the channel or conversation | boolean | 
+**link\_names** |  optional  | Check this if you want to enable announcements in your Slack messages using mentions\. E\.g\.\: Use \@someone or \@channel in your message in combination with this check to notify people | boolean | 
 
-| PARAMETER             | REQUIRED | DESCRIPTION                                                                                                                                | TYPE    | CONTAINS                                                                  |
-| --------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------- | ------------------------------------------------------------------------- |
-| **destination**       | required | Channel \(e\.g\. \#channel or C1A1A1AAA\) or user \(e\.g\. \@user or U1A1A1AAA\) to send message to                                        | string  | `slack channel name` `slack channel id` `slack user name` `slack user id` |
-| **message**           | required | Message to send                                                                                                                            | string  |
-| **parent_message_ts** | optional | Parent message timestamp to reply in thread                                                                                                | string  | `slack message ts`                                                        |
-| **reply_broadcast**   | optional | Used in conjunction with 'parent_message_ts' and indicates whether reply should be made visible to everyone in the channel or conversation | boolean |
-
-#### Action Output
-
-| DATA PATH                                                               | TYPE    | CONTAINS                                                                  |
-| ----------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------- |
-| action_result\.parameter\.destination                                   | string  | `slack channel name` `slack channel id` `slack user name` `slack user id` |
-| action_result\.parameter\.parent_message_ts                             | string  | `slack message ts`                                                        |
-| action_result\.parameter\.message                                       | string  |
-| action_result\.parameter\.reply_broadcast                               | string  |
-| action_result\.data\.\*\.channel                                        | string  | `slack channel id`                                                        |
-| action_result\.data\.\*\.message\.bot_id                                | string  |
-| action_result\.data\.\*\.message\.text                                  | string  |
-| action_result\.data\.\*\.message\.ts                                    | string  | `slack message ts`                                                        |
-| action_result\.data\.\*\.message\.type                                  | string  |
-| action_result\.data\.\*\.message\.user                                  | string  |
-| action_result\.data\.\*\.ok                                             | boolean |
-| action_result\.data\.\*\.message\.team                                  | string  |
-| action_result\.data\.\*\.message\.bot_profile\.id                       | string  |
-| action_result\.data\.\*\.message\.bot_profile\.name                     | string  |
-| action_result\.data\.\*\.message\.bot_profile\.icons\.image_36          | string  |
-| action_result\.data\.\*\.message\.bot_profile\.icons\.image_48          | string  |
-| action_result\.data\.\*\.message\.bot_profile\.icons\.image_72          | string  |
-| action_result\.data\.\*\.message\.bot_profile\.app_id                   | string  |
-| action_result\.data\.\*\.message\.bot_profile\.deleted                  | boolean |
-| action_result\.data\.\*\.message\.bot_profile\.team_id                  | string  |
-| action_result\.data\.\*\.message\.bot_profile\.updated                  | numeric |
-| action_result\.data\.\*\.message\.subtype                               | string  |
-| action_result\.data\.\*\.message\.thread_ts                             | string  |
-| action_result\.data\.\*\.message\.parent_user_id                        | string  |
-| action_result\.data\.\*\.message\.root\.ts                              | string  |
-| action_result\.data\.\*\.message\.root\.team                            | string  |
-| action_result\.data\.\*\.message\.root\.text                            | string  |
-| action_result\.data\.\*\.message\.root\.type                            | string  |
-| action_result\.data\.\*\.message\.root\.user                            | string  |
-| action_result\.data\.\*\.message\.root\.bot_id                          | string  |
-| action_result\.data\.\*\.message\.root\.thread_ts                       | string  |
-| action_result\.data\.\*\.message\.root\.subscribed                      | boolean |
-| action_result\.data\.\*\.message\.root\.bot_profile\.id                 | string  |
-| action_result\.data\.\*\.message\.root\.bot_profile\.name               | string  |
-| action_result\.data\.\*\.message\.root\.bot_profile\.icons\.image_36    | string  |
-| action_result\.data\.\*\.message\.root\.bot_profile\.icons\.image_48    | string  |
-| action_result\.data\.\*\.message\.root\.bot_profile\.icons\.image_72    | string  |
-| action_result\.data\.\*\.message\.root\.bot_profile\.app_id             | string  |
-| action_result\.data\.\*\.message\.root\.bot_profile\.deleted            | boolean |
-| action_result\.data\.\*\.message\.root\.bot_profile\.team_id            | string  |
-| action_result\.data\.\*\.message\.root\.bot_profile\.updated            | numeric |
-| action_result\.data\.\*\.message\.root\.reply_count                     | numeric |
-| action_result\.data\.\*\.message\.root\.latest_reply                    | string  |
-| action_result\.data\.\*\.message\.root\.reply_users_count               | numeric |
-| action_result\.data\.\*\.message\.root\.files\.\*\.id                   | string  |
-| action_result\.data\.\*\.message\.root\.files\.\*\.mode                 | string  |
-| action_result\.data\.\*\.message\.root\.files\.\*\.name                 | string  |
-| action_result\.data\.\*\.message\.root\.files\.\*\.size                 | numeric |
-| action_result\.data\.\*\.message\.root\.files\.\*\.user                 | string  |
-| action_result\.data\.\*\.message\.root\.files\.\*\.lines                | numeric |
-| action_result\.data\.\*\.message\.root\.files\.\*\.title                | string  |
-| action_result\.data\.\*\.message\.root\.files\.\*\.created              | numeric |
-| action_result\.data\.\*\.message\.root\.files\.\*\.preview              | string  |
-| action_result\.data\.\*\.message\.root\.files\.\*\.editable             | boolean |
-| action_result\.data\.\*\.message\.root\.files\.\*\.filetype             | string  |
-| action_result\.data\.\*\.message\.root\.files\.\*\.mimetype             | string  |
-| action_result\.data\.\*\.message\.root\.files\.\*\.username             | string  |
-| action_result\.data\.\*\.message\.root\.files\.\*\.edit_link            | string  |
-| action_result\.data\.\*\.message\.root\.files\.\*\.is_public            | boolean |
-| action_result\.data\.\*\.message\.root\.files\.\*\.permalink            | string  |
-| action_result\.data\.\*\.message\.root\.files\.\*\.timestamp            | numeric |
-| action_result\.data\.\*\.message\.root\.files\.\*\.is_starred           | boolean |
-| action_result\.data\.\*\.message\.root\.files\.\*\.lines_more           | numeric |
-| action_result\.data\.\*\.message\.root\.files\.\*\.is_external          | boolean |
-| action_result\.data\.\*\.message\.root\.files\.\*\.pretty_type          | string  |
-| action_result\.data\.\*\.message\.root\.files\.\*\.url_private          | string  |
-| action_result\.data\.\*\.message\.root\.files\.\*\.external_type        | string  |
-| action_result\.data\.\*\.message\.root\.files\.\*\.display_as_bot       | boolean |
-| action_result\.data\.\*\.message\.root\.files\.\*\.has_rich_preview     | boolean |
-| action_result\.data\.\*\.message\.root\.files\.\*\.permalink_public     | string  |
-| action_result\.data\.\*\.message\.root\.files\.\*\.preview_highlight    | string  |
-| action_result\.data\.\*\.message\.root\.files\.\*\.public_url_shared    | boolean |
-| action_result\.data\.\*\.message\.root\.files\.\*\.preview_is_truncated | boolean |
-| action_result\.data\.\*\.message\.root\.files\.\*\.url_private_download | string  |
-| action_result\.data\.\*\.message\.root\.upload                          | boolean |
-| action_result\.data\.\*\.message\.root\.display_as_bot                  | boolean |
-| action_result\.data\.\*\.ts                                             | string  |
-| action_result\.status                                                   | string  |
-| action_result\.message                                                  | string  |
-| action_result\.summary                                                  | string  |
-| summary\.total_objects                                                  | numeric |
-| summary\.total_objects_successful                                       | numeric |
-
+DATA PATH | TYPE | CONTAINS
+--------- | ---- | --------
+action\_result\.parameter\.destination | string |  `slack channel name`  `slack channel id`  `slack user name`  `slack user id` 
+action\_result\.parameter\.parent\_message\_ts | string |  `slack message ts` 
+action\_result\.parameter\.blocks | string | 
+action\_result\.parameter\.message | string | 
+action\_result\.parameter\.reply\_broadcast | boolean | 
+action\_result\.parameter\.link\_names | boolean | 
+action\_result\.data\.\*\.channel | string |  `slack channel id` 
+action\_result\.data\.\*\.message\.bot\_id | string | 
+action\_result\.data\.\*\.message\.text | string | 
+action\_result\.data\.\*\.message\.ts | string |  `slack message ts` 
+action\_result\.data\.\*\.message\.type | string | 
+action\_result\.data\.\*\.message\.user | string | 
+action\_result\.data\.\*\.ok | boolean | 
+action\_result\.data\.\*\.message\.team | string | 
+action\_result\.data\.\*\.message\.bot\_profile\.id | string | 
+action\_result\.data\.\*\.message\.bot\_profile\.name | string | 
+action\_result\.data\.\*\.message\.bot\_profile\.icons\.image\_36 | string | 
+action\_result\.data\.\*\.message\.bot\_profile\.icons\.image\_48 | string | 
+action\_result\.data\.\*\.message\.bot\_profile\.icons\.image\_72 | string | 
+action\_result\.data\.\*\.message\.bot\_profile\.app\_id | string | 
+action\_result\.data\.\*\.message\.bot\_profile\.deleted | boolean | 
+action\_result\.data\.\*\.message\.bot\_profile\.team\_id | string | 
+action\_result\.data\.\*\.message\.bot\_profile\.updated | numeric | 
+action\_result\.data\.\*\.message\.subtype | string | 
+action\_result\.data\.\*\.message\.thread\_ts | string | 
+action\_result\.data\.\*\.message\.parent\_user\_id | string | 
+action\_result\.data\.\*\.message\.root\.ts | string | 
+action\_result\.data\.\*\.message\.root\.team | string | 
+action\_result\.data\.\*\.message\.root\.text | string | 
+action\_result\.data\.\*\.message\.root\.type | string | 
+action\_result\.data\.\*\.message\.root\.user | string | 
+action\_result\.data\.\*\.message\.root\.bot\_id | string | 
+action\_result\.data\.\*\.message\.root\.thread\_ts | string | 
+action\_result\.data\.\*\.message\.root\.subscribed | boolean | 
+action\_result\.data\.\*\.message\.root\.bot\_profile\.id | string | 
+action\_result\.data\.\*\.message\.root\.bot\_profile\.name | string | 
+action\_result\.data\.\*\.message\.root\.bot\_profile\.icons\.image\_36 | string | 
+action\_result\.data\.\*\.message\.root\.bot\_profile\.icons\.image\_48 | string | 
+action\_result\.data\.\*\.message\.root\.bot\_profile\.icons\.image\_72 | string | 
+action\_result\.data\.\*\.message\.root\.bot\_profile\.app\_id | string | 
+action\_result\.data\.\*\.message\.root\.bot\_profile\.deleted | boolean | 
+action\_result\.data\.\*\.message\.root\.bot\_profile\.team\_id | string | 
+action\_result\.data\.\*\.message\.root\.bot\_profile\.updated | numeric | 
+action\_result\.data\.\*\.message\.root\.reply\_count | numeric | 
+action\_result\.data\.\*\.message\.root\.latest\_reply | string | 
+action\_result\.data\.\*\.message\.root\.reply\_users\_count | numeric | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.id | string | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.mode | string | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.name | string | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.size | numeric | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.user | string | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.lines | numeric | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.title | string | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.created | numeric | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.preview | string | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.editable | boolean | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.filetype | string | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.mimetype | string | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.username | string | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.edit\_link | string | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.is\_public | boolean | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.permalink | string | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.timestamp | numeric | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.is\_starred | boolean | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.lines\_more | numeric | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.is\_external | boolean | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.pretty\_type | string | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.url\_private | string | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.external\_type | string | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.display\_as\_bot | boolean | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.has\_rich\_preview | boolean | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.permalink\_public | string | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.preview\_highlight | string | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.public\_url\_shared | boolean | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.preview\_is\_truncated | boolean | 
+action\_result\.data\.\*\.message\.root\.files\.\*\.url\_private\_download | string | 
+action\_result\.data\.\*\.message\.root\.upload | boolean | 
+action\_result\.data\.\*\.message\.root\.display\_as\_bot | boolean | 
+action\_result\.data\.\*\.ts | string | 
+action\_result\.status | string | 
+action\_result\.message | string | 
+action\_result\.summary | string | 
+summary\.total\_objects | numeric | 
+summary\.total\_objects\_successful | numeric |   
 ## action: 'add reaction'
 
 React to a message in Slack
@@ -846,8 +850,7 @@ Upload file to Slack
 Type: **generic**  
 Read only: **False**
 
-The <b>destination</b> parameter can be a channel ID \(e\.g\. C1A1A1AAA\), a channel name \(e\.g\. \#general\), or a username \(e\.g\. \@user or U1A1A1AAA\)\. When uploading to a channel, the configured bot user must have been added to the channel\. Specifying a user will send a direct message containing the file\. The <b>file</b> parameter takes the vault ID of a file that will be uploaded to Slack\. Only files in the vault can be uploaded to Slack\. <b>Note\:</b> It is recommended to use channel ID/user ID instead of channel name/username since the latter usage has been deprecated by Slack\.
-
+The <b>destination</b> parameter can be a channel ID \(e\.g\.  C1A1A1AAA\), a channel name \(e\.g\. \#general\)\. When uploading to a channel, the configured bot user must have been added to the channel\.  The <b>file</b> parameter takes the vault ID of a file that will be uploaded to Slack\. Only files in the vault can be uploaded to Slack\.
 #### Action Parameters
 
 | PARAMETER             | REQUIRED | DESCRIPTION                                                                                   | TYPE   | CONTAINS                                                                  |

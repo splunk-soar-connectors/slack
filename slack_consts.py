@@ -136,9 +136,14 @@ SLACK_ERR_INVALID_CHANNEL_TYPE = "Please provide a valid value in the 'channel_t
 SLACK_ERR_LENGTH_LIMIT_EXCEEDED = ("Based on your asset_id length ({asset_length}), "
                                    "valid length for the 'confirmation' parameter is {valid_length}")
 
+SLACK_ERR_BLOCKS_OR_MSG_REQD = "You must provide at least one of 'blocks' or 'message'"
+
 SLACK_RESP_POLL_INTERVAL_KEY = "'How often to poll for a response (in seconds)' configuration"
 SLACK_TIMEOUT_KEY = "'Question timeout (in minutes)' configuration"
 SLACK_TOTAL_RESP_KEY = "'Total number of responses to keep' configuration"
 SLACK_LIMIT_KEY = "'limit' action"
 
 SLACK_DEFAULT_TIMEOUT = 30
+
+SLACK_STATE_FILE_CORRUPT_ERR = ("Error occurred while loading the state file due to it's unexpected format. Resetting "
+                                "the state file with the default format. Please test the connectivity.")
