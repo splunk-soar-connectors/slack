@@ -2,7 +2,7 @@
 # Slack
 
 Publisher: Splunk  
-Connector Version: 2\.2\.5  
+Connector Version: 2\.3\.0  
 Product Vendor: Slack Technologies  
 Product Name: Slack  
 Product Version Supported (regex): "\.\*"  
@@ -34,6 +34,13 @@ Integrate with Slack to post messages and attachments to channels
 
     -   Send Message - 2 new action parameters 'reply_broadcast' and 'parent_message_ts' are added
         which can be used to reply in the thread based on the timestamp of the parent message.
+
+    <!-- -->
+
+    -   Send Message - 1 new action parameter 'blocks' is added which can be used to send richly
+        formatted "blocks" as Slack messages. See [Slack
+        Documentation](https://api.slack.com/messaging/composing/layouts#adding-blocks) for more
+        information.
 
 -   New action 'Add Reaction' has been added. Hence, it is requested to the end-user to please
     update their existing playbooks by inserting the corresponding action blocks for this action on
@@ -187,7 +194,7 @@ In the **Request URL** text box, add the **POST incoming for Slack to this locat
 the **Asset Settings** window. Before saving these changes, add the username and password of the new
 user added to Phantom. The URL should end up in the format:  
   
-https://\<username>:\<password>@\<phantom_hostname>/rest/handler/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/slack  <!-- pragma: allowlist secret -->
+https://\<username>:\<password>@\<phantom_hostname>/rest/handler/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/slack
 After adding the full URL, click **Enable Interactive Messages**
 
 ## Slack Bot
@@ -706,24 +713,27 @@ Send a message to Slack
 Type: **generic**  
 Read only: **False**
 
-The <b>destination</b> parameter can be a channel ID \(e\.g\. C1A1A1AAA\), a channel name \(e\.g\. \#general\), a username \(e\.g\. \@user\), or a user ID \(e\.g\. U1A1A1AAA\)\. When sending a message to a channel, the configured bot user must have been added to the channel\. Specifying a user will send a direct message\. Messages are limited to 4000 characters\. <b>Note\:</b> It is recommended to use channel ID/user ID instead of channel name/username since the latter usage has been deprecated by Slack\.
+The <b>destination</b> parameter can be a channel ID \(e\.g\. C1A1A1AAA\), a channel name \(e\.g\. \#general\)\. When sending a message to a channel, the configured bot user must have been added to the channel\. Messages are limited to 4000 characters\. Passing a "username" as a channel value is deprecated, along with the whole concept of usernames on Slack\. Please always use channel\-like IDs instead to make sure your message gets to where it's going\.
 
 #### Action Parameters
 PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 --------- | -------- | ----------- | ---- | --------
-**destination** |  required  | Channel \(e\.g\. \#channel or C1A1A1AAA\) or user \(e\.g\. \@user or U1A1A1AAA\) to send message to | string |  `slack channel name`  `slack channel id`  `slack user name`  `slack user id` 
-**message** |  required  | Message to send | string | 
+**destination** |  required  | Channel \(e\.g\. \#channel or C1A1A1AAA\) | string |  `slack channel name`  `slack channel id`  `slack user name`  `slack user id` 
+**message** |  optional  | Message to send, required if 'blocks' is not set\. If 'blocks' is set, this is used as fallback text | string | 
+**blocks** |  optional  | Blocks to send, required if 'message' is not set | string | 
 **parent\_message\_ts** |  optional  | Parent message timestamp to reply in thread | string |  `slack message ts` 
 **reply\_broadcast** |  optional  | Used in conjunction with 'parent\_message\_ts' and indicates whether reply should be made visible to everyone in the channel or conversation | boolean | 
-**link\_names** |  optional  | Enables announcements in Slack messages using mentions. E.g.: Use @someone or @channel in the message in combination with this check to notify someone or a group. | boolean | 
+**link\_names** |  optional  | Check this if you want to enable announcements in your Slack messages using mentions\. E\.g\.\: Use \@someone or \@channel in your message in combination with this check to notify people | boolean | 
 
 #### Action Output
 DATA PATH | TYPE | CONTAINS
 --------- | ---- | --------
 action\_result\.parameter\.destination | string |  `slack channel name`  `slack channel id`  `slack user name`  `slack user id` 
 action\_result\.parameter\.parent\_message\_ts | string |  `slack message ts` 
+action\_result\.parameter\.blocks | string | 
 action\_result\.parameter\.message | string | 
-action\_result\.parameter\.reply\_broadcast | string | 
+action\_result\.parameter\.reply\_broadcast | boolean | 
+action\_result\.parameter\.link\_names | boolean | 
 action\_result\.data\.\*\.channel | string |  `slack channel id` 
 action\_result\.data\.\*\.message\.bot\_id | string | 
 action\_result\.data\.\*\.message\.text | string | 
@@ -837,7 +847,7 @@ Upload file to Slack
 Type: **generic**  
 Read only: **False**
 
-The <b>destination</b> parameter can be a channel ID \(e\.g\.  C1A1A1AAA\), a channel name \(e\.g\. \#general\), or a username \(e\.g\. \@user or U1A1A1AAA\)\. When uploading to a channel, the configured bot user must have been added to the channel\. Specifying a user will send a direct message containing the file\. The <b>file</b> parameter takes the vault ID of a file that will be uploaded to Slack\. Only files in the vault can be uploaded to Slack\. <b>Note\:</b> It is recommended to use channel ID/user ID instead of channel name/username since the latter usage has been deprecated by Slack\.
+The <b>destination</b> parameter can be a channel ID \(e\.g\.  C1A1A1AAA\), a channel name \(e\.g\. \#general\)\. When uploading to a channel, the configured bot user must have been added to the channel\.  The <b>file</b> parameter takes the vault ID of a file that will be uploaded to Slack\. Only files in the vault can be uploaded to Slack\.
 
 #### Action Parameters
 PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
