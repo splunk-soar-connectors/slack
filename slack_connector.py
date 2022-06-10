@@ -234,7 +234,7 @@ class SlackConnector(phantom.BaseConnector):
         config = self.get_config()
 
         self._bot_token = config[SLACK_JSON_BOT_TOKEN]
-        self._socket_token = config[SLACK_JSON_SOCKET_TOKEN]
+        self._socket_token = config.get(SLACK_JSON_SOCKET_TOKEN)
         self._base_url = SLACK_BASE_URL
         self._state = self.load_state()
         if not isinstance(self._state, dict):
