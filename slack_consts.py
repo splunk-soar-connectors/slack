@@ -125,7 +125,7 @@ SLACK_ERR_COULD_NOT_GET_BOT_ID = "Could not get bot ID from Slack"
 SLACK_SUCC_SLACKBOT_RUNNING = "SlackBot already running"
 SLACK_ERR_AUTH_TOKEN_NOT_PROVIDED = "The 'ph_auth_token' asset configuration parameter is required to run the on_poll action"
 SLACK_ERR_SLACKBOT_RUNNING_WITH_SAME_BOT_TOKEN = ("Detected an instance of SlackBot running with the same bot token. "
-"Not going to start new instance.")
+                                                  "Not going to start new instance.")
 SLACK_SUCC_SLACKBOT_STARTED = "SlackBot started"
 SLACK_ERR_UNABLE_TO_SEND_QUESTION_TO_CHANNEL = "Questions may only be sent as direct messages to users. They may not be sent to channels."
 SLACK_ERR_UNABLE_TO_PARSE_RESPONSE = "Error occurred while parsing the response"
@@ -133,7 +133,9 @@ SLACK_ERR_QUESTION_RESPONSE_NOT_AVAILABLE = "Response to question not available"
 SLACK_ERR_NO_RESPONSE_FROM_SERVER = "Got no response from the Slack server"
 SLACK_ERR_INVALID_CHANNEL_TYPE = "Please provide a valid value in the 'channel_type' action parameter"
 SLACK_ERR_LENGTH_LIMIT_EXCEEDED = ("Based on your asset_id length ({asset_length}), "
-"valid length for the 'confirmation' parameter is {valid_length}")
+                                   "valid length for the 'confirmation' parameter is {valid_length}")
+SLACK_ERR_BLOCKS_OR_MSG_REQD = "You must provide at least one of 'blocks' or 'message'"
+
 
 SLACK_RESP_POLL_INTERVAL_KEY = "'How often to poll for a response (in seconds)' configuration"
 SLACK_TIMEOUT_KEY = "'Question timeout (in minutes)' configuration"
@@ -141,3 +143,6 @@ SLACK_TOTAL_RESP_KEY = "'Total number of responses to keep' configuration"
 SLACK_LIMIT_KEY = "'limit' action"
 
 SLACK_DEFAULT_TIMEOUT = 30
+
+SLACK_STATE_FILE_CORRUPT_ERR = ("Error occurred while loading the state file due to it's unexpected format. Resetting "
+                                "the state file with the default format. Please test the connectivity.")
