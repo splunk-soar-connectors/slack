@@ -1116,7 +1116,6 @@ class SlackBot(object):
                             self._post_message(
                                 "Could not run command:\n\n{0}".format(e), channel
                             )
-
         handler = SocketModeHandler(app, self.socket_token)
         handler.start()
 
@@ -1169,8 +1168,6 @@ class SlackBot(object):
 if __name__ == '__main__':  # noqa: C901
 
     if (not os.path.exists('./bot_config.py')):
-        print(len(sys.argv))
-        print(sys.argv)
         if (len(sys.argv) != 2):
             print("Please create a bot_config.py file, and place it in this directory")
             sys.exit(1)

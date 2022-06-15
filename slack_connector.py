@@ -1058,16 +1058,18 @@ class SlackConnector(phantom.BaseConnector):
         config = self.get_config()
         bot_token = config.get('bot_token', '')
         asset_id = self.get_asset_id()
-
+        socket_token = config.get('socket_token', '')
         app_version = self.get_app_json().get('app_version', '')
+
+        headers = {
+            'Authorization': 'Bearer {}'.format(socket_token)
+        }
+        url = "{}apps.connections.open".format(SLACK_BASE_URL)
 
         try:
             ps_out = sh.grep(sh.ps('ww', 'aux'), 'slack_bot.py')  # pylint: disable=E1101
-
             if app_version not in ps_out:
-
                 old_pid = shlex.split(str(ps_out))[1]
-
                 self.save_progress("Found an old version of slackbot running with pid {}, going to kill it".format(old_pid))
 
                 sh.kill(old_pid)  # pylint: disable=E1101
@@ -1078,21 +1080,25 @@ class SlackConnector(phantom.BaseConnector):
         try:
             if bot_token in sh.grep(sh.ps('ww', 'aux'), 'slack_bot.py'):  # pylint: disable=E1101
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_SLACKBOT_RUNNING_WITH_SAME_BOT_TOKEN)
-
         except:
             pass
-
-        self.save_progress("Starting SlackBot")
 
         if phantom.is_fail(ret_val):
             return ret_val
 
         slack_bot_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'slack_bot.py')
 
+        # check if the socket token is valid
+        resp = requests.post(url, headers=headers)
+        resp = resp.json()
+
+        if not resp.get('ok'):
+            self.save_progress("Failed to start Slack Bot")
+            return action_result.set_status(phantom.APP_ERROR, SLACK_SOCKET_TOKEN_ERROR)
+
+        self.save_progress("Starting SlackBot")
         proc = subprocess.Popen(['phenv', 'python3', slack_bot_filename, asset_id])
-
         self._state['pid'] = proc.pid
-
         self.save_progress("Started SlackBot with pid: {0}".format(proc.pid))
 
         return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_SLACKBOT_STARTED)
