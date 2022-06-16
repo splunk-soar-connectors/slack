@@ -1141,7 +1141,7 @@ class SlackConnector(phantom.BaseConnector):
             'Authorization': 'Bearer {}'.format(self._socket_token)
         }
         url = "{}apps.connections.open".format(SLACK_BASE_URL)
-        resp = requests.post(url, headers=headers)
+        resp = requests.post(url, headers=headers, timeout=30)
         resp = resp.json()
 
         if not resp.get('ok'):
