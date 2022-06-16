@@ -23,6 +23,7 @@ import time
 import uuid
 from pathlib import Path
 
+import encryption_helper
 import phantom.app as phantom
 import phantom.rules as ph_rules
 import requests
@@ -178,7 +179,13 @@ def handle_request(request, path):
         except Exception as e:
             return HttpResponse(SLACK_ERR_UNABLE_TO_READ_STATE_FILE.format(error=e), content_type="text/plain", status=400)
 
-        my_token = state.get('token', 'my token does not exist')
+        my_token = state.get(SLACK_JSON_VERIFICATION_TOKEN, 'my token does not exist')
+
+        try:
+            my_token = encryption_helper.decrypt(my_token, asset_id)
+        except Exception:
+            return RetVal(phantom.APP_ERROR, SLACK_DECRYPTION_ERR)
+
         their_token = payload.get('token', 'their token is missing')
         # rest_log(f"My token: {my_token}, Their token: {their_token}")
 
@@ -228,15 +235,35 @@ class SlackConnector(phantom.BaseConnector):
         self._interval = None
         self._timeout = None
         self._socket_token = None
+        self._verification_token = None
+
+    def encrypt_state(self, encrypt_var, token_name):
+        """ Handle encryption of token.
+        :param encrypt_var: Variable needs to be encrypted
+        :return: encrypted variable
+        """
+        self.debug_print(SLACK_ENCRYPT_TOKEN.format(token_name))   # nosemgrep
+        return encryption_helper.encrypt(encrypt_var, self.get_asset_id())
+
+    def decrypt_state(self, decrypt_var, token_name):
+        """ Handle decryption of token.
+        :param decrypt_var: Variable needs to be decrypted
+        :return: decrypted variable
+        """
+        self.debug_print(SLACK_DECRYPT_TOKEN.format(token_name))    # nosemgrep
+        return encryption_helper.decrypt(decrypt_var, self.get_asset_id())
 
     def initialize(self):
 
         config = self.get_config()
-
-        self._bot_token = config[SLACK_JSON_BOT_TOKEN]
-        self._socket_token = config.get(SLACK_JSON_SOCKET_TOKEN)
-        self._base_url = SLACK_BASE_URL
         self._state = self.load_state()
+
+        self._bot_token = config.get(SLACK_JSON_BOT_TOKEN)
+        self._socket_token = config.get(SLACK_JSON_SOCKET_TOKEN)
+        self._ph_auth_token = config.get(SLACK_JSON_PH_AUTH_TOKEN)
+        self._verification_token = self._state.get(SLACK_JSON_VERIFICATION_TOKEN)
+        self._base_url = SLACK_BASE_URL
+
         if not isinstance(self._state, dict):
             self.debug_print("Resetting the state file with the default format")
             self._state = {"app_version": self.get_app_json().get("app_version")}
@@ -249,33 +276,66 @@ class SlackConnector(phantom.BaseConnector):
         if self._timeout is None:
             return self.get_status()
 
-        # Storing Bot file required data in state file
-        ret_val, base_url = self._get_phantom_base_url_slack(self)
+        ret_val, ph_base_url = self._get_phantom_base_url_slack(self)
         if phantom.is_fail(ret_val):
             return ret_val
-        base_url += '/' if not base_url.endswith('/') else ''
+        ph_base_url += '/' if not ph_base_url.endswith('/') else ''
 
-        config = self.get_config()
-        bot_token = config.get('bot_token', '')
-        socket_token = config.get('socket_token', '')
-        ph_auth_token = config.get('ph_auth_token', None)
+        # Storing Bot file required data in state file
+        self._state['ph_base_url'] = ph_base_url
+        self._state[SLACK_JSON_PH_AUTH_TOKEN] = self._ph_auth_token
+        self._state[SLACK_JSON_BOT_TOKEN] = self._bot_token
+        self._state[SLACK_JSON_SOCKET_TOKEN] = self._socket_token
 
-        self._state['base_url'] = base_url
-        self._state['bot_token'] = bot_token
-        self._state['socket_token'] = socket_token
-        self._state['ph_auth_token'] = ph_auth_token
-        self.save_state(self._state)
+        # Decrypting data from state file
+        if self._state.get(SLACK_STATE_IS_ENCRYPTED):
+            try:
+                if self._verification_token:
+                    self._verification_token = self.decrypt_state(self._verification_token, "verification")
+            except Exception as e:
+                self.debug_print("{}: {}".format(SLACK_DECRYPTION_ERR, self._get_error_message_from_exception(e)))
+                return self.set_status(phantom.APP_ERROR, SLACK_DECRYPTION_ERR)
 
         # Fetching the Python major version
         try:
             self._python_version = int(sys.version_info[0])
-        except:
+        except Exception:
             return self.set_status(phantom.APP_ERROR, SLACK_ERR_FETCHING_PYTHON_VERSION)
 
         return phantom.APP_SUCCESS
 
     def finalize(self):
 
+        # Encrypting tokens
+        try:
+            if self._verification_token:
+                self._state[SLACK_JSON_VERIFICATION_TOKEN] = self.encrypt_state(self._verification_token, "verification")
+        except Exception as e:
+            self.debug_print("{}: {}".format(SLACK_ENCRYPTION_ERR, self._get_error_message_from_exception(e)))
+            return self.set_status(phantom.APP_ERROR, SLACK_ENCRYPTION_ERR)
+
+        try:
+            if self._bot_token:
+                self._state[SLACK_JSON_BOT_TOKEN] = self.encrypt_state(self._bot_token, "bot")
+        except Exception as e:
+            self.debug_print("{}: {}".format(SLACK_ENCRYPTION_ERR, self._get_error_message_from_exception(e)))
+            return self.set_status(phantom.APP_ERROR, SLACK_ENCRYPTION_ERR)
+
+        try:
+            if self._socket_token:
+                self._state[SLACK_JSON_SOCKET_TOKEN] = self.encrypt_state(self._socket_token, "socket")
+        except Exception as e:
+            self.debug_print("{}: {}".format(SLACK_ENCRYPTION_ERR, self._get_error_message_from_exception(e)))
+            return self.set_status(phantom.APP_ERROR, SLACK_ENCRYPTION_ERR)
+
+        try:
+            if self._ph_auth_token:
+                self._state[SLACK_JSON_PH_AUTH_TOKEN] = self.encrypt_state(self._ph_auth_token, "ph_auth")
+        except Exception as e:
+            self.debug_print("{}: {}".format(SLACK_ENCRYPTION_ERR, self._get_error_message_from_exception(e)))
+            return self.set_status(phantom.APP_ERROR, SLACK_ENCRYPTION_ERR)
+
+        self._state[SLACK_STATE_IS_ENCRYPTED] = True
         self.save_state(self._state)
         _save_app_state(self._state, self.get_asset_id(), self)
 
@@ -284,7 +344,6 @@ class SlackConnector(phantom.BaseConnector):
     def _get_phantom_base_url_slack(self, action_result):
 
         rest_url = SLACK_PHANTOM_SYS_INFO_URL.format(url=self.get_phantom_base_url())
-
         ret_val, resp_json = self._make_rest_call(action_result, rest_url, False)
 
         if phantom.is_fail(ret_val):
@@ -1047,7 +1106,6 @@ class SlackConnector(phantom.BaseConnector):
         pid = self._state.get('pid', '')
 
         if pid:
-
             try:
                 if 'slack_bot.py' in sh.ps('ww', pid):  # pylint: disable=E1101
                     self.save_progress("Detected SlackBot running with pid {0}".format(pid))
@@ -1055,30 +1113,20 @@ class SlackConnector(phantom.BaseConnector):
             except:
                 pass
 
-        config = self.get_config()
-        bot_token = config.get('bot_token', '')
         asset_id = self.get_asset_id()
-        socket_token = config.get('socket_token', '')
         app_version = self.get_app_json().get('app_version', '')
-
-        headers = {
-            'Authorization': 'Bearer {}'.format(socket_token)
-        }
-        url = "{}apps.connections.open".format(SLACK_BASE_URL)
 
         try:
             ps_out = sh.grep(sh.ps('ww', 'aux'), 'slack_bot.py')  # pylint: disable=E1101
             if app_version not in ps_out:
                 old_pid = shlex.split(str(ps_out))[1]
                 self.save_progress("Found an old version of slackbot running with pid {}, going to kill it".format(old_pid))
-
                 sh.kill(old_pid)  # pylint: disable=E1101
-
         except:
             pass
 
         try:
-            if bot_token in sh.grep(sh.ps('ww', 'aux'), 'slack_bot.py'):  # pylint: disable=E1101
+            if asset_id in sh.grep(sh.ps('ww', 'aux'), 'slack_bot.py'):  # pylint: disable=E1101
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_SLACKBOT_RUNNING_WITH_SAME_BOT_TOKEN)
         except:
             pass
@@ -1089,6 +1137,10 @@ class SlackConnector(phantom.BaseConnector):
         slack_bot_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'slack_bot.py')
 
         # check if the socket token is valid
+        headers = {
+            'Authorization': 'Bearer {}'.format(self._socket_token)
+        }
+        url = "{}apps.connections.open".format(SLACK_BASE_URL)
         resp = requests.post(url, headers=headers)
         resp = resp.json()
 
@@ -1112,12 +1164,19 @@ class SlackConnector(phantom.BaseConnector):
         local_data_state_dir = self.get_state_dir().rstrip('/')
         self._state['local_data_path'] = local_data_state_dir
         # Need to make sure the configured verification token is in the app state so the request_handler can use it to verify POST requests
-        if 'token' not in self._state:
-            self._state['token'] = config[SLACK_JSON_VERIFICATION_TOKEN]
-            self.save_state(self._state)
-        elif self._state['token'] != config[SLACK_JSON_VERIFICATION_TOKEN]:
-            self._state['token'] = config[SLACK_JSON_VERIFICATION_TOKEN]
-            self.save_state(self._state)
+        if 'verification_token' not in self._state:
+            self._state['verification_token'] = config[SLACK_JSON_VERIFICATION_TOKEN]
+        elif self._state['verification_token'] != config[SLACK_JSON_VERIFICATION_TOKEN]:
+            self._state['verification_token'] = config[SLACK_JSON_VERIFICATION_TOKEN]
+
+        try:
+            if self._verification_token:
+                self._state[SLACK_JSON_VERIFICATION_TOKEN] = self.encrypt_state(self._verification_token, "verification")
+        except Exception as e:
+            self.debug_print("{}: {}".format(SLACK_ENCRYPTION_ERR, self._get_error_message_from_exception(e)))
+            return self.set_status(phantom.APP_ERROR, SLACK_ENCRYPTION_ERR)
+
+        self.save_state(self._state)
 
         # The default permission of state file in Phantom v4.9 is 600. So when from rest handler method (handle_request) reads this state file,
         # the action fails with "permission denied" error message

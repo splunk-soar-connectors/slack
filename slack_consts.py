@@ -34,6 +34,7 @@ SLACK_MESSAGE_LIMIT = 4000
 SLACK_DEFAULT_LIMIT = 100
 
 SLACK_JSON_BOT_TOKEN = "bot_token"
+SLACK_JSON_PH_AUTH_TOKEN = 'ph_auth_token'
 SLACK_JSON_VERIFICATION_TOKEN = "verification_token"
 SLACK_JSON_SOCKET_TOKEN = "socket_token"
 
@@ -148,3 +149,11 @@ SLACK_DEFAULT_TIMEOUT = 30
 SLACK_STATE_FILE_CORRUPT_ERR = ("Error occurred while loading the state file due to it's unexpected format. Resetting "
                                 "the state file with the default format. Please test the connectivity.")
 SLACK_SOCKET_TOKEN_ERROR = "Invalid Socket Token please update the configuration file and rerun test connectivity"
+
+SLACK_STATE_IS_ENCRYPTED = 'is_encrypted'
+
+# For encryption and decryption
+SLACK_ENCRYPT_TOKEN = "Encrypting the {} token"
+SLACK_DECRYPT_TOKEN = "Decrypting the {} token"
+SLACK_ENCRYPTION_ERR = "Error occurred while encrypting the state file"
+SLACK_DECRYPTION_ERR = "Error occurred while decrypting the state file"

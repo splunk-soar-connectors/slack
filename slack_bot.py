@@ -17,6 +17,7 @@ import shlex
 import sys
 from argparse import ArgumentParser
 
+import encryption_helper
 import requests
 import simplejson as json
 import six
@@ -24,6 +25,7 @@ import urllib3
 from slack_bolt import App as slack_app
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
+from slack_consts import *
 from slack_consts import SLACK_DEFAULT_TIMEOUT
 
 urllib3.disable_warnings()
@@ -164,6 +166,15 @@ def _load_app_state(asset_id, app_connector=None):
         app_connector.debug_print('Loaded state: ', state)
 
     return state
+
+
+def decrypt_state(asset_id, decrypt_var, token_name):
+    """ Handle decryption of token.
+    :param decrypt_var: Variable needs to be decrypted
+    :return: decrypted variable
+    """
+    print(SLACK_DECRYPT_TOKEN.format(token_name))    # nosemgrep
+    return encryption_helper.decrypt(decrypt_var, asset_id)
 
 
 class Action():
@@ -891,7 +902,6 @@ class SlackBot(object):
             playbook = int(args.playbook)
 
         except:
-
             if not args.repo:
                 return False, "repo argument is required when supplying playbook name instead of playbook ID"
 
@@ -1171,13 +1181,40 @@ if __name__ == '__main__':  # noqa: C901
         if (len(sys.argv) != 2):
             print("Please create a bot_config.py file, and place it in this directory")
             sys.exit(1)
-        config = _load_app_state(sys.argv[1])
+
+        asset_id = sys.argv[1]
+        state = _load_app_state(asset_id)
+
+        bot_id = state.get('bot_id')
+        ph_base_url = state.get('ph_base_url'),
+        bot_token = state.get(SLACK_JSON_BOT_TOKEN)
+        socket_token = state.get(SLACK_JSON_SOCKET_TOKEN)
+        ph_auth_token = state.get(SLACK_JSON_PH_AUTH_TOKEN)
+
+        try:
+            if bot_token:
+                bot_token = decrypt_state(asset_id, bot_token, "bot")
+        except Exception:
+            print("{}".format(SLACK_DECRYPTION_ERR))
+
+        try:
+            if socket_token:
+                socket_token = decrypt_state(asset_id, socket_token, "socket")
+        except Exception:
+            print("{}".format(SLACK_DECRYPTION_ERR))
+
+        try:
+            if ph_auth_token:
+                ph_auth_token = decrypt_state(asset_id, ph_auth_token, "ph_auth")
+        except Exception:
+            print("{}".format(SLACK_DECRYPTION_ERR))
+
         sb = SlackBot(
-            bot_token=config.get('bot_token'),
-            socket_token=config.get('socket_token'),
-            bot_id=config.get('bot_id'),
-            base_url=config.get('base_url'),
-            auth_token=config.get('ph_auth_token')
+            bot_token=bot_token,
+            socket_token=socket_token,
+            bot_id=bot_id,
+            base_url=ph_base_url[0],
+            auth_token=ph_auth_token
         )
         sb._from_on_poll()
         sys.exit(0)
