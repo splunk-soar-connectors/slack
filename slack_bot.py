@@ -1036,27 +1036,22 @@ class SlackBot(object):
 
         try:
             parsed_args = self.list_parser.parse_args(command)
-
         except:
             return False, SLACK_LIST_HELP_MESSAGE
 
         self._generate_dicts()
 
         if parsed_args.listee == 'actions':
-
             msg = ''
-
             sorted_actions = list(self.action_dict.keys())
             sorted_actions.sort()
 
             for action in sorted_actions:
-
                 msg += '{}\n'.format(action)
 
             msg += '\nFor more info on an action, try "act <action_name>"'
 
         elif parsed_args.listee == 'containers':
-
             msg = ''
 
             try:
@@ -1066,13 +1061,15 @@ class SlackBot(object):
                 return False, "Could not retrieve container data. Could not connect to REST endpoint: {}".format(e)
 
             for container in r.json()['data']:
-
                 try:
                     msg += 'ID: {}'.format(container['id']).ljust(10) + 'Name: {}\n'.format(container['name'])
                 except:
                     msg += 'Container info could not be parsed'
 
             msg += '\nFor more information on a container, try "get_container <container_id>"'
+
+        else:
+            msg = SLACK_BOT_HELP_MESSAGE
 
         return True, msg
 
@@ -1114,6 +1111,7 @@ class SlackBot(object):
 
                 if command and channel:
                     command = self._sanitize(command)
+                    sys.stdout.write(command + "\n")
                     try:
                         self._handle_command(command, channel)
                     except Exception as e:
@@ -1161,15 +1159,10 @@ class SlackBot(object):
                 msg = result
 
         elif cmd_type == "get_container":
-
             status, msg = self._parse_container(args[1:])
-
         elif cmd_type == "list":
-
             status, msg = self._parse_list(args[1:])
-
         else:
-
             msg = SLACK_BOT_HELP_MESSAGE
 
         self._post_message(msg, channel)
@@ -1178,7 +1171,7 @@ class SlackBot(object):
 if __name__ == '__main__':  # noqa: C901
 
     if (not os.path.exists('./bot_config.py')):
-        if (len(sys.argv) != 2):
+        if (len(sys.argv) != 3):
             print("Please create a bot_config.py file, and place it in this directory")
             sys.exit(1)
 

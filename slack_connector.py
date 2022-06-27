@@ -258,16 +258,16 @@ class SlackConnector(phantom.BaseConnector):
         config = self.get_config()
         self._state = self.load_state()
 
-        self._bot_token = config.get(SLACK_JSON_BOT_TOKEN)
-        self._socket_token = config.get(SLACK_JSON_SOCKET_TOKEN)
-        self._ph_auth_token = config.get(SLACK_JSON_PH_AUTH_TOKEN)
-        self._verification_token = self._state.get(SLACK_JSON_VERIFICATION_TOKEN)
-        self._base_url = SLACK_BASE_URL
-
         if not isinstance(self._state, dict):
             self.debug_print("Resetting the state file with the default format")
             self._state = {"app_version": self.get_app_json().get("app_version")}
 
+        self._bot_token = config.get(SLACK_JSON_BOT_TOKEN)
+        self._socket_token = config.get(SLACK_JSON_SOCKET_TOKEN)
+        self._ph_auth_token = config.get(SLACK_JSON_PH_AUTH_TOKEN)
+        self._base_url = SLACK_BASE_URL
+
+        self._verification_token = self._state.get(SLACK_JSON_VERIFICATION_TOKEN)
         self._interval = self._validate_integers(self, config.get("response_poll_interval", 30), SLACK_RESP_POLL_INTERVAL_KEY)
         if self._interval is None:
             return self.get_status()
@@ -382,8 +382,7 @@ class SlackConnector(phantom.BaseConnector):
         except:
             error_text = SLACK_UNABLE_TO_PARSE_ERR_DETAILS
 
-        message = "Status Code: {0}. Data from server:\n{1}\n".format(status_code,
-                                                                      self._handle_py_ver_compat_for_input_str(error_text))
+        message = "Status Code: {0}. Data from server:\n{1}\n".format(status_code, error_text)
 
         message = message.replace('{', '{{').replace('}', '}}')
 
@@ -439,7 +438,7 @@ class SlackConnector(phantom.BaseConnector):
 
         # everything else is actually an error at this point
         message = "Can't process response from server. Status Code: {0} Data from server: {1}".format(
-            r.status_code, self._handle_py_ver_compat_for_input_str(r.text.replace('{', '{{').replace('}', '}}')))
+            r.status_code, r.text.replace('{', '{{').replace('}', '}}'))
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
 
@@ -462,13 +461,6 @@ class SlackConnector(phantom.BaseConnector):
                 error_msg = SLACK_ERR_MESSAGE_UNKNOWN
         except:
             error_code = SLACK_ERR_CODE_UNAVAILABLE
-            error_msg = SLACK_ERR_MESSAGE_UNKNOWN
-
-        try:
-            error_msg = self._handle_py_ver_compat_for_input_str(error_msg)
-        except TypeError:
-            error_msg = SLACK_UNICODE_DAMMIT_TYPE_ERR_MESSAGE
-        except:
             error_msg = SLACK_ERR_MESSAGE_UNKNOWN
 
         return "Error Code: {0}. Error Message: {1}".format(error_code, error_msg)
@@ -497,8 +489,6 @@ class SlackConnector(phantom.BaseConnector):
 
         if resp_json:
             details = json.dumps(resp_json).replace('{', '{{').replace('}', '}}')
-
-        details = self._handle_py_ver_compat_for_input_str(details)
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, "Error from server: Status code: {0} Details: {1}".format(
             r.status_code, details)), None)
@@ -551,21 +541,6 @@ class SlackConnector(phantom.BaseConnector):
             return None
 
         return parameter
-
-    def _handle_py_ver_compat_for_input_str(self, input_str):
-        """
-        This method returns the encoded|original string based on the Python version.
-        :param input_str: Input string to be processed
-        :return: input_str (Processed input string based on following logic 'input_str - Python 3; encoded input_str - Python 2')
-        """
-
-        try:
-            if input_str and self._python_version == 2:
-                input_str = UnicodeDammit(input_str).unicode_markup.encode('utf-8')
-        except:
-            self.debug_print(SLACK_ERR_PY_2TO3)
-
-        return input_str
 
     def _test_connectivity(self, param):
 
@@ -639,7 +614,7 @@ class SlackConnector(phantom.BaseConnector):
 
         if not resp_json.get('ok', True):
             error = resp_json.get('error', 'N/A')
-            error_details = self._handle_py_ver_compat_for_input_str(resp_json.get('detail', ''))
+            error_details = resp_json.get('detail', '')
             if error_details:
                 error_message = "{}: {}\r\nDetails: {}".format(SLACK_ERR_CREATING_CHANNEL, error, error_details)
             else:
@@ -826,7 +801,7 @@ class SlackConnector(phantom.BaseConnector):
 
         if not resp_json.get('ok', True):
             error = resp_json.get('error', 'N/A')
-            error_details = self._handle_py_ver_compat_for_input_str(resp_json.get('detail', ''))
+            error_details = resp_json.get('detail', '')
             if error_details:
                 error_message = "{}: {}\r\nDetails: {}".format(SLACK_ERR_INVITING_CHANNEL, error, error_details)
             else:
@@ -848,7 +823,7 @@ class SlackConnector(phantom.BaseConnector):
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_BLOCKS_OR_MSG_REQD)
 
         if 'message' in param:
-            message = self._handle_py_ver_compat_for_input_str(param['message'])
+            message = param['message']
 
             if '\\' in message:
                 if self._python_version == 2:
@@ -892,7 +867,7 @@ class SlackConnector(phantom.BaseConnector):
         self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
-        emoji = self._handle_py_ver_compat_for_input_str(param['emoji'])
+        emoji = param['emoji']
 
         params = {'channel': param['destination'], 'name': emoji, 'timestamp': param['message_ts']}
 
@@ -964,7 +939,7 @@ class SlackConnector(phantom.BaseConnector):
             params['filename'] = file_name
             kwargs['files'] = {'file': upfile}
         elif 'content' in param:
-            params['content'] = self._handle_py_ver_compat_for_input_str(param.get('content'))
+            params['content'] = param.get('content')
         else:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_FILE_OR_CONTENT_NOT_PROVIDED)
 
@@ -1092,7 +1067,6 @@ class SlackConnector(phantom.BaseConnector):
     def _on_poll(self, param):
 
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
-
         ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_AUTH_TEST, {})
 
         if not ret_val:
@@ -1118,15 +1092,12 @@ class SlackConnector(phantom.BaseConnector):
 
         try:
             ps_out = sh.grep(sh.ps('ww', 'aux'), 'slack_bot.py')  # pylint: disable=E1101
+            old_pid = shlex.split(str(ps_out))[1]
             if app_version not in ps_out:
-                old_pid = shlex.split(str(ps_out))[1]
                 self.save_progress("Found an old version of slackbot running with pid {}, going to kill it".format(old_pid))
                 sh.kill(old_pid)  # pylint: disable=E1101
-        except:
-            pass
-
-        try:
-            if asset_id in sh.grep(sh.ps('ww', 'aux'), 'slack_bot.py'):  # pylint: disable=E1101
+            elif asset_id in ps_out:  # pylint: disable=E1101
+                self._state['pid'] = int(old_pid)
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_SLACKBOT_RUNNING_WITH_SAME_BOT_TOKEN)
         except:
             pass
@@ -1149,7 +1120,7 @@ class SlackConnector(phantom.BaseConnector):
             return action_result.set_status(phantom.APP_ERROR, SLACK_SOCKET_TOKEN_ERROR)
 
         self.save_progress("Starting SlackBot")
-        proc = subprocess.Popen(['phenv', 'python3', slack_bot_filename, asset_id])
+        proc = subprocess.Popen(['phenv', 'python3', slack_bot_filename, asset_id, app_version])
         self._state['pid'] = proc.pid
         self.save_progress("Started SlackBot with pid: {0}".format(proc.pid))
 
@@ -1274,7 +1245,7 @@ class SlackConnector(phantom.BaseConnector):
 
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
-        qid = self._handle_py_ver_compat_for_input_str(param['question_id'])
+        qid = param['question_id']
         state_dir = self.get_state_dir()
         answer_path = '{0}/{1}.json'.format(state_dir, qid)
 

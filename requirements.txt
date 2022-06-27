@@ -5,6 +5,5 @@ requests==2.27.1
 sh==1.14.2
 simplejson==3.17.5
 six==1.15.0
-slack-bolt==1.13.0
-slack-sdk==3.15.2
+slack-bolt==1.14.0
 websocket-client==1.2.1
