@@ -577,6 +577,7 @@ class SlackConnector(phantom.BaseConnector):
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         user_token = self.get_config().get('user_token')
+        self.debug_print("user_token : {}".format(user_token))
 
         if not user_token:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_USER_TOKEN_NOT_PROVIDED)
@@ -600,6 +601,7 @@ class SlackConnector(phantom.BaseConnector):
         if channel_type == "private":
             params.update({"is_private": True})
 
+        self.debug_print("Making rest call to create channel")
         ret_val, resp_json = self._make_rest_call(
             action_result,
             endpoint,
@@ -765,6 +767,7 @@ class SlackConnector(phantom.BaseConnector):
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         user_token = self.get_config().get('user_token')
+        self.debug_print("user_token : {}".format(user_token))
 
         if not user_token:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_USER_TOKEN_NOT_PROVIDED)
@@ -848,6 +851,7 @@ class SlackConnector(phantom.BaseConnector):
             if 'reply_broadcast' in param:
                 params['reply_broadcast'] = param.get('reply_broadcast', False)
 
+        self.debug_print("Making rest call to send message")
         ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_SEND_MESSAGE, params)
 
         if not ret_val:
@@ -871,6 +875,7 @@ class SlackConnector(phantom.BaseConnector):
 
         params = {'channel': param['destination'], 'name': emoji, 'timestamp': param['message_ts']}
 
+        self.debug_print("Making rest call to add reaction")
         ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_ADD_REACTION, params)
 
         if not ret_val:
@@ -943,6 +948,7 @@ class SlackConnector(phantom.BaseConnector):
         else:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_FILE_OR_CONTENT_NOT_PROVIDED)
 
+        self.debug_print("Making rest call to upload file")
         ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_UPLOAD_FILE, params, **kwargs)
         if 'files' in kwargs:
             upfile.close()
@@ -1018,15 +1024,14 @@ class SlackConnector(phantom.BaseConnector):
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         pid = self._state.get('pid', '')
+        self.debug_print("PID of Bot : {}".format(pid))
         if pid:
-
             self._state.pop('pid')
 
             try:
                 if 'slack_bot.py' in sh.ps('ww', pid):  # pylint: disable=E1101
                     sh.kill(pid)  # pylint: disable=E1101
                     action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_SLACKBOT_STOPPED)
-
             except:
                 action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_SLACKBOT_NOT_RUNNING)
 
@@ -1035,6 +1040,7 @@ class SlackConnector(phantom.BaseConnector):
 
         rest_url = SLACK_PHANTOM_ASSET_INFO_URL.format(url=self.get_phantom_base_url(), asset_id=self.get_asset_id())
 
+        self.debug_print("Making rest call")
         ret_val, resp_json = self._make_rest_call(action_result, rest_url, False)
 
         if phantom.is_fail(ret_val):
@@ -1248,7 +1254,7 @@ class SlackConnector(phantom.BaseConnector):
         qid = param['question_id']
         state_dir = self.get_state_dir()
         answer_path = '{0}/{1}.json'.format(state_dir, qid)
-
+        self.debug_print("answer path : {}".format(answer_path))
         self.save_progress('Checking for response to question with ID: {0}'.format(qid))
 
         try:
