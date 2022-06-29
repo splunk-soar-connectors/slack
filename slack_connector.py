@@ -789,7 +789,7 @@ class SlackConnector(phantom.BaseConnector):
         }
 
         endpoint = "{}{}".format(SLACK_BASE_URL, SLACK_INVITE_TO_CHANNEL)
-
+        self.debug_print("Making rest call to invite user")
         ret_val, resp_json = self._make_rest_call(
             action_result,
             endpoint,
