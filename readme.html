@@ -219,11 +219,6 @@ Click <b>SAVE</b>, you will be asked to fill in the <b>Ingest Settings</b>, sele
     <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_ingest_settings.png">
 </a>
 <br><br>
-After saving the asset, go back to the <b>Asset Settings</b> tab. There will now be a box labeled <b>POST incoming for Slack to this location</b>. This URL will be used later when configuring Slack's <b>Interactive Messages</b> functionality.
-<br><br>
-<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_post_url.png">
-    <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_post_url.png">
-</a>
 <h3>Automation User</h3>
 The Slack app needs a Phantom authentication token to perform some tasks on the Phantom platform. To get this token, it is recommended that you create a new automation user. The steps for creating this user are as follows:
 <ul>
@@ -233,7 +228,7 @@ The Slack app needs a Phantom authentication token to perform some tasks on the 
     <ul>
         <li>Set the <b>User Type</b> to <b>Automation</b></li>
         <li>Give the user a <b>Username</b> like &quot;Slack Automation&quot;</li>
-        <li>Set <b>Allowed IPs</b> to <b>127.0.0.1</b></li>
+        <li>For security reasons, accessing 127.0.0.1 is not allowed. Set <b>Allowed IPs</b> same as the <b>instance IP or any</b>. (eg : If instance IP is 10.1.18.123, set allowed IP also 10.1.18.123)</li>
         <li>Set the <b>Default Label</b> to the label seen in the Slack asset's <b>Ingest Settings</b></li>
         <li>Under <b>Roles</b>, in addition to the default <b>Automation</b> role, add the <b>Observer</b> role</li>
         <li>Click <b>CREATE</b>
