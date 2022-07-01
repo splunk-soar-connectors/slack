@@ -1087,26 +1087,19 @@ class SlackBot(object):
             is mentioned in the cat. It recives a json body which contains the data of the event. The command and
             channel name are parsed from the body and passed to command handler to further process the command.
             """
-
-            out_dict = {}
-            if body and len(body) > 0:
-                try:
-                    out_dict = body
-                except ValueError:
-                    return None
-
-                out_text = out_dict.get("event", {}).get("text")
+            if body:
+                out_text = body.get("event", {}).get("text")
 
                 if out_text:
                     if out_text.startswith(self.cmd_start):
                         if out_text.strip() == self.cmd_start:
                             self._post_message(
                                 SLACK_BOT_HELP_MESSAGE,
-                                out_dict.get("payload", {})
+                                body.get("payload", {})
                                 .get("event", {})
                                 .get("channel", "#general"),
                             )
-                        channel = out_dict.get("event", {}).get("channel", "#general")
+                        channel = body.get("event", {}).get("channel", "#general")
                         command = out_text[len(self.cmd_start):].strip()
 
                 if command and channel:
