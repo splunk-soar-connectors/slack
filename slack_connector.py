@@ -996,6 +996,7 @@ class SlackConnector(phantom.BaseConnector):
 
     def _stop_bot(self, param):
 
+        self.debug_print("Inside stop bot action")
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         pid = self._state.get('pid')
