@@ -22,6 +22,7 @@ import sys
 import time
 import uuid
 from pathlib import Path
+from urllib.parse import unquote
 
 import encryption_helper
 import phantom.app as phantom
@@ -34,11 +35,6 @@ from django.http import HttpResponse
 from phantom.base_connector import APPS_STATE_PATH
 
 from slack_consts import *
-
-try:
-    from urllib.parse import unquote
-except:
-    from urllib import unquote
 
 
 class RetVal(tuple):
@@ -179,17 +175,17 @@ def handle_request(request, path):
         except Exception as e:
             return HttpResponse(SLACK_ERR_UNABLE_TO_READ_STATE_FILE.format(error=e), content_type="text/plain", status=400)
 
-        my_token = state.get(SLACK_JSON_VERIFICATION_TOKEN, 'my token does not exist')
+        my_token = state.get(SLACK_JSON_VERIFICATION_TOKEN)
+        if my_token:
+            try:
+                my_token = encryption_helper.decrypt(my_token, asset_id)
+            except Exception:
+                return RetVal(phantom.APP_ERROR, SLACK_DECRYPTION_ERR)
 
-        try:
-            my_token = encryption_helper.decrypt(my_token, asset_id)
-        except Exception:
-            return RetVal(phantom.APP_ERROR, SLACK_DECRYPTION_ERR)
-
-        their_token = payload.get('token', 'their token is missing')
+        their_token = payload.get('token')
         # rest_log(f"My token: {my_token}, Their token: {their_token}")
 
-        if my_token != their_token:
+        if not my_token or not their_token or my_token != their_token:
             return HttpResponse(SLACK_ERR_AUTH_FAILED, content_type="text/plain", status=400)
 
         qid = callback_json.get('qid')
@@ -296,12 +292,6 @@ class SlackConnector(phantom.BaseConnector):
                 self.debug_print("{}: {}".format(SLACK_DECRYPTION_ERR, self._get_error_message_from_exception(e)))
                 return self.set_status(phantom.APP_ERROR, SLACK_DECRYPTION_ERR)
 
-        # Fetching the Python major version
-        try:
-            self._python_version = int(sys.version_info[0])
-        except Exception:
-            return self.set_status(phantom.APP_ERROR, SLACK_ERR_FETCHING_PYTHON_VERSION)
-
         return phantom.APP_SUCCESS
 
     def finalize(self):
@@ -310,27 +300,16 @@ class SlackConnector(phantom.BaseConnector):
         try:
             if self._verification_token:
                 self._state[SLACK_JSON_VERIFICATION_TOKEN] = self.encrypt_state(self._verification_token, "verification")
-        except Exception as e:
-            self.debug_print("{}: {}".format(SLACK_ENCRYPTION_ERR, self._get_error_message_from_exception(e)))
-            return self.set_status(phantom.APP_ERROR, SLACK_ENCRYPTION_ERR)
 
-        try:
             if self._bot_token:
                 self._state[SLACK_JSON_BOT_TOKEN] = self.encrypt_state(self._bot_token, "bot")
-        except Exception as e:
-            self.debug_print("{}: {}".format(SLACK_ENCRYPTION_ERR, self._get_error_message_from_exception(e)))
-            return self.set_status(phantom.APP_ERROR, SLACK_ENCRYPTION_ERR)
 
-        try:
             if self._socket_token:
                 self._state[SLACK_JSON_SOCKET_TOKEN] = self.encrypt_state(self._socket_token, "socket")
-        except Exception as e:
-            self.debug_print("{}: {}".format(SLACK_ENCRYPTION_ERR, self._get_error_message_from_exception(e)))
-            return self.set_status(phantom.APP_ERROR, SLACK_ENCRYPTION_ERR)
 
-        try:
             if self._ph_auth_token:
                 self._state[SLACK_JSON_PH_AUTH_TOKEN] = self.encrypt_state(self._ph_auth_token, "ph_auth")
+
         except Exception as e:
             self.debug_print("{}: {}".format(SLACK_ENCRYPTION_ERR, self._get_error_message_from_exception(e)))
             return self.set_status(phantom.APP_ERROR, SLACK_ENCRYPTION_ERR)
@@ -379,7 +358,7 @@ class SlackConnector(phantom.BaseConnector):
             split_lines = error_text.split('\n')
             split_lines = [x.strip() for x in split_lines if x.strip()]
             error_text = '\n'.join(split_lines)
-        except:
+        except Exception:
             error_text = SLACK_UNABLE_TO_PARSE_ERR_DETAILS
 
         message = "Status Code: {0}. Data from server:\n{1}\n".format(status_code, error_text)
@@ -459,7 +438,7 @@ class SlackConnector(phantom.BaseConnector):
             else:
                 error_code = SLACK_ERR_CODE_UNAVAILABLE
                 error_msg = SLACK_ERR_MESSAGE_UNKNOWN
-        except:
+        except Exception:
             error_code = SLACK_ERR_CODE_UNAVAILABLE
             error_msg = SLACK_ERR_MESSAGE_UNKNOWN
 
@@ -475,7 +454,7 @@ class SlackConnector(phantom.BaseConnector):
 
         try:
             resp_json = r.json()
-        except:
+        except Exception:
             return RetVal(action_result.set_status(phantom.APP_ERROR, SLACK_ERR_UNABLE_TO_DECODE_JSON_RESPONSE), None)
 
         if 'failed' in resp_json:
@@ -529,7 +508,7 @@ class SlackConnector(phantom.BaseConnector):
                 return None
 
             parameter = int(parameter)
-        except:
+        except Exception:
             action_result.set_status(phantom.APP_ERROR, SLACK_ERR_INVALID_INT.format(key=key))
             return None
 
@@ -543,10 +522,6 @@ class SlackConnector(phantom.BaseConnector):
         return parameter
 
     def _test_connectivity(self, param):
-
-        ret_val, base_url = self._get_phantom_base_url_slack(self)
-        if phantom.is_fail(ret_val):
-            return ret_val
 
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
@@ -577,7 +552,7 @@ class SlackConnector(phantom.BaseConnector):
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         user_token = self.get_config().get('user_token')
-        self.debug_print("user_token : {}".format(user_token))
+        self.debug_print("Inside create channel action")
 
         if not user_token:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_USER_TOKEN_NOT_PROVIDED)
@@ -767,7 +742,7 @@ class SlackConnector(phantom.BaseConnector):
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         user_token = self.get_config().get('user_token')
-        self.debug_print("user_token : {}".format(user_token))
+        self.debug_print("Inside invite user action")
 
         if not user_token:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_USER_TOKEN_NOT_PROVIDED)
@@ -1023,74 +998,49 @@ class SlackConnector(phantom.BaseConnector):
 
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
-        pid = self._state.get('pid', '')
+        pid = self._state.get('pid')
         self.debug_print("PID of Bot : {}".format(pid))
         if pid:
             self._state.pop('pid')
-
             try:
                 if 'slack_bot.py' in sh.ps('ww', pid):  # pylint: disable=E1101
-                    sh.kill(pid)  # pylint: disable=E1101
-                    action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_SLACKBOT_STOPPED)
-            except:
-                action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_SLACKBOT_NOT_RUNNING)
-
+                    try:
+                        sh.kill(pid)  # pylint: disable=E1101
+                        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_SLACKBOT_STOPPED)
+                    except Exception:
+                        return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_COUDNT_STOP_SLACKBOT)
+            except Exception:
+                return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_SLACKBOT_NOT_RUNNING)
         else:
-            action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_SLACKBOT_NOT_RUNNING)
-
-        rest_url = SLACK_PHANTOM_ASSET_INFO_URL.format(url=self.get_phantom_base_url(), asset_id=self.get_asset_id())
-
-        self.debug_print("Making rest call")
-        ret_val, resp_json = self._make_rest_call(action_result, rest_url, False)
-
-        if phantom.is_fail(ret_val):
-            return ret_val
-
-        asset_config = resp_json.get('configuration', {})
-
-        ingest_config = asset_config.get('ingest', {})
-
-        poll = ingest_config.get('poll')
-
-        if poll is None:
-            return action_result.set_status(phantom.APP_SUCCESS, SLACK_FAILED_TO_DISABLE_INGESTION
-                                            .format(message=action_result.get_message()))
-
-        if not poll:
-            return action_result.set_status(phantom.APP_SUCCESS, SLACK_INGESTION_NOT_ENABLED.format(message=action_result.get_message()))
-
-        ingest_config['poll'] = False
-
-        body = {'configuration': asset_config}
-
-        ret_val, resp_json = self._make_rest_call(action_result, rest_url, False, method=requests.post, body=body)
-
-        if phantom.is_fail(ret_val):
-            return ret_val
-
-        return action_result.set_status(phantom.APP_SUCCESS, SLACK_INGESTION_DISABLED.format(message=action_result.get_message()))
+            try:
+                ps_out = sh.grep(sh.ps('ww', 'aux'), 'slack_bot.py')
+                pid = shlex.split(str(ps_out))[1]
+                try:
+                    sh.kill(pid)  # pylint: disable=E1101
+                    return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_SLACKBOT_STOPPED)
+                except Exception:
+                    return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_COUDNT_STOP_SLACKBOT)
+            except Exception:
+                return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_SLACKBOT_NOT_RUNNING)
 
     def _on_poll(self, param):
 
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
         ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_AUTH_TEST, {})
-
         if not ret_val:
             return ret_val
 
         bot_id = resp_json.get('user_id')
-
         if not bot_id:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_COULD_NOT_GET_BOT_ID)
 
-        pid = self._state.get('pid', '')
-
+        pid = self._state.get('pid')
         if pid:
             try:
                 if 'slack_bot.py' in sh.ps('ww', pid):  # pylint: disable=E1101
                     self.save_progress("Detected SlackBot running with pid {0}".format(pid))
                     return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_SLACKBOT_RUNNING)
-            except:
+            except Exception:
                 pass
 
         asset_id = self.get_asset_id()
@@ -1104,12 +1054,9 @@ class SlackConnector(phantom.BaseConnector):
                 sh.kill(old_pid)  # pylint: disable=E1101
             elif asset_id in ps_out:  # pylint: disable=E1101
                 self._state['pid'] = int(old_pid)
-                return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_SLACKBOT_RUNNING_WITH_SAME_BOT_TOKEN)
-        except:
+                return action_result.set_status(phantom.APP_SUCCESS, SLACK_ERR_SLACKBOT_RUNNING_WITH_SAME_BOT_TOKEN)
+        except Exception:
             pass
-
-        if phantom.is_fail(ret_val):
-            return ret_val
 
         slack_bot_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'slack_bot.py')
 
@@ -1226,8 +1173,7 @@ class SlackConnector(phantom.BaseConnector):
 
             try:
                 answer_file = open(answer_path, 'r')
-
-            except:
+            except Exception:
                 count += 1
                 time.sleep(self._interval)
                 continue
@@ -1235,7 +1181,7 @@ class SlackConnector(phantom.BaseConnector):
             try:
                 resp_json = json.loads(answer_file.read())
                 answer_file.close()
-            except:
+            except Exception:
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_UNABLE_TO_PARSE_RESPONSE)
 
             break
@@ -1259,13 +1205,13 @@ class SlackConnector(phantom.BaseConnector):
 
         try:
             answer_file = open(answer_path, 'r')
-        except:
+        except Exception:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_QUESTION_RESPONSE_NOT_AVAILABLE)
 
         try:
             resp_json = json.loads(answer_file.read())
             answer_file.close()
-        except:
+        except Exception:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_UNABLE_TO_PARSE_RESPONSE)
 
         action_result.add_data(resp_json)

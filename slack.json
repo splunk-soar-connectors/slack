@@ -16,7 +16,7 @@
     "python_version": "3",
     "fips_compliant": true,
     "latest_tested_versions": [
-        "Cloud API, May 30, 2022"
+        "Cloud API, July 05, 2022"
     ],
     "logo": "logo_slack.svg",
     "logo_dark": "logo_slack_dark.svg",
@@ -45,27 +45,22 @@
             "description": "Socket Token",
             "order": 3
         },
-        "ph_0": {
-            "data_type": "ph",
-            "description": "Placeholder",
-            "order": 4
-        },
         "ph_auth_token": {
             "data_type": "password",
             "description": "Automation User Auth Token",
-            "order": 5
+            "order": 4
         },
         "timeout": {
             "description": "Question timeout (in minutes)",
             "data_type": "numeric",
             "default": 30,
-            "order": 6
+            "order": 5
         },
         "response_poll_interval": {
             "description": "How often to poll for a response (in seconds)",
             "data_type": "numeric",
             "default": 30,
-            "order": 7
+            "order": 6
         }
     },
     "actions": [

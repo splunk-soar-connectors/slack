@@ -126,18 +126,16 @@ For example:
                           """
 
 
-def _load_app_state(asset_id, app_connector=None):
+def _load_app_state(asset_id):
     """ This function is used to load the current state file.
 
     :param asset_id: asset_id
-    :param app_connector: Object of app_connector class
     :return: state: Current state file as a dictionary
     """
 
     asset_id = str(asset_id)
     if not asset_id or not asset_id.isalnum():
-        if app_connector:
-            app_connector.debug_print('In _load_app_state: Invalid asset_id')
+        print('In _load_app_state: Invalid asset_id')
         return {}
 
     app_dir = os.path.dirname(os.path.abspath(__file__))
@@ -146,24 +144,20 @@ def _load_app_state(asset_id, app_connector=None):
 
     real_state_file_path = os.path.realpath(state_file)
 
-    if not os.path.dirname(real_state_file_path) == app_dir:
-        if app_connector:
-            app_connector.debug_print('In _load_app_state: Invalid asset_id')
+    if os.path.dirname(real_state_file_path) != app_dir:
+        print('In _load_app_state: Invalid asset_id')
         return {}
 
     state = {}
     try:
-
         with open(real_state_file_path, 'r') as state_file_obj:
             state_file_data = state_file_obj.read()
             state = json.loads(state_file_data)
 
     except Exception as e:
-        if app_connector:
-            app_connector.debug_print('In _load_app_state: Exception: {0}'.format(str(e)))
+        print('In _load_app_state: Exception: {0}'.format(str(e)))
 
-    if app_connector:
-        app_connector.debug_print('Loaded state: ', state)
+    print('Loaded state: ', state)
 
     return state
 
@@ -292,7 +286,7 @@ class SlackBot(object):
         try:
             r = requests.get(self.base_url + "rest/app?page_size=0&pretty", headers=self.headers, auth=self.auth,
                              verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
-        except:
+        except Exception:
             return
 
         if (r.status_code != 200):
@@ -319,7 +313,7 @@ class SlackBot(object):
         try:
             r = requests.get(self.base_url + "rest/build_action", headers=self.headers, auth=self.auth,
                              verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
-        except:
+        except Exception:
             return
 
         if (r.status_code != 200):
@@ -361,7 +355,7 @@ class SlackBot(object):
         try:
             r = requests.get(self.base_url + "rest/app_action?page_size=0", headers=self.headers, auth=self.auth,
                              verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
-        except:
+        except Exception:
             return
 
         if (r.status_code != 200):
@@ -393,7 +387,7 @@ class SlackBot(object):
         try:
             r = requests.get(self.base_url + "rest/container?page_size=0", headers=self.headers, auth=self.auth,
                              verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
-        except:
+        except Exception:
             return None
 
         if (r.status_code != 200):
@@ -510,7 +504,7 @@ class SlackBot(object):
 
                 resp = r.json()
 
-            except:
+            except Exception:
                 continue
 
             if resp.get('status', '') in ['success', 'failed']:
@@ -530,7 +524,7 @@ class SlackBot(object):
 
                 resp = r.json()
 
-            except:
+            except Exception:
                 continue
 
             status = resp.get('status', 'unknown')
@@ -594,7 +588,7 @@ class SlackBot(object):
 
                 resp = r.json()
 
-            except:
+            except Exception:
                 continue
 
             status = resp.get('status', 'unknown')
@@ -686,7 +680,7 @@ class SlackBot(object):
         try:
             parsed_args = self.action_parser.parse_args(command)
 
-        except:
+        except Exception:
             return False, SLACK_ACTION_HELP_MESSAGE
 
         self._generate_dicts()
@@ -751,7 +745,7 @@ class SlackBot(object):
 
                     total_message += "\n{}".format(message)
 
-                except:
+                except Exception:
                     continue
 
             if (not container):
@@ -890,7 +884,7 @@ class SlackBot(object):
         try:
             args = self.playbook_parser.parse_args(command)
 
-        except:
+        except Exception:
             return False, SLACK_PLAYBOOK_HELP_MESSAGE
 
         request_body = {}
@@ -901,7 +895,7 @@ class SlackBot(object):
         try:
             playbook = int(args.playbook)
 
-        except:
+        except Exception:
             if not args.repo:
                 return False, "repo argument is required when supplying playbook name instead of playbook ID"
 
@@ -916,7 +910,7 @@ class SlackBot(object):
         try:
             parsed_args = self.container_parser.parse_args(command)
 
-        except:
+        except Exception:
             return False, SLACK_CONTAINER_HELP_MESSAGE
 
         container = parsed_args.container
@@ -942,10 +936,10 @@ class SlackBot(object):
 
                 container_info = r.json()
 
-            except:
+            except Exception:
                 try:
                     return False, "Could not parse container ID: {}".format(container)
-                except:
+                except Exception:
                     return False, "Could not parse given container ID"
 
             message = ""
@@ -967,7 +961,7 @@ class SlackBot(object):
 
                 try:
                     message += "{0}: {1}\n".format(key, value)
-                except:
+                except Exception:
                     message += "{0}: {1}\n".format(key, 'Value could not be parsed')
 
             return True, message
@@ -1024,7 +1018,7 @@ class SlackBot(object):
                     message = message[:-1]
 
                     message += '\n\n'
-                except:
+                except Exception:
                     message += "COULD NOT PARSE CONTAINER INFO\n\n"
 
             if bad_tags:
@@ -1036,7 +1030,7 @@ class SlackBot(object):
 
         try:
             parsed_args = self.list_parser.parse_args(command)
-        except:
+        except Exception:
             return False, SLACK_LIST_HELP_MESSAGE
 
         self._generate_dicts()
@@ -1063,7 +1057,7 @@ class SlackBot(object):
             for container in r.json()['data']:
                 try:
                     msg += 'ID: {}'.format(container['id']).ljust(10) + 'Name: {}\n'.format(container['name'])
-                except:
+                except Exception:
                     msg += 'Container info could not be parsed'
 
             msg += '\nFor more information on a container, try "get_container <container_id>"'
@@ -1090,33 +1084,32 @@ class SlackBot(object):
             if body:
                 out_text = body.get("event", {}).get("text")
 
-                if out_text:
-                    if out_text.startswith(self.cmd_start):
-                        if out_text.strip() == self.cmd_start:
-                            self._post_message(
-                                SLACK_BOT_HELP_MESSAGE,
-                                body.get("payload", {})
-                                .get("event", {})
-                                .get("channel", "#general"),
-                            )
-                        channel = body.get("event", {}).get("channel", "#general")
-                        command = out_text[len(self.cmd_start):].strip()
+                if out_text and out_text.startswith(self.cmd_start):
+                    if out_text.strip() == self.cmd_start:
+                        self._post_message(
+                            SLACK_BOT_HELP_MESSAGE,
+                            body.get("payload", {})
+                            .get("event", {})
+                            .get("channel", "#general"),
+                        )
+                    channel = body.get("event", {}).get("channel", "#general")
+                    command = out_text[len(self.cmd_start):].strip()
 
-                if command and channel:
-                    command = self._sanitize(command)
-                    sys.stdout.write(command + "\n")
-                    try:
-                        self._handle_command(command, channel)
-                    except Exception as e:
+                    if command and channel:
+                        command = self._sanitize(command)
                         try:
-                            self._post_message(
-                                "Could not run command:\n\n{0}\n\n{1}".format(command, e),
-                                channel,
-                            )
+                            self._handle_command(command, channel)
                         except Exception as e:
-                            self._post_message(
-                                "Could not run command:\n\n{0}".format(e), channel
-                            )
+                            try:
+                                self._post_message(
+                                    "Could not run command:\n\n{0}\n\n{1}".format(command, e),
+                                    channel,
+                                )
+                            except Exception as e:
+                                self._post_message(
+                                    "Could not run command:\n\n{0}".format(e), channel
+                                )
+
         handler = SocketModeHandler(app, self.socket_token)
         handler.start()
 
@@ -1124,7 +1117,6 @@ class SlackBot(object):
 
         try:
             args = shlex.split(command)
-
         except Exception as e:
             self._post_message("Could not parse arguments:\n\n{}".format(e), channel)
             return
@@ -1172,7 +1164,7 @@ if __name__ == '__main__':  # noqa: C901
         state = _load_app_state(asset_id)
 
         bot_id = state.get('bot_id')
-        ph_base_url = state.get('ph_base_url'),
+        ph_base_url = state.get('ph_base_url')
         bot_token = state.get(SLACK_JSON_BOT_TOKEN)
         socket_token = state.get(SLACK_JSON_SOCKET_TOKEN)
         ph_auth_token = state.get(SLACK_JSON_PH_AUTH_TOKEN)
@@ -1181,25 +1173,28 @@ if __name__ == '__main__':  # noqa: C901
             if bot_token:
                 bot_token = decrypt_state(asset_id, bot_token, "bot")
         except Exception:
-            print("{}".format(SLACK_DECRYPTION_ERR))
+            print(SLACK_DECRYPTION_ERR)
+            sys.exit(1)
 
         try:
             if socket_token:
                 socket_token = decrypt_state(asset_id, socket_token, "socket")
         except Exception:
-            print("{}".format(SLACK_DECRYPTION_ERR))
+            print(SLACK_DECRYPTION_ERR)
+            sys.exit(1)
 
         try:
             if ph_auth_token:
                 ph_auth_token = decrypt_state(asset_id, ph_auth_token, "ph_auth")
         except Exception:
-            print("{}".format(SLACK_DECRYPTION_ERR))
+            print(SLACK_DECRYPTION_ERR)
+            sys.exit(1)
 
         sb = SlackBot(
             bot_token=bot_token,
             socket_token=socket_token,
             bot_id=bot_id,
-            base_url=ph_base_url[0],
+            base_url=ph_base_url,
             auth_token=ph_auth_token
         )
         sb._from_on_poll()
@@ -1217,7 +1212,7 @@ if __name__ == '__main__':  # noqa: C901
             print("The BOT_TOKEN entry in the bot_config file appears to not be a string")
             fail = True
 
-    except:
+    except Exception:
         print("Could not find a BOT_TOKEN entry in bot_config file")
         fail = True
 
@@ -1229,7 +1224,7 @@ if __name__ == '__main__':  # noqa: C901
             )
             fail = True
 
-    except:
+    except Exception:
         print("Could not find a SOCKET_TOKEN entry in bot_config file")
         fail = True
 
@@ -1241,7 +1236,7 @@ if __name__ == '__main__':  # noqa: C901
             print("The PHANTOM_URL entry in the bot_config file appears to not be a string")
             fail = True
 
-    except:
+    except Exception:
         print("Could not find a PHANTOM_URL entry in bot_config file")
         fail = True
 
@@ -1253,7 +1248,7 @@ if __name__ == '__main__':  # noqa: C901
             print("The VERIFY_CERT entry in the bot_config file appears to not be a boolean")
             fail = True
 
-    except:
+    except Exception:
         print("Could not find a VERIFY_CERT entry in bot_config file")
         fail = True
 
@@ -1267,28 +1262,25 @@ if __name__ == '__main__':  # noqa: C901
             print("The PHANTOM_TOKEN entry in the bot_config file appears to not be a string")
             fail = True
 
-    except:
+    except Exception:
         pt = ''
         has_token = False
 
     try:
-
         pn = bot_config.PHANTOM_USERNAME
         pp = bot_config.PHANTOM_PASSWORD
 
         auth = (pn, pp)
-
         has_basic = True
 
         if (not isinstance(pn, str)):
             print("The PHANTOM_USERNAME entry in the bot_config file appears to not be a string")
             fail = True
-
         if (not isinstance(pp, str)):
             print("The PHANTOM_PASSWORD entry in the bot_config file appears to not be a string")
             fail = True
 
-    except:
+    except Exception:
         auth = ()
         has_basic = False
 
@@ -1298,12 +1290,9 @@ if __name__ == '__main__':  # noqa: C901
         fail = True
 
     try:
-
         resp = requests.post('https://slack.com/api/auth.test', data={'token': bot_config.BOT_TOKEN}, timeout=SLACK_DEFAULT_TIMEOUT)
-
         resp_json = resp.json()
-
-    except:
+    except Exception:
         print("Could not connect to Slack REST endpoint for auth check")
         sys.exit(1)
 
