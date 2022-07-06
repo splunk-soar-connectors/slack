@@ -175,7 +175,7 @@ def handle_request(request, path):
         except Exception as e:
             return HttpResponse(SLACK_ERR_UNABLE_TO_READ_STATE_FILE.format(error=e), content_type="text/plain", status=400)
 
-        my_token = state.get(SLACK_JSON_VERIFICATION_TOKEN)
+        my_token = state.get('token')
         if my_token:
             try:
                 my_token = encryption_helper.decrypt(my_token, asset_id)
@@ -263,7 +263,7 @@ class SlackConnector(phantom.BaseConnector):
         self._ph_auth_token = config.get(SLACK_JSON_PH_AUTH_TOKEN)
         self._base_url = SLACK_BASE_URL
 
-        self._verification_token = self._state.get(SLACK_JSON_VERIFICATION_TOKEN)
+        self._verification_token = self._state.get('token')
         self._interval = self._validate_integers(self, config.get("response_poll_interval", 30), SLACK_RESP_POLL_INTERVAL_KEY)
         if self._interval is None:
             return self.get_status()
@@ -299,7 +299,7 @@ class SlackConnector(phantom.BaseConnector):
         # Encrypting tokens
         try:
             if self._verification_token:
-                self._state[SLACK_JSON_VERIFICATION_TOKEN] = self.encrypt_state(self._verification_token, "verification")
+                self._state['token'] = self.encrypt_state(self._verification_token, "verification")
 
             if self._bot_token:
                 self._state[SLACK_JSON_BOT_TOKEN] = self.encrypt_state(self._bot_token, "bot")
@@ -1086,14 +1086,14 @@ class SlackConnector(phantom.BaseConnector):
         local_data_state_dir = self.get_state_dir().rstrip('/')
         self._state['local_data_path'] = local_data_state_dir
         # Need to make sure the configured verification token is in the app state so the request_handler can use it to verify POST requests
-        if 'verification_token' not in self._state:
-            self._state['verification_token'] = config[SLACK_JSON_VERIFICATION_TOKEN]
-        elif self._state['verification_token'] != config[SLACK_JSON_VERIFICATION_TOKEN]:
-            self._state['verification_token'] = config[SLACK_JSON_VERIFICATION_TOKEN]
+        if 'token' not in self._state:
+            self._verification_token = config[SLACK_JSON_VERIFICATION_TOKEN]
+        elif self._state['token'] != config[SLACK_JSON_VERIFICATION_TOKEN]:
+            self._verification_token = config[SLACK_JSON_VERIFICATION_TOKEN]
 
         try:
             if self._verification_token:
-                self._state[SLACK_JSON_VERIFICATION_TOKEN] = self.encrypt_state(self._verification_token, "verification")
+                self._state['token'] = self.encrypt_state(self._verification_token, "verification")
         except Exception as e:
             self.debug_print("{}: {}".format(SLACK_ENCRYPTION_ERR, self._get_error_message_from_exception(e)))
             return self.set_status(phantom.APP_ERROR, SLACK_ENCRYPTION_ERR)
