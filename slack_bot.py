@@ -35,7 +35,6 @@ if (os.path.exists('{}/dependencies'.format(app_dir))):  # noqa
     os.sys.path.insert(0, '{}/dependencies/websocket-client'.format(app_dir))  # noqa
     os.sys.path.insert(0, '{}/dependencies'.format(app_dir))  # noqa
 
-
 SLACK_JSON_MESSAGE_LIMIT = 4000
 SLACK_JSON_API_URL = 'https://slack.com/api/'
 
@@ -257,7 +256,7 @@ class SlackBot(object):
 
     def _init_parsers(self):
 
-        self.action_parser = ArgumentParser(add_help=False)
+        self.action_parser = ArgumentParser(add_help=False, exit_on_error=False)
         self.action_parser.add_argument("action")
         self.action_parser.add_argument("--help", dest="aid", action="store_true")
         self.action_parser.add_argument("--container")
@@ -266,17 +265,17 @@ class SlackBot(object):
         self.action_parser.add_argument("--asset")
         self.action_parser.add_argument("--parameters", nargs='+')
 
-        self.playbook_parser = ArgumentParser()
+        self.playbook_parser = ArgumentParser(exit_on_error=False)
         self.playbook_parser.add_argument("--repo", dest="repo",
                                           help="Name of the repo the playbook is in (required if playbook argument is a name, and not an ID)")
         self.playbook_parser.add_argument("playbook", help="Name or ID of the playbook to run")
         self.playbook_parser.add_argument("container", help="ID of container to run playbook on")
 
-        self.container_parser = ArgumentParser()
+        self.container_parser = ArgumentParser(exit_on_error=False)
         self.container_parser.add_argument("--container")
         self.container_parser.add_argument("--tags", nargs='+')
 
-        self.list_parser = ArgumentParser(add_help=False)
+        self.list_parser = ArgumentParser(exit_on_error=False, add_help=False)
         self.list_parser.add_argument("--help", dest="aid", action="store_true")
         self.list_parser.add_argument("listee", choices=['actions', 'containers'])
 
@@ -679,8 +678,7 @@ class SlackBot(object):
 
         try:
             parsed_args = self.action_parser.parse_args(command)
-
-        except Exception:
+        except:  # passing type as Exception weren't able to to catch SystemError exception. Even with multiple exceptions it didn't work
             return False, SLACK_ACTION_HELP_MESSAGE
 
         self._generate_dicts()
@@ -884,7 +882,7 @@ class SlackBot(object):
         try:
             args = self.playbook_parser.parse_args(command)
 
-        except Exception:
+        except:
             return False, SLACK_PLAYBOOK_HELP_MESSAGE
 
         request_body = {}
@@ -910,7 +908,7 @@ class SlackBot(object):
         try:
             parsed_args = self.container_parser.parse_args(command)
 
-        except Exception:
+        except:
             return False, SLACK_CONTAINER_HELP_MESSAGE
 
         container = parsed_args.container
@@ -1030,7 +1028,7 @@ class SlackBot(object):
 
         try:
             parsed_args = self.list_parser.parse_args(command)
-        except Exception:
+        except:
             return False, SLACK_LIST_HELP_MESSAGE
 
         self._generate_dicts()
@@ -1062,9 +1060,6 @@ class SlackBot(object):
 
             msg += '\nFor more information on a container, try "get_container <container_id>"'
 
-        else:
-            msg = SLACK_BOT_HELP_MESSAGE
-
         return True, msg
 
     def _from_on_poll(self):
@@ -1088,10 +1083,10 @@ class SlackBot(object):
                     if out_text.strip() == self.cmd_start:
                         self._post_message(
                             SLACK_BOT_HELP_MESSAGE,
-                            body.get("payload", {})
-                            .get("event", {})
+                            body.get("event", {})
                             .get("channel", "#general"),
                         )
+
                     channel = body.get("event", {}).get("channel", "#general")
                     command = out_text[len(self.cmd_start):].strip()
 
@@ -1124,29 +1119,26 @@ class SlackBot(object):
         cmd_type = args[0]
 
         if cmd_type == "act":
-
             status, result = self._parse_action(args[1:])
-
             if (status):
                 msg = self._action_run_request(result, channel)
-
             else:
                 msg = result
 
         elif cmd_type == "run_playbook":
 
             status, result = self._parse_playbook(args[1:])
-
             if (status):
                 msg = self._playbook_request(result, channel)
-
             else:
                 msg = result
 
         elif cmd_type == "get_container":
             status, msg = self._parse_container(args[1:])
+
         elif cmd_type == "list":
             status, msg = self._parse_list(args[1:])
+
         else:
             msg = SLACK_BOT_HELP_MESSAGE
 
