@@ -1072,8 +1072,8 @@ class SlackBot(object):
         @app.event("app_mention")
         def mention_handler(body):
             """
-            mention handler function uses a app_mention event decorator to respons to the events whenever the bot
-            is mentioned in the cat. It recives a json body which contains the data of the event. The command and
+            mention handler function uses a app_mention event decorator to response to the events whenever the bot
+            is mentioned in the cat. It receives a json body which contains the data of the event. The command and
             channel name are parsed from the body and passed to command handler to further process the command.
             """
             if body:
