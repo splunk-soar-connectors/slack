@@ -147,7 +147,7 @@ SLACK_DEFAULT_TIMEOUT = 30
 
 SLACK_STATE_FILE_CORRUPT_ERR = ("Error occurred while loading the state file due to it's unexpected format. Resetting "
                                 "the state file with the default format. Please test the connectivity.")
-SLACK_SOCKET_TOKEN_ERROR = "Invalid Socket Token please update the configuration file and rerun test connectivity"
+SLACK_SOCKET_TOKEN_ERR = "Invalid Socket Token please update the configuration file and rerun test connectivity"
 
 SLACK_STATE_IS_ENCRYPTED = 'is_encrypted'
 

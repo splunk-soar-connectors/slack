@@ -1065,7 +1065,7 @@ class SlackConnector(phantom.BaseConnector):
 
         if not resp.get('ok'):
             self.save_progress("Failed to start Slack Bot")
-            return action_result.set_status(phantom.APP_ERROR, SLACK_SOCKET_TOKEN_ERROR)
+            return action_result.set_status(phantom.APP_ERROR, SLACK_SOCKET_TOKEN_ERR)
 
         self.save_progress("Starting SlackBot")
         proc = subprocess.Popen(['phenv', 'python3', slack_bot_filename, asset_id, app_version])
