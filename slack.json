@@ -7,7 +7,7 @@
     "type": "information",
     "license": "Copyright (c) 2016-2022 Splunk Inc.",
     "main_module": "slack_connector.py",
-    "app_version": "2.3.0",
+    "app_version": "2.4.0",
     "utctime_updated": "2022-02-04T18:14:51.000000Z",
     "product_vendor": "Slack Technologies",
     "product_name": "Slack",
@@ -16,7 +16,7 @@
     "python_version": "3",
     "fips_compliant": true,
     "latest_tested_versions": [
-        "Cloud API, May 30, 2022"
+        "Cloud API, July 05, 2022"
     ],
     "logo": "logo_slack.svg",
     "logo_dark": "logo_slack_dark.svg",
@@ -40,9 +40,9 @@
             "description": "OAuth Access Token",
             "order": 2
         },
-        "ph_0": {
-            "data_type": "ph",
-            "description": "Placeholder",
+        "socket_token": {
+            "data_type": "password",
+            "description": "Socket Token",
             "order": 3
         },
         "ph_auth_token": {
@@ -3927,15 +3927,15 @@
             },
             {
                 "module": "certifi",
-                "input_file": "wheels/py3/certifi-2022.5.18.1-py3-none-any.whl"
+                "input_file": "wheels/py3/certifi-2022.6.15-py3-none-any.whl"
             },
             {
-                "module": "chardet",
-                "input_file": "wheels/shared/chardet-4.0.0-py2.py3-none-any.whl"
+                "module": "charset_normalizer",
+                "input_file": "wheels/py3/charset_normalizer-2.0.12-py3-none-any.whl"
             },
             {
                 "module": "idna",
-                "input_file": "wheels/shared/idna-2.10-py2.py3-none-any.whl"
+                "input_file": "wheels/py3/idna-3.3-py3-none-any.whl"
             },
             {
                 "module": "pytz",
@@ -3943,7 +3943,7 @@
             },
             {
                 "module": "requests",
-                "input_file": "wheels/shared/requests-2.25.1-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/requests-2.27.1-py2.py3-none-any.whl"
             },
             {
                 "module": "sh",
@@ -3956,6 +3956,14 @@
             {
                 "module": "six",
                 "input_file": "wheels/shared/six-1.15.0-py2.py3-none-any.whl"
+            },
+            {
+                "module": "slack_bolt",
+                "input_file": "wheels/shared/slack_bolt-1.14.0-py2.py3-none-any.whl"
+            },
+            {
+                "module": "slack_sdk",
+                "input_file": "wheels/shared/slack_sdk-3.17.2-py2.py3-none-any.whl"
             },
             {
                 "module": "soupsieve",
@@ -3971,7 +3979,7 @@
             },
             {
                 "module": "urllib3",
-                "input_file": "wheels/shared/urllib3-1.26.9-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/urllib3-1.26.10-py2.py3-none-any.whl"
             },
             {
                 "module": "websocket_client",
@@ -3995,15 +4003,15 @@
             },
             {
                 "module": "certifi",
-                "input_file": "wheels/py3/certifi-2022.5.18.1-py3-none-any.whl"
+                "input_file": "wheels/py3/certifi-2022.6.15-py3-none-any.whl"
             },
             {
-                "module": "chardet",
-                "input_file": "wheels/shared/chardet-4.0.0-py2.py3-none-any.whl"
+                "module": "charset_normalizer",
+                "input_file": "wheels/py3/charset_normalizer-2.0.12-py3-none-any.whl"
             },
             {
                 "module": "idna",
-                "input_file": "wheels/shared/idna-2.10-py2.py3-none-any.whl"
+                "input_file": "wheels/py3/idna-3.3-py3-none-any.whl"
             },
             {
                 "module": "pytz",
@@ -4011,7 +4019,7 @@
             },
             {
                 "module": "requests",
-                "input_file": "wheels/shared/requests-2.25.1-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/requests-2.27.1-py2.py3-none-any.whl"
             },
             {
                 "module": "sh",
@@ -4026,6 +4034,14 @@
                 "input_file": "wheels/shared/six-1.15.0-py2.py3-none-any.whl"
             },
             {
+                "module": "slack_bolt",
+                "input_file": "wheels/shared/slack_bolt-1.14.0-py2.py3-none-any.whl"
+            },
+            {
+                "module": "slack_sdk",
+                "input_file": "wheels/shared/slack_sdk-3.17.2-py2.py3-none-any.whl"
+            },
+            {
                 "module": "soupsieve",
                 "input_file": "wheels/py3/soupsieve-2.3.2.post1-py3-none-any.whl"
             },
@@ -4035,7 +4051,7 @@
             },
             {
                 "module": "urllib3",
-                "input_file": "wheels/shared/urllib3-1.26.9-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/urllib3-1.26.10-py2.py3-none-any.whl"
             },
             {
                 "module": "websocket_client",
