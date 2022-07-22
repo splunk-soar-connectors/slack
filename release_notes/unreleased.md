@@ -1,3 +1,1 @@
 **Unreleased**
-* Fixed the Slack Bot to execute commands on Splunk SOAR from Slack App [PAPP-25444]
-
