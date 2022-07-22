@@ -34,7 +34,9 @@ SLACK_MESSAGE_LIMIT = 4000
 SLACK_DEFAULT_LIMIT = 100
 
 SLACK_JSON_BOT_TOKEN = "bot_token"
+SLACK_JSON_PH_AUTH_TOKEN = 'ph_auth_token'
 SLACK_JSON_VERIFICATION_TOKEN = "verification_token"
+SLACK_JSON_SOCKET_TOKEN = "socket_token"
 
 SLACK_PHANTOM_ASSET_INFO_URL = "{url}rest/asset/{asset_id}"
 SLACK_PHANTOM_SYS_INFO_URL = "{url}rest/system_info"
@@ -64,8 +66,6 @@ SLACK_ERR_FROM_SERVER = "Got unknown error from the Slack server"
 SLACK_ERR_NOT_IN_VAULT = "No item in vault has the supplied ID"
 SLACK_ERR_CODE_UNAVAILABLE = "Error code unavailable"
 SLACK_ERR_MESSAGE_UNKNOWN = "Unknown error occurred. Please check the asset configuration and|or action parameters"
-SLACK_UNICODE_DAMMIT_TYPE_ERR_MESSAGE = ("Error occurred while connecting to the Slack server. "
-"Please check the asset configuration and|or the action parameters")
 SLACK_ERR_INVALID_FILE_PATH = "The file path is invalid"
 SLACK_ERR_INVALID_INT = "Please provide a valid integer value in the {key} parameter"
 SLACK_ERR_NEGATIVE_AND_ZERO_INT = "Please provide a valid non-zero positive integer value in the {key} parameter"
@@ -96,7 +96,7 @@ SLACK_ERR_REST_CALL_FAILED = "REST call failed"
 SLACK_ERR_TEST_CONN_FAILED = "Test Connectivity Failed"
 SLACK_SUCC_TEST_CONN_PASSED = "Test Connectivity Passed"
 SLACK_ERR_USER_TOKEN_NOT_PROVIDED = ("'OAuth Access Token' is required for this action. "
-"Navigate to the asset's configuration and add a token now and try again.")
+                                     "Navigate to the asset's configuration and add a token now and try again.")
 SLACK_ERR_CREATING_CHANNEL = "Error creating channel"
 SLACK_SUCC_CHANNEL_CREATED = "Channel created successfully"
 SLACK_ERR_DATA_NOT_FOUND_IN_OUTPUT = "{key} data not found in json output"
@@ -117,7 +117,8 @@ SLACK_SUCC_REACTION_ADDED = "Reaction added successfully"
 SLACK_ERR_FILE_OR_CONTENT_NOT_PROVIDED = "Please provide either a 'file' or 'content' to upload"
 SLACK_SUCC_FILE_UPLOAD = "File uploaded successfully"
 SLACK_SUCC_SLACKBOT_STOPPED = "SlackBot has been stopped."
-SLACK_SUCC_SLACKBOT_NOT_RUNNING = "SlackBot isn't running, not going to stop it."
+SLACK_ERR_SLACKBOT_NOT_RUNNING = "SlackBot isn't running, not going to stop it."
+SLACK_ERR_COUDNT_STOP_SLACKBOT = "Something went wrong, wasn't able to stop the BOT. Please rerun the stop bot action"
 SLACK_FAILED_TO_DISABLE_INGESTION = "{message} Failed to disable ingestion, please check that ingest settings are correct."
 SLACK_INGESTION_NOT_ENABLED = "{message} Ingestion isn't enabled, not going to disable it."
 SLACK_INGESTION_DISABLED = "{message} Ingestion has been disabled."
@@ -134,8 +135,8 @@ SLACK_ERR_NO_RESPONSE_FROM_SERVER = "Got no response from the Slack server"
 SLACK_ERR_INVALID_CHANNEL_TYPE = "Please provide a valid value in the 'channel_type' action parameter"
 SLACK_ERR_LENGTH_LIMIT_EXCEEDED = ("Based on your asset_id length ({asset_length}), "
                                    "valid length for the 'confirmation' parameter is {valid_length}")
-SLACK_ERR_BLOCKS_OR_MSG_REQD = "You must provide at least one of 'blocks' or 'message'"
 
+SLACK_ERR_BLOCKS_OR_MSG_REQD = "You must provide at least one of 'blocks' or 'message'"
 
 SLACK_RESP_POLL_INTERVAL_KEY = "'How often to poll for a response (in seconds)' configuration"
 SLACK_TIMEOUT_KEY = "'Question timeout (in minutes)' configuration"
@@ -146,3 +147,12 @@ SLACK_DEFAULT_TIMEOUT = 30
 
 SLACK_STATE_FILE_CORRUPT_ERR = ("Error occurred while loading the state file due to it's unexpected format. Resetting "
                                 "the state file with the default format. Please test the connectivity.")
+SLACK_SOCKET_TOKEN_ERR = "Invalid Socket Token please update the configuration file and rerun test connectivity"
+
+SLACK_STATE_IS_ENCRYPTED = 'is_encrypted'
+
+# For encryption and decryption
+SLACK_ENCRYPT_TOKEN = "Encrypting the {} token"
+SLACK_DECRYPT_TOKEN = "Decrypting the {} token"
+SLACK_ENCRYPTION_ERR = "Error occurred while encrypting the state file"
+SLACK_DECRYPTION_ERR = "Error occurred while decrypting the state file"

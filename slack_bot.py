@@ -15,21 +15,25 @@
 import os
 import shlex
 import sys
-import time
 from argparse import ArgumentParser
 
+import encryption_helper
 import requests
 import simplejson as json
 import six
-from websocket import create_connection
+import urllib3
+from slack_bolt import App as slack_app
+from slack_bolt.adapter.socket_mode import SocketModeHandler
 
+from slack_consts import *
 from slack_consts import SLACK_DEFAULT_TIMEOUT
+
+urllib3.disable_warnings()
 
 app_dir = os.path.dirname(os.path.abspath(__file__))  # noqa
 if (os.path.exists('{}/dependencies'.format(app_dir))):  # noqa
     os.sys.path.insert(0, '{}/dependencies/websocket-client'.format(app_dir))  # noqa
     os.sys.path.insert(0, '{}/dependencies'.format(app_dir))  # noqa
-
 
 SLACK_JSON_MESSAGE_LIMIT = 4000
 SLACK_JSON_API_URL = 'https://slack.com/api/'
@@ -121,6 +125,51 @@ For example:
                           """
 
 
+def _load_app_state(asset_id):
+    """ This function is used to load the current state file.
+
+    :param asset_id: asset_id
+    :return: state: Current state file as a dictionary
+    """
+
+    asset_id = str(asset_id)
+    if not asset_id or not asset_id.isalnum():
+        print('In _load_app_state: Invalid asset_id')
+        return {}
+
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+
+    state_file = '{0}/{1}_state.json'.format(app_dir, asset_id)
+
+    real_state_file_path = os.path.realpath(state_file)
+
+    if os.path.dirname(real_state_file_path) != app_dir:
+        print('In _load_app_state: Invalid asset_id')
+        return {}
+
+    state = {}
+    try:
+        with open(real_state_file_path, 'r') as state_file_obj:
+            state_file_data = state_file_obj.read()
+            state = json.loads(state_file_data)
+
+    except Exception as e:
+        print('In _load_app_state: Exception: {0}'.format(str(e)))
+
+    print('Loaded state: ', state)
+
+    return state
+
+
+def decrypt_state(asset_id, decrypt_var, token_name):
+    """ Handle decryption of token.
+    :param decrypt_var: Variable needs to be decrypted
+    :return: decrypted variable
+    """
+    print(SLACK_DECRYPT_TOKEN.format(token_name))    # nosemgrep
+    return encryption_helper.decrypt(decrypt_var, asset_id)
+
+
 class Action():
 
     def __init__(self, name, action_id, app):
@@ -169,20 +218,19 @@ class App():
 
 class SlackBot(object):
 
-    def __init__(self, bot_token, bot_id, base_url="https://127.0.0.1/", verify=False, auth_token='', auth_basic=()):
+    def __init__(self, bot_token, socket_token, bot_id, base_url="https://127.0.0.1/", verify=False, auth_token='', auth_basic=()):
         """ This should be changed to some kind of load config thing
         """
         self.bot_token = bot_token
+        self.socket_token = socket_token
         self.headers = {} if not auth_token else {'ph-auth-token': auth_token}
         self.cmd_start = "<@{}>".format(bot_id)
         self.auth = auth_basic
         self.verify = verify
-
-        base_url += '/' if not base_url.endswith('/') else ''
+        base_url += "/" if not base_url.endswith("/") else ""
         self.base_url = base_url
         self.phantom_url = base_url
         self.verification_token = None
-
         self._init_containers()
         self._generate_dicts()
         self._init_parsers()
@@ -208,7 +256,7 @@ class SlackBot(object):
 
     def _init_parsers(self):
 
-        self.action_parser = ArgumentParser(add_help=False)
+        self.action_parser = ArgumentParser(add_help=False, exit_on_error=False)
         self.action_parser.add_argument("action")
         self.action_parser.add_argument("--help", dest="aid", action="store_true")
         self.action_parser.add_argument("--container")
@@ -217,17 +265,17 @@ class SlackBot(object):
         self.action_parser.add_argument("--asset")
         self.action_parser.add_argument("--parameters", nargs='+')
 
-        self.playbook_parser = ArgumentParser()
+        self.playbook_parser = ArgumentParser(exit_on_error=False)
         self.playbook_parser.add_argument("--repo", dest="repo",
-            help="Name of the repo the playbook is in (required if playbook argument is a name, and not an ID)")
+                                          help="Name of the repo the playbook is in (required if playbook argument is a name, and not an ID)")
         self.playbook_parser.add_argument("playbook", help="Name or ID of the playbook to run")
         self.playbook_parser.add_argument("container", help="ID of container to run playbook on")
 
-        self.container_parser = ArgumentParser()
+        self.container_parser = ArgumentParser(exit_on_error=False)
         self.container_parser.add_argument("--container")
         self.container_parser.add_argument("--tags", nargs='+')
 
-        self.list_parser = ArgumentParser(add_help=False)
+        self.list_parser = ArgumentParser(exit_on_error=False, add_help=False)
         self.list_parser.add_argument("--help", dest="aid", action="store_true")
         self.list_parser.add_argument("listee", choices=['actions', 'containers'])
 
@@ -236,8 +284,8 @@ class SlackBot(object):
 
         try:
             r = requests.get(self.base_url + "rest/app?page_size=0&pretty", headers=self.headers, auth=self.auth,
-                verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
-        except:
+                             verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
+        except Exception:
             return
 
         if (r.status_code != 200):
@@ -245,7 +293,7 @@ class SlackBot(object):
 
         for app in r.json().get('data', []):
 
-            app_name = app.get('name', '').encode('utf-8')
+            app_name = app.get('name', '')
             app_id = app.get('id')
 
             if (not (app_id and app_name)):
@@ -263,8 +311,8 @@ class SlackBot(object):
 
         try:
             r = requests.get(self.base_url + "rest/build_action", headers=self.headers, auth=self.auth,
-                verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
-        except:
+                             verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
+        except Exception:
             return
 
         if (r.status_code != 200):
@@ -272,7 +320,7 @@ class SlackBot(object):
 
         for asset in r.json().get('assets', []):
 
-            asset_name = asset.get('name', '').encode('utf-8')
+            asset_name = asset.get('name', '')
             asset_id = asset.get('id')
             asset_apps = asset.get('apps', [])
 
@@ -305,8 +353,8 @@ class SlackBot(object):
 
         try:
             r = requests.get(self.base_url + "rest/app_action?page_size=0", headers=self.headers, auth=self.auth,
-                verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
-        except:
+                             verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
+        except Exception:
             return
 
         if (r.status_code != 200):
@@ -314,7 +362,7 @@ class SlackBot(object):
 
         for action in r.json().get('data', []):
 
-            action_name = action.get('action', '').encode('utf-8')
+            action_name = action.get('action', '')
             action_id = action.get('id')
             action_app = action.get('app')
 
@@ -337,8 +385,8 @@ class SlackBot(object):
 
         try:
             r = requests.get(self.base_url + "rest/container?page_size=0", headers=self.headers, auth=self.auth,
-                verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
-        except:
+                             verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
+        except Exception:
             return None
 
         if (r.status_code != 200):
@@ -369,7 +417,7 @@ class SlackBot(object):
         try:
 
             r = requests.post(self.base_url + "rest/action_run", json=body, headers=self.headers, auth=self.auth,
-                verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
+                              verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
 
             resp = r.json()
 
@@ -402,7 +450,7 @@ class SlackBot(object):
         try:
 
             r = requests.post(self.base_url + "rest/playbook_run", json=body, headers=self.headers, auth=self.auth,
-                verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
+                              verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
 
             resp = r.json()
 
@@ -455,7 +503,7 @@ class SlackBot(object):
 
                 resp = r.json()
 
-            except:
+            except Exception:
                 continue
 
             if resp.get('status', '') in ['success', 'failed']:
@@ -471,11 +519,11 @@ class SlackBot(object):
             try:
 
                 r = requests.get(self.base_url + "rest/app_run/{}".format(app_run_id), headers=self.headers, auth=self.auth,
-                    verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
+                                 verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
 
                 resp = r.json()
 
-            except:
+            except Exception:
                 continue
 
             status = resp.get('status', 'unknown')
@@ -539,7 +587,7 @@ class SlackBot(object):
 
                 resp = r.json()
 
-            except:
+            except Exception:
                 continue
 
             status = resp.get('status', 'unknown')
@@ -571,12 +619,13 @@ class SlackBot(object):
           " And in the domain case, get rid of the URL.
         """
 
-        string = string.encode("utf-8")\
-            .replace('\xe2\x80\x9c', '"')\
-            .replace('\xe2\x80\x9d', '"')\
-            .replace('\xe2\x80\x94', '--')\
-            .replace('\xe2\x80\x98', "'")\
-            .replace('\xe2\x80\x99', "'")
+        string = (
+            string.replace("\xe2\x80\x9c", '"')
+            .replace("\xe2\x80\x9d", '"')
+            .replace("\xe2\x80\x94", "--")
+            .replace("\xe2\x80\x98", "'")
+            .replace("\xe2\x80\x99", "'")
+        )
 
         while string.find('<') > -1 and string.find('>') > -1:
 
@@ -629,8 +678,7 @@ class SlackBot(object):
 
         try:
             parsed_args = self.action_parser.parse_args(command)
-
-        except:
+        except:  # passing type as Exception weren't able to to catch SystemError exception. Even with multiple exceptions it didn't work
             return False, SLACK_ACTION_HELP_MESSAGE
 
         self._generate_dicts()
@@ -695,12 +743,12 @@ class SlackBot(object):
 
                     total_message += "\n{}".format(message)
 
-                except:
+                except Exception:
                     continue
 
             if (not container):
                 total_message += ('\nThis help message was printed because no container ID was provided.'
-                    '\nPlease specify a container if you would like to run this action.')
+                                  '\nPlease specify a container if you would like to run this action.')
 
             return False, total_message
 
@@ -845,8 +893,7 @@ class SlackBot(object):
         try:
             playbook = int(args.playbook)
 
-        except:
-
+        except Exception:
             if not args.repo:
                 return False, "repo argument is required when supplying playbook name instead of playbook ID"
 
@@ -881,16 +928,16 @@ class SlackBot(object):
 
                 try:
                     r = requests.get(self.base_url + "rest/container/{}".format(container), headers=self.headers,
-                        auth=self.auth, verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
+                                     auth=self.auth, verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
                 except Exception as e:
                     return False, "Could not retrieve container data. Could not connect to REST endpoint: {}".format(e)
 
                 container_info = r.json()
 
-            except:
+            except Exception:
                 try:
                     return False, "Could not parse container ID: {}".format(container)
-                except:
+                except Exception:
                     return False, "Could not parse given container ID"
 
             message = ""
@@ -912,7 +959,7 @@ class SlackBot(object):
 
                 try:
                     message += "{0}: {1}\n".format(key, value)
-                except:
+                except Exception:
                     message += "{0}: {1}\n".format(key, 'Value could not be parsed')
 
             return True, message
@@ -949,9 +996,9 @@ class SlackBot(object):
                 try:
 
                     r = requests.get(self.base_url + "rest/container/{}".format(container), headers=self.headers,
-                        auth=self.auth, verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
+                                     auth=self.auth, verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
 
-                    resp_text = r.text.encode('utf-8')
+                    resp_text = r.text
                     info = json.loads(resp_text)
 
                 except Exception as e:
@@ -969,7 +1016,7 @@ class SlackBot(object):
                     message = message[:-1]
 
                     message += '\n\n'
-                except:
+                except Exception:
                     message += "COULD NOT PARSE CONTAINER INFO\n\n"
 
             if bad_tags:
@@ -981,40 +1028,34 @@ class SlackBot(object):
 
         try:
             parsed_args = self.list_parser.parse_args(command)
-
         except:
             return False, SLACK_LIST_HELP_MESSAGE
 
         self._generate_dicts()
 
         if parsed_args.listee == 'actions':
-
             msg = ''
-
             sorted_actions = list(self.action_dict.keys())
             sorted_actions.sort()
 
             for action in sorted_actions:
-
                 msg += '{}\n'.format(action)
 
             msg += '\nFor more info on an action, try "act <action_name>"'
 
         elif parsed_args.listee == 'containers':
-
             msg = ''
 
             try:
                 r = requests.get(self.base_url + "rest/container?page_size=0", headers=self.headers, auth=self.auth,
-                    verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
+                                 verify=self.verify, timeout=SLACK_DEFAULT_TIMEOUT)
             except Exception as e:
                 return False, "Could not retrieve container data. Could not connect to REST endpoint: {}".format(e)
 
             for container in r.json()['data']:
-
                 try:
                     msg += 'ID: {}'.format(container['id']).ljust(10) + 'Name: {}\n'.format(container['name'])
-                except:
+                except Exception:
                     msg += 'Container info could not be parsed'
 
             msg += '\nFor more information on a container, try "get_container <container_id>"'
@@ -1022,134 +1063,132 @@ class SlackBot(object):
         return True, msg
 
     def _from_on_poll(self):
+        """
+        On poll method helps to establish the web socket connection  with slack bot app on you slack
+        using the slack-bolt sdk.
+        """
+        app = slack_app(token=self.bot_token)
 
-        url = SLACK_JSON_API_URL + 'rtm.start'
+        @app.event("app_mention")
+        def mention_handler(body):
+            """
+            mention handler function uses a app_mention event decorator to response to the events whenever the bot
+            is mentioned in the cat. It receives a json body which contains the data of the event. The command and
+            channel name are parsed from the body and passed to command handler to further process the command.
+            """
+            if body:
+                out_text = body.get("event", {}).get("text")
 
-        try:
+                if out_text and out_text.startswith(self.cmd_start):
+                    if out_text.strip() == self.cmd_start:
+                        self._post_message(
+                            SLACK_BOT_HELP_MESSAGE,
+                            body.get("event", {})
+                            .get("channel", "#general"),
+                        )
 
-            resp = requests.post(url, data={'token': self.bot_token}, timeout=SLACK_DEFAULT_TIMEOUT)
+                    channel = body.get("event", {}).get("channel", "#general")
+                    command = out_text[len(self.cmd_start):].strip()
 
-            resp_json = resp.json()
+                    if command and channel:
+                        command = self._sanitize(command)
+                        try:
+                            self._handle_command(command, channel)
+                        except Exception as e:
+                            try:
+                                self._post_message(
+                                    "Could not run command:\n\n{0}\n\n{1}".format(command, e),
+                                    channel,
+                                )
+                            except Exception as e:
+                                self._post_message(
+                                    "Could not run command:\n\n{0}".format(e), channel
+                                )
 
-        except Exception as e:
-            return False, "There was an issue connecting to Slack: {}".format(e)
-
-        socket_url = resp_json.get('url')
-
-        if (not (resp_json.get('ok') and socket_url)):
-            return False, "Could not get websocket URL from Slack"
-
-        web_socket = create_connection(socket_url)
-
-        if (not web_socket):
-            return False, "Could not connect to Slack"
-
-        while True:
-
-            command, channel = self._parse_slack_output(web_socket.recv())
-
-            if command and channel:
-
-                command = self._sanitize(command)
-
-                try:
-                    self._handle_command(command, channel)
-                except Exception as e:
-                    try:
-                        self._post_message('Could not run command:\n\n{0}\n\n{1}'.format(command, e), channel)
-                    except Exception as e:
-                        self._post_message('Could not run command:\n\n{0}'.format(e), channel)
-
-            self._check_action_queue()
-            self._check_app_run_queue()
-            self._check_playbook_queue()
-
-            time.sleep(1)
-
-    def _parse_slack_output(self, slack_output):
-
-        out_dict = {}
-
-        if slack_output and len(slack_output) > 0:
-
-            print(slack_output)
-
-            try:
-                out_dict = json.loads(slack_output)
-            except ValueError:
-                return None, None
-
-            out_text = out_dict.get('text')
-
-            if out_text:
-
-                if out_text.startswith(self.cmd_start):
-
-                    if (out_text.strip() == self.cmd_start):
-                        self._post_message(SLACK_BOT_HELP_MESSAGE, out_dict.get('channel', '#general'))
-
-                    return out_text[len(self.cmd_start):].strip(), out_dict.get('channel', '#general')
-
-        return None, None
+        handler = SocketModeHandler(app, self.socket_token)
+        handler.start()
 
     def _handle_command(self, command, channel):
 
         try:
             args = shlex.split(command)
-
         except Exception as e:
             self._post_message("Could not parse arguments:\n\n{}".format(e), channel)
             return
 
-        args = [x.decode('utf-8') for x in args]
-
         cmd_type = args[0]
 
         if cmd_type == "act":
-
             status, result = self._parse_action(args[1:])
-
             if (status):
                 msg = self._action_run_request(result, channel)
-
             else:
                 msg = result
 
         elif cmd_type == "run_playbook":
 
             status, result = self._parse_playbook(args[1:])
-
             if (status):
                 msg = self._playbook_request(result, channel)
-
             else:
                 msg = result
 
         elif cmd_type == "get_container":
-
             status, msg = self._parse_container(args[1:])
 
         elif cmd_type == "list":
-
             status, msg = self._parse_list(args[1:])
 
         else:
-
             msg = SLACK_BOT_HELP_MESSAGE
 
         self._post_message(msg, channel)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # noqa: C901
 
     if (not os.path.exists('./bot_config.py')):
-
-        if (len(sys.argv) != 6):
+        if (len(sys.argv) != 3):
             print("Please create a bot_config.py file, and place it in this directory")
             sys.exit(1)
 
-        sb = SlackBot(sys.argv[1], sys.argv[2], auth_token=sys.argv[5])
-        sb.phantom_url = sys.argv[3]
+        asset_id = sys.argv[1]
+        state = _load_app_state(asset_id)
+
+        bot_id = state.get('bot_id')
+        ph_base_url = state.get('ph_base_url')
+        bot_token = state.get(SLACK_JSON_BOT_TOKEN)
+        socket_token = state.get(SLACK_JSON_SOCKET_TOKEN)
+        ph_auth_token = state.get(SLACK_JSON_PH_AUTH_TOKEN)
+
+        try:
+            if bot_token:
+                bot_token = decrypt_state(asset_id, bot_token, "bot")
+        except Exception:
+            print(SLACK_DECRYPTION_ERR)
+            sys.exit(1)
+
+        try:
+            if socket_token:
+                socket_token = decrypt_state(asset_id, socket_token, "socket")
+        except Exception:
+            print(SLACK_DECRYPTION_ERR)
+            sys.exit(1)
+
+        try:
+            if ph_auth_token:
+                ph_auth_token = decrypt_state(asset_id, ph_auth_token, "ph_auth")
+        except Exception:
+            print(SLACK_DECRYPTION_ERR)
+            sys.exit(1)
+
+        sb = SlackBot(
+            bot_token=bot_token,
+            socket_token=socket_token,
+            bot_id=bot_id,
+            base_url=ph_base_url,
+            auth_token=ph_auth_token
+        )
         sb._from_on_poll()
         sys.exit(0)
 
@@ -1165,8 +1204,20 @@ if __name__ == '__main__':
             print("The BOT_TOKEN entry in the bot_config file appears to not be a string")
             fail = True
 
-    except:
+    except Exception:
         print("Could not find a BOT_TOKEN entry in bot_config file")
+        fail = True
+
+    try:
+        sat = bot_config.SOCKET_TOKEN
+        if not isinstance(sat, str):
+            print(
+                "The SOCKET_TOKEN entry in the bot_config file appears to not be a string"
+            )
+            fail = True
+
+    except Exception:
+        print("Could not find a SOCKET_TOKEN entry in bot_config file")
         fail = True
 
     try:
@@ -1177,7 +1228,7 @@ if __name__ == '__main__':
             print("The PHANTOM_URL entry in the bot_config file appears to not be a string")
             fail = True
 
-    except:
+    except Exception:
         print("Could not find a PHANTOM_URL entry in bot_config file")
         fail = True
 
@@ -1189,7 +1240,7 @@ if __name__ == '__main__':
             print("The VERIFY_CERT entry in the bot_config file appears to not be a boolean")
             fail = True
 
-    except:
+    except Exception:
         print("Could not find a VERIFY_CERT entry in bot_config file")
         fail = True
 
@@ -1203,43 +1254,37 @@ if __name__ == '__main__':
             print("The PHANTOM_TOKEN entry in the bot_config file appears to not be a string")
             fail = True
 
-    except:
+    except Exception:
         pt = ''
         has_token = False
 
     try:
-
         pn = bot_config.PHANTOM_USERNAME
         pp = bot_config.PHANTOM_PASSWORD
 
         auth = (pn, pp)
-
         has_basic = True
 
         if (not isinstance(pn, str)):
             print("The PHANTOM_USERNAME entry in the bot_config file appears to not be a string")
             fail = True
-
         if (not isinstance(pp, str)):
             print("The PHANTOM_PASSWORD entry in the bot_config file appears to not be a string")
             fail = True
 
-    except:
+    except Exception:
         auth = ()
         has_basic = False
 
     if (not (has_token or has_basic)):
         print("Please specify a form of authorization. "
-            "Either PHANTOM_TOKEN or PHANTOM_USERNAME and PHANTOM_PASSWORD need to be included in the bot_config file.")
+              "Either PHANTOM_TOKEN or PHANTOM_USERNAME and PHANTOM_PASSWORD need to be included in the bot_config file.")
         fail = True
 
     try:
-
         resp = requests.post('https://slack.com/api/auth.test', data={'token': bot_config.BOT_TOKEN}, timeout=SLACK_DEFAULT_TIMEOUT)
-
         resp_json = resp.json()
-
-    except:
+    except Exception:
         print("Could not connect to Slack REST endpoint for auth check")
         sys.exit(1)
 
@@ -1257,6 +1302,12 @@ if __name__ == '__main__':
         print("Config file failed verification, exiting")
         sys.exit(1)
 
-    sb = SlackBot(bot_config.BOT_TOKEN, bot_username, base_url=bot_config.PHANTOM_URL,
-        verify=bot_config.VERIFY_CERT, auth_token=pt, auth_basic=auth)
+    sb = SlackBot(
+        bot_token=bot_config.BOT_TOKEN,
+        socket_token=bot_config.SOCKET_TOKEN,
+        bot_id=bot_username,
+        base_url=bot_config.PHANTOM_URL,
+        verify=bot_config.VERIFY_CERT,
+        auth_token=pt,
+        auth_basic=auth)
     sb._from_on_poll()

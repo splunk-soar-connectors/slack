@@ -2,7 +2,7 @@
 # Slack
 
 Publisher: Splunk  
-Connector Version: 2\.3\.0  
+Connector Version: 2\.4\.0  
 Product Vendor: Slack Technologies  
 Product Name: Slack  
 Product Version Supported (regex): "\.\*"  
@@ -48,18 +48,19 @@ Integrate with Slack to post messages and attachments to channels
 
 ## Authentication
 
-Phantom's Slack App needs a bot token to read messages from and post messages to slack channels. The
+SOAR's Slack App needs a bot token to read messages from and post messages to slack channels. The
 app also needs a verification token to verify POST requests received from Slack.
 
 ### Create a Slack App
 
-Creating a Slack App is required to get the proper bot token for authenticating the Phantom Slack
-App. To do this, go to <https://api.slack.com/apps> in a browser, and select **Create New App** .  
+Creating a Slack App is required to get the proper bot token for authenticating the SOAR Slack App.
+To do this, go to <https://api.slack.com/apps> in a browser, and select **Create New App** .  
   
 [![](img/slack_your_apps.png)](img/slack_your_apps.png)  
   
-In the pop up window, give the app name and associate it with a Slack team/your Workspace, then
-click **Create App** .  
+In the pop up window, there are two options, select **From scratch** .This would open another pop
+up, give the app name and associate it with a Slack team/your Workspace, then click **Create App**
+.  
   
 [![](img/slack_create_an_app.png)](img/slack_create_an_app.png)  
   
@@ -68,11 +69,150 @@ configuration.
   
 [![](img/slack_basic_info.png)](img/slack_basic_info.png)  
   
+On the same page, there is a **App Level tokens** . This dialog box will have a **Generate Token and
+Scope** button, click on it. It would again open an pop up, give token name **socket_token** . Just
+below this would be the **Add Scope** button, add **connection:write & authorization:read** and
+click on **Generate** . This token will be needed during asset configuration.  
+  
+[![](img/slack_socket_token.png)](img/slack_socket_token.png)  
+  
 In the menu bar on the left, select **OAuth & Permissions** . On that page, Scroll down to the
 **Scopes** section and click **Add an OAuth Scope** to add scopes to your **Bot Token** and **User
 Token** .  
   
 [![](img/slack_add_scopes.png)](img/slack_add_scopes.png)  
+  
+The required scopes are given below, please add the particular scope to use that specific action.  
+  
+
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Required Action Scopes</th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th>Action Name</th>
+<th>Bot Token Scopes</th>
+<th>User Token Scopes</th>
+</tr>
+
+<tr class="odd">
+<td>Create Channel</td>
+<td><ul>
+<li>channels:manage</li>
+<li>groups:write</li>
+<li>im:write</li>
+<li>mpim:write</li>
+</ul></td>
+<td><ul>
+<li>channels:write</li>
+<li>groups:write</li>
+<li>im:write</li>
+<li>mpim:write</li>
+</ul></td>
+</tr>
+<tr class="even">
+<td>List Channels</td>
+<td><ul>
+<li>channels:read</li>
+<li>groups:read</li>
+<li>im:read</li>
+<li>mpim:read</li>
+</ul></td>
+<td><ul>
+<li>channels:read</li>
+<li>groups:read</li>
+<li>im:read</li>
+<li>mpim:read</li>
+</ul></td>
+</tr>
+<tr class="odd">
+<td>List Users</td>
+<td><ul>
+<li>users:read</li>
+</ul></td>
+<td><ul>
+<li>users:read</li>
+</ul></td>
+</tr>
+<tr class="even">
+<td>Get User</td>
+<td><ul>
+<li>users:read</li>
+</ul></td>
+<td><ul>
+<li>users:read</li>
+</ul></td>
+</tr>
+<tr class="odd">
+<td>Invite User</td>
+<td><ul>
+<li>channels:manage</li>
+<li>groups:write</li>
+<li>im:write</li>
+<li>mpim:write</li>
+</ul></td>
+<td><ul>
+<li>channels:write</li>
+<li>groups:write</li>
+<li>im:write</li>
+<li>mpim:write</li>
+</ul></td>
+</tr>
+<tr class="even">
+<td>Send Message</td>
+<td><ul>
+<li>chat:write</li>
+</ul></td>
+<td><ul>
+<li>chat:write</li>
+<li>chat:write:user</li>
+<li>chat:write:bot</li>
+</ul></td>
+</tr>
+<tr class="odd">
+<td>Add Reaction</td>
+<td><ul>
+<li>reactions:write</li>
+</ul></td>
+<td><ul>
+<li>reactions:write</li>
+</ul></td>
+</tr>
+<tr class="even">
+<td>Upload File</td>
+<td><ul>
+<li>files:write</li>
+</ul></td>
+<td><ul>
+<li>files:write</li>
+<li>files:write:user</li>
+</ul></td>
+</tr>
+<tr class="odd">
+<td>Ask Question</td>
+<td><ul>
+<li>chat:write</li>
+</ul></td>
+<td><ul>
+<li>chat:write</li>
+<li>chat:write:user</li>
+<li>chat:write:bot</li>
+</ul></td>
+</tr>
+</tbody>
+</table>
+
+  
   
 Next, click on **Install App** in the side bar. On that page, click **Install to Workspace** .  
   
@@ -87,21 +227,21 @@ OAuth Access Token** and **OAuth Access Token** will be required during asset co
   
 [![](img/slack_auth_tokens.png)](img/slack_auth_tokens.png)
 
-## Phantom Base URL
+## SOAR Base URL
 
-The app uses the Phantom **Base URL** configuration to generate links to actions, so please make
-sure a valid url is specified in the **System Settings** .  
+The app uses the SOAR **Base URL** configuration to generate links to actions, so please make sure a
+valid url is specified in the **System Settings** .  
   
 [![](img/slack_system_settings.png)](img/slack_system_settings.png)
 
-## Phantom Slack Asset
+## SOAR Slack Asset
 
 Fill out the required values in the **Asset Definition** tab.  
   
 [![](img/slack_asset_info.png)](img/slack_asset_info.png)  
   
-Fill out the **Bot User OAuth Access Token** , **OAuth Access Token** and **Verification Token** in
-the **Asset Settings** tab.  
+Fill out the **Bot User OAuth Access Token** , **OAuth Access Token** , **Socket Token** and
+**Verification Token** in the **Asset Settings** tab.  
   
 [![](img/slack_asset_settings.png)](img/slack_asset_settings.png)  
   
@@ -110,19 +250,14 @@ from the drop-down or you can create a new one and Click **SAVE** .
   
 [![](img/slack_ingest_settings.png)](img/slack_ingest_settings.png)  
   
-After saving the asset, go back to the **Asset Settings** tab. There will now be a box labeled
-**POST incoming for Slack to this location** . This URL will be used later when configuring Slack's
-**Interactive Messages** functionality.  
-  
-[![](img/slack_post_url.png)](img/slack_post_url.png)
 
 ### Automation User
 
-The Slack app needs a Phantom authentication token to perform some tasks on the Phantom platform. To
-get this token, it is recommended that you create a new automation user. The steps for creating this
+The Slack app needs a SOAR authentication token to perform some tasks on the SOAR platform. To get
+this token, it is recommended that you create a new automation user. The steps for creating this
 user are as follows:
 
--   On the Phantom platform, navigate to **Administration->User Management**
+-   On the SOAR platform, navigate to **Administration->User Management**
 
 -   Under **Users** , click **+ USER**
 
@@ -132,7 +267,9 @@ user are as follows:
 
     -   Set the **User Type** to **Automation**
     -   Give the user a **Username** like "Slack Automation"
-    -   Set **Allowed IPs** to **127.0.0.1**
+    -   For security reasons, accessing 127.0.0.1 is not allowed. Set **Allowed IPs** same as the
+        **instance IP or "any"** . (eg : If instance IP is 10.1.18.123, set allowed IP also
+        10.1.18.123)
     -   Set the **Default Label** to the label seen in the Slack asset's **Ingest Settings**
     -   Under **Roles** , in addition to the default **Automation** role, add the **Observer** role
     -   Click **CREATE**
@@ -155,26 +292,22 @@ user are as follows:
 ### Test Connectivity
 
 Now, on the **Asset Settings** page, click the **TEST CONNECTIVITY** button, which will display a
-text box with progress messages. It will show the bot username and bot user ID that Phantom received
+text box with progress messages. It will show the bot username and bot user ID that SOAR received
 from Slack. Please ensure that these are correct.  
   
 [![](img/slack_new_test_connectivity.png)](img/slack_new_test_connectivity.png)
 
-### Interactive Messages
+## Set up Socket Mode in Slack
 
-In order for Phantom to receive responses to questions from Slack, the functionality needs to be
-configured. But first, you will need to create a user to allow Slack to authenticate with Phantom
-(This user is separate from the automation user created above).  
+Go to the **Your apps** option in Slack. From the menu on the left select the **Socket Mode**
+option.  
   
-Navigate back to the **Users** tab in **Administration** , and click on **+ USER** .  
+[![](img/slack_socket_mode.png)](img/slack_socket_mode.png)  
   
-[![](img/slack_users.png)](img/slack_users.png)  
+Once on this page, toggle on **Socket Mode** . Then click on the event subscription option. This
+will redirect you to the Event Subscription page, and add the following subscriptions for bot.  
   
-In the pop-up window, select the User Type **Local** . Fill out the required username and password
-fields. For security reasons DO NOT give the user any roles. This user should only be used to
-authenticate POST requests from Slack to Phantom.  
-  
-[![](img/slack_add_user.png)](img/slack_add_user.png)
+[![](img/slack_subscription_events.png)](img/slack_subscription_events.png)
 
 ## Set up Interactivity in Slack
 
@@ -188,28 +321,21 @@ certificate authority.
   
 Once on this page, toggle on **Interactivity** .  
   
-[![](img/slack_enable_interactive_messages.png)](img/slack_enable_interactive_messages.png)  
-  
-In the **Request URL** text box, add the **POST incoming for Slack to this location** URL found in
-the **Asset Settings** window. Before saving these changes, add the username and password of the new
-user added to Phantom. The URL should end up in the format:  
-  
-https://\<username>:\<password>@\<phantom_hostname>/rest/handler/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/slack
-After adding the full URL, click **Enable Interactive Messages**
+[![](img/slack_enable_interactive_messages.png)](img/slack_enable_interactive_messages.png)
 
 ## Slack Bot
 
 ### Ingest Settings
 
-To run the Phantom SlackBot that will get Phantom to take commands from Slack, ingestion needs to be
-enabled on the Phantom Slack Asset. To do this go back to the INGEST SETTINGS tab and enable polling
-and specify the Polling interval as 10 minutes. The "Label to apply to objects from this source"
+To run the SOAR SlackBot that will get SOAR to take commands from Slack, ingestion needs to be
+enabled on the SOAR Slack Asset. To do this go back to the INGEST SETTINGS tab and enable polling
+and specify the Polling interval as **off** . The "Label to apply to objects from this source"
 setting is ignored by this app, so it can be set to anything.  
   
 [![](img/slack_polling_enabled.png)](img/slack_polling_enabled.png)  
   
-To check the status of the phantom bot and restart it if not running, you can Click POLL NOW from
-the INGEST SETTINGS app and then POLL NOW again. The "Source ID", "Maximum containers", and "Maximum
+To check the status of the SOAR bot and restart it if not running, you can Click POLL NOW from the
+INGEST SETTINGS app and then POLL NOW again. The "Source ID", "Maximum containers", and "Maximum
 artifacts" settings can be ignored in this case.  
   
 [![](img/slack_poll_now.png)](img/slack_poll_now.png)  
@@ -220,19 +346,18 @@ and containers ingested (which will always be zero for this app).
 
 ### Stopping SlackBot
 
-Once the Phantom SlackBot starts running, the **stop bot** action needs to be run to stop it. Simply
+Once the SOAR SlackBot starts running, the **stop bot** action needs to be run to stop it. Simply
 disabling ingestion won't stop SlackBot.  
-WARNING: Stopping SlackBot is required before upgrading or uninstalling the Phantom Slack App or
-else an untracked SlackBot process may be left running on the Phantom instance. In addition,
-deleting a Slack asset that has SlackBot running will result in SlackBot continuing to run,
-untracked.  
+WARNING: Stopping SlackBot is required before upgrading or uninstalling the SOAR Slack App or else
+an untracked SlackBot process may be left running on the SOAR instance. In addition, deleting a
+Slack asset that has SlackBot running will result in SlackBot continuing to run, untracked.  
   
 
 ## Slack Commands
 
-Once a Slack asset has been configured, and SlackBot is running on Phantom, it needs to be invited
-to the channel, and then commands from Slack can be received by Phantom. In Slack, just mention the
-bot to get a help message on running commands. All commands follow this syntax:  
+Once a Slack asset has been configured, and SlackBot is running on SOAR, it needs to be invited to
+the channel, and then commands from Slack can be received by SOAR. In Slack, just mention the bot to
+get a help message on running commands. All commands follow this syntax:  
   
 
 @BOT_NAME COMMAND COMMAND_PARAMETERS
@@ -241,19 +366,19 @@ bot to get a help message on running commands. All commands follow this syntax:
 
 ### Running Actions
 
-To run an action on Phantom from Slack, use the **act** command. The syntax of which is:  
+To run an action on SOAR from Slack, use the **act** command. The syntax of which is:  
   
 
     @BOT_NAME act ACTION_NAME [--container CONTAINER_ID] [--asset ASSET] [--name NAME]
         [--type TYPE] [--parameters PARAMETER:VALUE [PARAMETER:VALUE]*]
 
     required parameters:
-      ACTION_NAME       The name of the action to run on Phantom
+      ACTION_NAME       The name of the action to run on SOAR
       --container       ID of the container to run the action on
 
     optional parameters:
       --name            Set a name for the action (defaults to 'Slack generated action')
-      --type            Set the type of the action (defaults to 'phantombot')
+      --type            Set the type of the action (defaults to 'SOARbot')
       --asset           Name or ID of the asset to run the action on
                         If no asset is specified, the given action will run on all possible assets
       --parameters      List of parameter/value pairs in the format
@@ -262,15 +387,15 @@ To run an action on Phantom from Slack, use the **act** command. The syntax of w
     examples:
       To run the action "list channels" on container 123 using the "slack" asset:
 
-        @phantombot act "list channels" --container 123 --asset slack
+        @SOARbot act "list channels" --container 123 --asset slack
 
       To run the action "whois ip" on 1.1.1.1 using the "whois" asset:
 
-        @phantombot act "whois ip" --container 123 --asset whois --parameters ip:1.1.1.1
+        @SOARbot act "whois ip" --container 123 --asset whois --parameters ip:1.1.1.1
 
       To run all possible "whois ip" actions on 1.1.1.1 using all assets that support the action, and giving it the name "All WhoIs":
 
-        @phantombot act "whois ip" --container 123 --parameters ip:1.1.1.1 --name "All WhoIs"
+        @SOARbot act "whois ip" --container 123 --parameters ip:1.1.1.1 --name "All WhoIs"
 
   
 After receiving an **act** command, SlackBot will kick off the action and send a link to the action
@@ -280,7 +405,7 @@ separately as each action completes.
 
 ### Running Playbooks
 
-To run a playbook on Phantom from Slack, use the **run_playbook** command. The syntax of which is:  
+To run a playbook on SOAR from Slack, use the **run_playbook** command. The syntax of which is:  
   
 
     @BOT_NAME run_playbook [--repo REPO] PLAYBOOK CONTAINER_ID
@@ -296,11 +421,11 @@ To run a playbook on Phantom from Slack, use the **run_playbook** command. The s
     examples:
       To run the playbook "investigate" which is in the "community" repo, on container 123
 
-        @phantombot run_playbook --repo community investigate 123
+        @SOARbot run_playbook --repo community investigate 123
 
       To run the playbook with ID 32 on container 123:
 
-        @phantombot run_playbook 32 123
+        @SOARbot run_playbook 32 123
 
   
 After receiving a **run_playbook** command, SlackBot will kick off the playbook and send a link to
@@ -324,15 +449,15 @@ To get information about a container, use the **get_container** command. The syn
     examples:
       To get information on container 123:
 
-        @phantombot get_container 123
+        @SOARbot get_container 123
 
       To get a list of containers with the tag "my_tag"
 
-        @phantombot get_container --tags my_tag
+        @SOARbot get_container --tags my_tag
 
       To get a list of containers with one of the following tags: "tag1" "tag2" or "tag3"
 
-        @phantombot get_container --tags tag1 tag2 tag3
+        @SOARbot get_container --tags tag1 tag2 tag3
 
 Running a **get_container** command will result in SlackBot sending either a list of containers or a
 set of information on one container to Slack.  
@@ -350,13 +475,13 @@ To get a list of actions or containers, use the **list** command. The syntax of 
     WARNING: If there are many containers on the system, the 'list containers' command can take a long time and can result in a lot of data being dumped on Slack
 
     examples:
-      To get a list of all actions on the Phantom instance:
+      To get a list of all actions on the SOAR instance:
 
-        @phantombot list actions
+        @SOARbot list actions
 
-      To get a list of all containers on the Phantom instance:
+      To get a list of all containers on the SOAR instance:
 
-        @phantombot list containers
+        @SOARbot list containers
 
 Running a **list** command will result in SlackBot sending a list of either actions or containers to
 Slack.  
@@ -370,7 +495,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 **bot\_token** |  required  | password | Bot User OAuth Access Token
 **verification\_token** |  required  | password | Verification Token
 **user\_token** |  optional  | password | OAuth Access Token
-**ph\_0** |  optional  | ph | Placeholder
+**socket\_token** |  optional  | password | Socket Token
 **ph\_auth\_token** |  optional  | password | Automation User Auth Token
 **timeout** |  optional  | numeric | Question timeout \(in minutes\)
 **response\_poll\_interval** |  optional  | numeric | How often to poll for a response \(in seconds\)
