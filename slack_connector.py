@@ -1069,7 +1069,7 @@ class SlackConnector(phantom.BaseConnector):
                         self.save_progress("pid passed in as container count, stopping bot")
                         return action_result.set_status(phantom.APP_SUCCESS, "bot has been stopped")
                     else:
-                        self.save_progress("HINT: Set Container Count to 1234 to restart slackbot, or set to PID to stop slackbot")
+                        self.save_progress("HINT: Set Maximum Containers to 1234 to restart slackbot, or set to PID to stop slackbot")
 
                 if 'slack_bot.py' in sh.ps('ww', pid):  # pylint: disable=E1101
                     self.save_progress("Detected SlackBot running with pid {0}".format(pid))

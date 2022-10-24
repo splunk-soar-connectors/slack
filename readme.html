@@ -308,7 +308,7 @@ If SlackBot permissions are changed in the asset configuration, it is mandatory 
 </a>
 <br><br>
 <h3>Stopping SlackBot</h3>
-Once the SOAR SlackBot starts running, the <b>stop bot</b> action needs to be run to stop it. Simply disabling ingestion won't stop SlackBot. You may also run poll now with a container count of the PID to stop SlackBot. To obtain the PID, run Poll Now with default parameters.
+Once the SOAR SlackBot starts running, the <b>stop bot</b> action needs to be run to stop it. Simply disabling ingestion won't stop SlackBot. You may also run poll now with a Maximum container count of the PID to stop SlackBot. To obtain the PID, run Poll Now with default parameters.
 <br>
 <br>
 WARNING: Stopping SlackBot is required before upgrading or uninstalling the SOAR Slack App or else an untracked SlackBot process may be left running on the SOAR instance. In addition, deleting a Slack asset that has SlackBot running will result in SlackBot continuing to run, untracked.
