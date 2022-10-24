@@ -12,12 +12,16 @@
 # the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
+from datetime import datetime
+import pytz
 import os
 import shlex
 import sys
 from argparse import ArgumentParser
+from pathlib import Path
 
 import encryption_helper
+import re
 import requests
 import simplejson as json
 import six
@@ -27,6 +31,8 @@ from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 from slack_consts import *
 from slack_consts import SLACK_DEFAULT_TIMEOUT
+from phantom.base_connector import APPS_STATE_PATH
+from bs4 import UnicodeDammit
 
 urllib3.disable_warnings()
 
@@ -43,8 +49,7 @@ usage:
 
 @<bot_username> act|run_playbook|get_container|list
 
-For more information on a specific command, try @<bot_username> <command> --help
-                         """
+For more information on a specific command, try @<bot_username> <command> --helpprint                     """
 
 SLACK_ACTION_HELP_MESSAGE = """
 usage:
@@ -125,13 +130,25 @@ For example:
                           """
 
 
+def tmp_log(msg):
+    log_dir = "/tmp"
+    log_path = Path(log_dir) / "slack.log"
+    log_path.touch()
+
+    tz_Denver = pytz.timezone('America/Denver')
+    now = datetime.now(tz_Denver)
+    current_time = now.strftime("%Y-%m-%d %H:%M:%S")
+
+    with log_path.open('a') as bubbly:
+        bubbly.write(current_time + ": " + msg + "\n")
+
+
 def _load_app_state(asset_id):
     """ This function is used to load the current state file.
 
     :param asset_id: asset_id
     :return: state: Current state file as a dictionary
     """
-
     asset_id = str(asset_id)
     if not asset_id or not asset_id.isalnum():
         print('In _load_app_state: Invalid asset_id')
@@ -140,7 +157,6 @@ def _load_app_state(asset_id):
     app_dir = os.path.dirname(os.path.abspath(__file__))
 
     state_file = '{0}/{1}_state.json'.format(app_dir, asset_id)
-
     real_state_file_path = os.path.realpath(state_file)
 
     if os.path.dirname(real_state_file_path) != app_dir:
@@ -218,11 +234,17 @@ class App():
 
 class SlackBot(object):
 
-    def __init__(self, bot_token, socket_token, bot_id, base_url="https://127.0.0.1/", verify=False, auth_token='', auth_basic=()):
+    def __init__(self, bot_token, socket_token, bot_id, base_url="https://127.0.0.1/", verify=False, auth_token='',
+                 permit_act=False, permit_playbook=False, permit_container=False, permit_list=False, permitted_users='', auth_basic=()):
         """ This should be changed to some kind of load config thing
         """
         self.bot_token = bot_token
         self.socket_token = socket_token
+        self.permit_act = permit_act
+        self.permit_playbook = permit_playbook
+        self.permit_container = permit_container
+        self.permit_list = permit_list
+        self.permitted_users = permitted_users
         self.headers = {} if not auth_token else {'ph-auth-token': auth_token}
         self.cmd_start = "<@{}>".format(bot_id)
         self.auth = auth_basic
@@ -1069,15 +1091,67 @@ class SlackBot(object):
         """
         app = slack_app(token=self.bot_token)
 
+        # decorator to catch responses to actions. Using RE to confirm the payload is in the format we expect
+        # it should be given it is a response to an interactive button sent by ask_question
+        @app.action({
+            "type": "interactive_message",
+            "callback_id": re.compile('{"qid": ".*')
+        })
+        def interactive_message_handler(ack, body, respond):
+            """
+            interactive_message_handler is used to handle responses to buttons actions sent by the ask_question
+            action. It receives a json body which contains the data of the event. The contents of the event are
+            written to the $PHANTOM_HOME/local_data/app_stats/$APP_ID folder. The ask_question action runs a loop
+            looking for files in this directory - it will pickup and process the file once it is written.
+            """
+            ack()
+            try:
+                if body:
+                    print(body.keys())
+                    callback_id = body.get('callback_id')
+                    callback_json = json.loads(UnicodeDammit(callback_id).unicode_markup)
+                    # asset_id = callback_json.get('asset_id')
+                    qid = callback_json.get('qid')
+                    confirmation_message = callback_json.get('confirmation')
+                    state_dir = '{0}/{1}'.format(APPS_STATE_PATH, SLACK_APP_ID)
+
+                    answer_filename = '{0}.json'.format(qid)
+                    answer_path = "{0}/{1}".format(state_dir, answer_filename)
+                    tmp_log('**going to put answer file here: {}'.format(answer_path))
+
+                    try:
+                        answer_file = open(answer_path, 'w')  # nosemgrep
+                    except Exception as e:
+                        print('Exception occured while opening file at {}. Exception: {}'.format(answer_file, e))
+
+                    try:
+                        answer_file.write(json.dumps(body))
+                        answer_file.close()
+                    except Exception as e:
+                        print('Exception occured while writing reponse to {}. Exception: {}'.format(answer_path, e))
+
+                    respond(confirmation_message)
+            except Exception as e:
+                print('Unknown exception occured while processing answer response. Exception: {}'.format(e))
+
         @app.event("app_mention")
-        def mention_handler(body):
+        def mention_handler(body, say):
             """
             mention handler function uses a app_mention event decorator to response to the events whenever the bot
             is mentioned in the cat. It receives a json body which contains the data of the event. The command and
             channel name are parsed from the body and passed to command handler to further process the command.
             """
+            tmp_log('**app_mention handler hit')
             if body:
+                # tmp_log('**body from app mention: {}'.format(body))
+                user = body.get("event", {}).get("user")
+                tmp_log('**user that spawned bot command is {}'.format(user))
+                if not self._check_user_authorization(user):
+                    say('`User {} is not authorized to use this bot`'.format(user))
+                    return
+
                 out_text = body.get("event", {}).get("text")
+                tmp_log('**body exists, app_mention text: {}'.format(out_text))
 
                 if out_text and out_text.startswith(self.cmd_start):
                     if out_text.strip() == self.cmd_start:
@@ -1108,6 +1182,59 @@ class SlackBot(object):
         handler = SocketModeHandler(app, self.socket_token)
         handler.start()
 
+    def _check_user_authorization(self, user):
+        tmp_log('**Checking authorization for user "{}"'.format(user))
+        permitted_users = self.permitted_users
+
+        if not permitted_users:
+            tmp_log('**No permitted users specified. falling back to allow all')
+            return True
+
+        else:
+            user_list = permitted_users.split(",")
+            tmp_log('**Permitted_users: {}'.format(user_list))
+            if user in user_list:
+                tmp_log('**User "{}" is permitted to use bot'.format(user))
+                return True
+            else:
+                tmp_log('**User "{}" is not permitted to use bot'.format(user))
+                return False
+
+    def _check_command_authorization(self, cmd_type):
+        if cmd_type == "act":
+            if self.permit_act:
+                tmp_log('**Command: "{}" is permitted'.format(cmd_type))
+                return True
+            else:
+                tmp_log('**Command:"{}" is not permitted'.format(cmd_type))
+                return False
+
+        if cmd_type == "run_playbook":
+            if self.permit_playbook:
+                tmp_log('**Command: "{}" is permitted'.format(cmd_type))
+                return True
+            else:
+                tmp_log('**Command: "{}" is not permitted'.format(cmd_type))
+                return False
+
+        if cmd_type == "get_container":
+            if self.permit_container:
+                tmp_log('**Command:" {}" is permitted'.format(cmd_type))
+                return True
+            else:
+                tmp_log('**Command: "{}" is not permitted'.format(cmd_type))
+                return False
+
+        if cmd_type == "list":
+            if self.permit_list:
+                tmp_log('**Command: "{}" is permitted'.format(cmd_type))
+                return True
+            else:
+                tmp_log('**Command: "{}" is not permitted'.format(cmd_type))
+                return False
+        else:
+            return False
+
     def _handle_command(self, command, channel):
 
         try:
@@ -1117,8 +1244,18 @@ class SlackBot(object):
             return
 
         cmd_type = args[0]
+        if cmd_type not in ["act", "run_playbook", "get_container", "list"]:
+            msg = "Unknown Command\n\n {}".format(SLACK_BOT_HELP_MESSAGE)
+            self._post_message(msg, channel)
+            return
+
+        if not self._check_command_authorization(cmd_type):
+            msg = SLACK_ERR_COMMAND_NOT_PERMITTED
+            self._post_message(msg, channel)
+            return
 
         if cmd_type == "act":
+            tmp_log("**permit_bot_act: {}".format(self.permit_act))
             status, result = self._parse_action(args[1:])
             if (status):
                 msg = self._action_run_request(result, channel)
@@ -1126,7 +1263,7 @@ class SlackBot(object):
                 msg = result
 
         elif cmd_type == "run_playbook":
-
+            tmp_log("**permit_bot_playbook: {}".format(self.permit_playbook))
             status, result = self._parse_playbook(args[1:])
             if (status):
                 msg = self._playbook_request(result, channel)
@@ -1134,9 +1271,11 @@ class SlackBot(object):
                 msg = result
 
         elif cmd_type == "get_container":
+            tmp_log("**permit_bot_container: {}".format(self.permit_container))
             status, msg = self._parse_container(args[1:])
 
         elif cmd_type == "list":
+            tmp_log("**permit_bot_list: {}".format(self.permit_list))
             status, msg = self._parse_list(args[1:])
 
         else:
@@ -1147,6 +1286,7 @@ class SlackBot(object):
 
 if __name__ == '__main__':  # noqa: C901
 
+    tmp_log('**Spawning slack_bot.py...')
     if (not os.path.exists('./bot_config.py')):
         if (len(sys.argv) != 3):
             print("Please create a bot_config.py file, and place it in this directory")
@@ -1154,12 +1294,16 @@ if __name__ == '__main__':  # noqa: C901
 
         asset_id = sys.argv[1]
         state = _load_app_state(asset_id)
-
         bot_id = state.get('bot_id')
         ph_base_url = state.get('ph_base_url')
         bot_token = state.get(SLACK_JSON_BOT_TOKEN)
         socket_token = state.get(SLACK_JSON_SOCKET_TOKEN)
         ph_auth_token = state.get(SLACK_JSON_PH_AUTH_TOKEN)
+        permit_act = state.get(SLACK_JSON_PERMIT_BOT_ACT)
+        permit_playbook = state.get(SLACK_JSON_PERMIT_BOT_PLAYBOOK)
+        permit_container = state.get(SLACK_JSON_PERMIT_BOT_CONTAINER)
+        permit_list = state.get(SLACK_JSON_PERMIT_BOT_LIST)
+        permitted_users = state.get(SLACK_JSON_PERMITTED_USERS)
 
         try:
             if bot_token:
@@ -1187,7 +1331,12 @@ if __name__ == '__main__':  # noqa: C901
             socket_token=socket_token,
             bot_id=bot_id,
             base_url=ph_base_url,
-            auth_token=ph_auth_token
+            auth_token=ph_auth_token,
+            permit_act=permit_act,
+            permit_playbook=permit_playbook,
+            permit_container=permit_container,
+            permit_list=permit_list,
+            permitted_users=permitted_users
         )
         sb._from_on_poll()
         sys.exit(0)

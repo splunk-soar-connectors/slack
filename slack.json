@@ -3,11 +3,16 @@
     "name": "Slack",
     "description": "Integrate with Slack to post messages and attachments to channels",
     "publisher": "Splunk",
+    "contributors": [
+      {
+        "name": "Dallan Wagner"
+      }
+    ],
     "package_name": "phantom_slack",
     "type": "information",
     "license": "Copyright (c) 2016-2022 Splunk Inc.",
     "main_module": "slack_connector.py",
-    "app_version": "2.4.0",
+    "app_version": "2.5.1",
     "utctime_updated": "2022-02-04T18:14:51.000000Z",
     "product_vendor": "Slack Technologies",
     "product_name": "Slack",
@@ -61,6 +66,40 @@
             "data_type": "numeric",
             "default": 30,
             "order": 6
+        },
+        "permit_bot_act": {
+            "description": "Permit 'act' commands on Bot (I.E. @SOARbot act 'list channels' --container 123 --asset slack)",
+            "data_type": "boolean",
+            "default": false,
+            "required": true,
+            "order": 7
+        },
+        "permit_bot_playbook": {
+            "description": "Permit 'run_playbook' commands on Bot (I.E. @SOARbot run_playbook <playbook_id> <container_id>)",
+            "data_type": "boolean",
+            "default": false,
+            "required": true,
+            "order": 8
+        },
+        "permit_bot_container": {
+            "description": "Permit 'get_container' commands on Bot (I.E. @SOARbot get_container <container_id>)",
+            "data_type": "boolean",
+            "default": false,
+            "required": true,
+            "order": 9
+        },
+        "permit_bot_list": {
+            "description": "Permit 'list' commands on Bot (I.E. @SOARbot list [actions|containers])",
+            "data_type": "boolean",
+            "default": false,
+            "required": true,
+            "order": 10
+        },
+        "permitted_bot_users": {
+            "description": "Users permitted to use Bot Actions. Comma seperated list of Member IDs. Leave blank to allow all users (Default Setting)",
+            "data_type": "string",
+            "required": false,
+            "order": 11
         }
     },
     "actions": [
@@ -3280,6 +3319,11 @@
                     "description": "Message to user after response",
                     "data_type": "string",
                     "order": 3
+                },
+                "permitted_responders": {
+                    "description": "Comma separated User IDs permitted to respond to question. Leave blank to permit all. Useful when sending to groups or channels.",
+                    "data_type": "string",
+                    "order": 4
                 }
             },
             "output": [
@@ -3303,6 +3347,10 @@
                 },
                 {
                     "data_path": "action_result.parameter.responses",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.permitted_responders",
                     "data_type": "string"
                 },
                 {
