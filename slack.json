@@ -5,7 +5,8 @@
     "publisher": "Splunk",
     "contributors": [
       {
-        "name": "Dallan Wagner"
+        "name": "Dallan Wagner",
+        "name": "Mhike Funderburk"
       }
     ],
     "package_name": "phantom_slack",
