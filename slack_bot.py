@@ -1107,7 +1107,6 @@ class SlackBot(object):
             ack()
             try:
                 if body:
-                    print(body.keys())
                     callback_id = body.get('callback_id')
                     callback_json = json.loads(UnicodeDammit(callback_id).unicode_markup)
                     # asset_id = callback_json.get('asset_id')
