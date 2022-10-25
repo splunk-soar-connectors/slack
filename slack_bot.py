@@ -13,12 +13,10 @@
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
 import os
-import pytz
 import re
 import shlex
 import sys
 from argparse import ArgumentParser
-from bs4 import UnicodeDammit
 from datetime import datetime
 from pathlib import Path
 
