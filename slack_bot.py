@@ -12,27 +12,25 @@
 # the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
-from datetime import datetime
-import pytz
-import os
-import shlex
-import sys
-from argparse import ArgumentParser
-from pathlib import Path
-
 import encryption_helper
+import os
+import pytz
 import re
 import requests
+import shlex
 import simplejson as json
 import six
+import sys
 import urllib3
+from argparse import ArgumentParser
+from bs4 import UnicodeDammit
+from datetime import datetime
+from pathlib import Path
+from phantom.base_connector import APPS_STATE_PATH
 from slack_bolt import App as slack_app
 from slack_bolt.adapter.socket_mode import SocketModeHandler
-
 from slack_consts import *
 from slack_consts import SLACK_DEFAULT_TIMEOUT
-from phantom.base_connector import APPS_STATE_PATH
-from bs4 import UnicodeDammit
 
 urllib3.disable_warnings()
 
