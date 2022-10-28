@@ -263,11 +263,11 @@ class SlackConnector(phantom.BaseConnector):
         self._bot_token = config.get(SLACK_JSON_BOT_TOKEN)
         self._socket_token = config.get(SLACK_JSON_SOCKET_TOKEN)
         self._ph_auth_token = config.get(SLACK_JSON_PH_AUTH_TOKEN)
-        self._permit_act = config.get(SLACK_JSON_PERMIT_BOT_ACT)
-        self._permit_playbook = config.get(SLACK_JSON_PERMIT_BOT_PLAYBOOK)
-        self._permit_container = config.get(SLACK_JSON_PERMIT_BOT_CONTAINER)
-        self._permit_list = config.get(SLACK_JSON_PERMIT_BOT_LIST)
-        self._permitted_users = config.get(SLACK_JSON_PERMITTED_USERS)
+        self._permit_act = config.get(SLACK_JSON_PERMIT_BOT_ACT, False)
+        self._permit_playbook = config.get(SLACK_JSON_PERMIT_BOT_PLAYBOOK, False)
+        self._permit_container = config.get(SLACK_JSON_PERMIT_BOT_CONTAINER, False)
+        self._permit_list = config.get(SLACK_JSON_PERMIT_BOT_LIST, False)
+        self._permitted_users = config.get(SLACK_JSON_PERMITTED_USERS, False)
         self._base_url = SLACK_BASE_URL
 
         self._verification_token = self._state.get('token')
@@ -333,8 +333,9 @@ class SlackConnector(phantom.BaseConnector):
         return phantom.APP_SUCCESS
 
     def _get_phantom_base_url_slack(self, action_result):
+        base_url = self.get_phantom_base_url()
+        rest_url = SLACK_PHANTOM_SYS_INFO_URL.format(url=base_url if base_url.endswith('/') else base_url + '/')
 
-        rest_url = SLACK_PHANTOM_SYS_INFO_URL.format(url=self.get_phantom_base_url())
         ret_val, resp_json = self._make_rest_call(action_result, rest_url, False)
 
         if phantom.is_fail(ret_val):
@@ -438,23 +439,27 @@ class SlackConnector(phantom.BaseConnector):
         :param e: Exception object
         :return: error message
         """
+        error_code = None
+        error_msg = SLACK_ERR_MSG_UNAVAILABLE
+
+        self.error_print("Error occurred.", e)
 
         try:
-            if e.args:
+            if hasattr(e, "args"):
                 if len(e.args) > 1:
                     error_code = e.args[0]
                     error_msg = e.args[1]
                 elif len(e.args) == 1:
-                    error_code = SLACK_ERR_CODE_UNAVAILABLE
                     error_msg = e.args[0]
-            else:
-                error_code = SLACK_ERR_CODE_UNAVAILABLE
-                error_msg = SLACK_ERR_MESSAGE_UNKNOWN
-        except Exception:
-            error_code = SLACK_ERR_CODE_UNAVAILABLE
-            error_msg = SLACK_ERR_MESSAGE_UNKNOWN
+        except Exception as e:
+            self.error_print("Error occurred while fetching exception information. Details: {}".format(str(e)))
 
-        return "Error Code: {0}. Error Message: {1}".format(error_code, error_msg)
+        if not error_code:
+            error_text = "Error Message: {}".format(error_msg)
+        else:
+            error_text = "Error Code: {}. Error Message: {}".format(error_code, error_msg)
+
+        return error_text
 
     def _make_rest_call(self, action_result, rest_url, verify, method=requests.get, headers={}, body={}):
 

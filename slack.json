@@ -18,7 +18,7 @@
     "product_vendor": "Slack Technologies",
     "product_name": "Slack",
     "product_version_regex": ".*",
-    "min_phantom_version": "5.3.0",
+    "min_phantom_version": "5.3.4",
     "python_version": "3",
     "fips_compliant": true,
     "latest_tested_versions": [
@@ -72,28 +72,24 @@
             "description": "Permit 'act' commands on Bot (I.E. @SOARbot act 'list channels' --container 123 --asset slack)",
             "data_type": "boolean",
             "default": false,
-            "required": true,
             "order": 7
         },
         "permit_bot_playbook": {
             "description": "Permit 'run_playbook' commands on Bot (I.E. @SOARbot run_playbook <playbook_id> <container_id>)",
             "data_type": "boolean",
             "default": false,
-            "required": true,
             "order": 8
         },
         "permit_bot_container": {
             "description": "Permit 'get_container' commands on Bot (I.E. @SOARbot get_container <container_id>)",
             "data_type": "boolean",
             "default": false,
-            "required": true,
             "order": 9
         },
         "permit_bot_list": {
             "description": "Permit 'list' commands on Bot (I.E. @SOARbot list [actions|containers])",
             "data_type": "boolean",
             "default": false,
-            "required": true,
             "order": 10
         },
         "permitted_bot_users": {
@@ -4040,7 +4036,7 @@
         "wheel": [
             {
                 "module": "Django",
-                "input_file": "wheels/py3/Django-3.2.13-py3-none-any.whl"
+                "input_file": "wheels/py3/Django-3.2.16-py3-none-any.whl"
             },
             {
                 "module": "asgiref",
