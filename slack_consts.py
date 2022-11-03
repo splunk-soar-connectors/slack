@@ -20,6 +20,7 @@ ACTION_ID_LIST_CHANNELS = "list_channels"
 ACTION_ID_POST_MESSAGE = "send_message"
 ACTION_ID_ADD_REACTION = "add_reaction"
 ACTION_ID_ASK_QUESTION = "ask_question"
+ACTION_ID_ASK_QUESTION_CHANNLE = "ask_question_channel"
 ACTION_ID_GET_RESPONSE = "get_response"
 ACTION_ID_UPLOAD_FILE = "upload_file"
 ACTION_ID_LIST_USERS = "list_users"
@@ -114,6 +115,7 @@ SLACK_ERR_MESSAGE_TOO_LONG = "Message too long. Please limit messages to {limit}
 SLACK_ERR_QUESTION_TOO_LONG = "Question too long. Please limit questions to {limit} characters."
 SLACK_SUCC_MESSAGE_SENT = "Message sent successfully"
 SLACK_SUCC_REACTION_ADDED = "Reaction added successfully"
+SLACK_SUCC_ASKED_QUESTION = "Asked question in channel successfully"
 SLACK_ERR_FILE_OR_CONTENT_NOT_PROVIDED = "Please provide either a 'file' or 'content' to upload"
 SLACK_SUCC_FILE_UPLOAD = "File uploaded successfully"
 SLACK_SUCC_SLACKBOT_STOPPED = "SlackBot has been stopped."
@@ -128,7 +130,11 @@ SLACK_ERR_AUTH_TOKEN_NOT_PROVIDED = "The 'ph_auth_token' asset configuration par
 SLACK_ERR_SLACKBOT_RUNNING_WITH_SAME_BOT_TOKEN = ("Detected an instance of SlackBot running with the same bot token. "
                                                   "Not going to start new instance.")
 SLACK_SUCC_SLACKBOT_STARTED = "SlackBot started"
-SLACK_ERR_UNABLE_TO_SEND_QUESTION_TO_CHANNEL = "Questions may only be sent as direct messages to users. They may not be sent to channels."
+SLACK_ERR_UNABLE_TO_SEND_QUESTION_TO_CHANNEL = (
+    "Questions can only be sent as direct messages to users using this action. To send message in channel, use the ask question channel action.")
+SLACK_ERR_UNABLE_TO_SEND_QUESTION_TO_USER = (
+    "Questions can only be sent in channel using this action. To send message to a user, use the ask question action.")
+
 SLACK_ERR_UNABLE_TO_PARSE_RESPONSE = "Error occurred while parsing the response"
 SLACK_ERR_QUESTION_RESPONSE_NOT_AVAILABLE = "Response to question not available"
 SLACK_ERR_NO_RESPONSE_FROM_SERVER = "Got no response from the Slack server"

@@ -7,7 +7,7 @@
     "type": "information",
     "license": "Copyright (c) 2016-2022 Splunk Inc.",
     "main_module": "slack_connector.py",
-    "app_version": "2.4.0",
+    "app_version": "2.5.0",
     "utctime_updated": "2022-02-04T18:14:51.000000Z",
     "product_vendor": "Slack Technologies",
     "product_name": "Slack",
@@ -3591,33 +3591,66 @@
             "versions": "EQ(*)"
         },
         {
-            "action": "get response",
-            "description": "Get the response to a previously asked question",
-            "verbose": "The purpose of the 'get response' action is to get the response of a question, asked using the 'ask question' action, that timed out before it could get the response.<br>The action will check to see if a question has been answered.<br><ul><li>If the user has answered the question, the question id generated in the 'ask question' action can be used to get the response.</li><li>If no response is yet available, the action will fail.</li></ul>",
-            "type": "investigate",
-            "identifier": "get_response",
-            "read_only": true,
+            "action": "ask question channel",
+            "description": "Ask a question to a Slack user",
+            "verbose": "This action will send a Slack user a direct message containing a question with a series of buttons which represent possible responses. Once the user clicks on one of the responses, Slack will send the response back to Phantom. The action will succeed and output this response in the action result. If the user fails to respond within the timeout configured in the asset, the action will succeed, and output the <b>question ID</b> in the action result. The question ID can be used as input to the <b>get response</b> action.<br><br>If the <b>responses</b> parameter is not filled out, the response options will be <b>yes</b> and <b>no</b>.<br><br>The <b>confirmation</b> parameter takes a string that will be sent to the user after the user clicks a response. <b>Note:</b> It is recommended to use user ID instead of username since the latter usage has been deprecated by Slack.",
+            "type": "generic",
+            "identifier": "ask_question_channel",
+            "read_only": false,
+            "lock": {
+                "enabled": false
+            },
             "parameters": {
-                "question_id": {
-                    "description": "Question ID",
+                "destination": {
+                    "description": "User (e.g. @user or U1A1A1AAA) to ask question to",
                     "data_type": "string",
                     "primary": true,
                     "required": true,
                     "order": 0,
                     "contains": [
-                        "slack question id"
+                        "slack user name",
+                        "slack user id"
                     ]
+                },
+                "question": {
+                    "description": "Question to ask",
+                    "data_type": "string",
+                    "required": true,
+                    "order": 1
+                },
+                "responses": {
+                    "description": "List of possible responses",
+                    "data_type": "string",
+                    "order": 2
+                },
+                "confirmation": {
+                    "description": "Message to user after response",
+                    "data_type": "string",
+                    "order": 3
                 }
             },
             "output": [
                 {
-                    "data_path": "action_result.parameter.question_id",
+                    "data_path": "action_result.parameter.confirmation",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.destination",
                     "data_type": "string",
-                    "column_name": "Question ID",
-                    "column_order": 2,
                     "contains": [
-                        "slack question id"
+                        "slack user name",
+                        "slack user id"
                     ]
+                },
+                {
+                    "data_path": "action_result.parameter.question",
+                    "data_type": "string",
+                    "column_name": "Question",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.parameter.responses",
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.action_ts",
@@ -3632,16 +3665,19 @@
                     "data_type": "string"
                 },
                 {
-                    "data_path": "action_result.data.*.actions.*.value",
-                    "data_type": "string"
-                },
-                {
                     "data_path": "action_result.data.*.attachment_id",
                     "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.callback_id",
                     "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.channel",
+                    "data_type": "string",
+                    "contains": [
+                        "slack channel id"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.channel.id",
@@ -3660,10 +3696,82 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.message.attachments.*.actions.*.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.actions.*.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.actions.*.style",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.actions.*.text",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.actions.*.type",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.actions.*.value",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.callback_id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.color",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.fallback",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.id",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.text",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.bot_id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.text",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.ts",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.type",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.user",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.message_ts",
                     "data_type": "string",
                     "contains": [
                         "slack message ts"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.ok",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
                     ]
                 },
                 {
@@ -3708,9 +3816,7 @@
                 },
                 {
                     "data_path": "action_result.data.*.original_message.attachments.*.text",
-                    "data_type": "string",
-                    "column_name": "Question",
-                    "column_order": 0
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.original_message.bot_id",
@@ -3755,6 +3861,10 @@
                     "data_type": "string"
                 },
                 {
+                    "data_path": "action_result.data.*.ts",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.user.id",
                     "data_type": "string"
                 },
@@ -3774,14 +3884,247 @@
                     "data_path": "action_result.message",
                     "data_type": "string",
                     "example_values": [
+                        "Response received: True, Question id: c2bc5f7cfbb34e13a7ada4aa6e6bb7b5, Response: yes"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.qid",
+                    "data_type": "string",
+                    "column_name": "Question ID",
+                    "column_order": 2,
+                    "contains": [
+                        "slack question id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.summary.response",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.summary.response_received",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                }
+            ],
+            "render": {
+                "width": 12,
+                "title": "Question",
+                "type": "table",
+                "height": 5
+            },
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "get response",
+            "description": "Get the response to a previously asked question",
+            "verbose": "The purpose of the 'get response' action is to get the response of a question, asked using the 'ask question' action, that timed out before it could get the response.<br>The action will check to see if a question has been answered.<br><ul><li>If the user has answered the question, the question id generated in the 'ask question' action can be used to get the response.</li><li>If no response is yet available, the action will fail.</li></ul>",
+            "type": "investigate",
+            "identifier": "get_response",
+            "read_only": true,
+            "parameters": {
+                "question_id": {
+                    "description": "Question ID",
+                    "data_type": "string",
+                    "primary": true,
+                    "required": true,
+                    "order": 0,
+                    "contains": [
+                        "slack question id"
+                    ]
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.parameter.question_id",
+                    "data_type": "string",
+                    "column_name": "Question ID",
+                    "column_order": 3,
+                    "contains": [
+                        "slack question id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.action_ts",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.actions.*.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.actions.*.type",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.actions.*.value",
+                    "data_type": "string",
+                    "column_name": "Response",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.attachment_id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.callback_id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.channel.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.channel.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.is_app_unfurl",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.message_ts",
+                    "data_type": "string",
+                    "contains": [
+                        "slack message ts"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.original_message.attachments.*.actions.*.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.original_message.attachments.*.actions.*.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.original_message.attachments.*.actions.*.style",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.original_message.attachments.*.actions.*.text",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.original_message.attachments.*.actions.*.type",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.original_message.attachments.*.actions.*.value",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.original_message.attachments.*.callback_id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.original_message.attachments.*.color",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.original_message.attachments.*.fallback",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.original_message.attachments.*.id",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.original_message.attachments.*.text",
+                    "data_type": "string",
+                    "column_name": "Question",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.original_message.bot_id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.original_message.text",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.original_message.ts",
+                    "data_type": "string",
+                    "contains": [
+                        "slack message ts"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.original_message.type",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.original_message.user",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.response_url",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.team.domain",
+                    "data_type": "string",
+                    "contains": [
+                        "domain"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.team.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.token",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.user.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.user.name",
+                    "data_type": "string",
+                    "column_name": "Username",
+                    "column_order": 2
+                },
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
                         "Response received: True, Response: yes"
                     ]
                 },
                 {
                     "data_path": "action_result.summary.response",
-                    "data_type": "string",
-                    "column_name": "Response",
-                    "column_order": 1
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.summary.response_received",
@@ -3927,7 +4270,7 @@
             },
             {
                 "module": "certifi",
-                "input_file": "wheels/py3/certifi-2022.6.15-py3-none-any.whl"
+                "input_file": "wheels/py3/certifi-2022.9.24-py3-none-any.whl"
             },
             {
                 "module": "charset_normalizer",
@@ -3939,7 +4282,7 @@
             },
             {
                 "module": "pytz",
-                "input_file": "wheels/shared/pytz-2022.1-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/pytz-2022.6-py2.py3-none-any.whl"
             },
             {
                 "module": "requests",
@@ -3963,7 +4306,7 @@
             },
             {
                 "module": "slack_sdk",
-                "input_file": "wheels/shared/slack_sdk-3.17.2-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/slack_sdk-3.19.2-py2.py3-none-any.whl"
             },
             {
                 "module": "soupsieve",
@@ -3971,7 +4314,7 @@
             },
             {
                 "module": "sqlparse",
-                "input_file": "wheels/py3/sqlparse-0.4.2-py3-none-any.whl"
+                "input_file": "wheels/py3/sqlparse-0.4.3-py3-none-any.whl"
             },
             {
                 "module": "typing_extensions",
@@ -3979,7 +4322,7 @@
             },
             {
                 "module": "urllib3",
-                "input_file": "wheels/shared/urllib3-1.26.10-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/urllib3-1.26.12-py2.py3-none-any.whl"
             },
             {
                 "module": "websocket_client",
@@ -4003,7 +4346,7 @@
             },
             {
                 "module": "certifi",
-                "input_file": "wheels/py3/certifi-2022.6.15-py3-none-any.whl"
+                "input_file": "wheels/py3/certifi-2022.9.24-py3-none-any.whl"
             },
             {
                 "module": "charset_normalizer",
@@ -4015,7 +4358,7 @@
             },
             {
                 "module": "pytz",
-                "input_file": "wheels/shared/pytz-2022.1-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/pytz-2022.6-py2.py3-none-any.whl"
             },
             {
                 "module": "requests",
@@ -4039,7 +4382,7 @@
             },
             {
                 "module": "slack_sdk",
-                "input_file": "wheels/shared/slack_sdk-3.17.2-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/slack_sdk-3.19.2-py2.py3-none-any.whl"
             },
             {
                 "module": "soupsieve",
@@ -4047,11 +4390,11 @@
             },
             {
                 "module": "sqlparse",
-                "input_file": "wheels/py3/sqlparse-0.4.2-py3-none-any.whl"
+                "input_file": "wheels/py3/sqlparse-0.4.3-py3-none-any.whl"
             },
             {
                 "module": "urllib3",
-                "input_file": "wheels/shared/urllib3-1.26.10-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/urllib3-1.26.12-py2.py3-none-any.whl"
             },
             {
                 "module": "websocket_client",

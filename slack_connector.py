@@ -18,6 +18,7 @@ import subprocess
 import sys
 import time
 import uuid
+from os.path import exists
 from pathlib import Path
 from urllib.parse import unquote
 
@@ -95,7 +96,7 @@ def _save_app_state(state, asset_id, app_connector=None):
     state_file = '{0}/{1}_state.json'.format(app_dir, asset_id)
 
     real_state_file_path = os.path.realpath(state_file)
-    if not os.path.dirname(real_state_file_path) == app_dir:
+    if os.path.dirname(real_state_file_path) != app_dir:
         if app_connector:
             app_connector.debug_print('In _save_app_state: Invalid asset_id')
         return {}
@@ -134,7 +135,38 @@ def rest_log(msg):
         highscore.write(msg + "\n")
 
 
+def process_payload_for_channel(payload, answer_path):
+
+    if not exists(answer_path):
+        final_payload = {
+            "payloads": [payload],
+            "replies_from": [payload.get('user').get('id')]
+        }
+        return final_payload
+    else:
+        old_payload = dict()
+        try:
+            with open(answer_path, "r") as read_old_file:
+                old_payload = read_old_file.read()
+        except Exception as e:
+            print(e)
+
+        old_payload = json.loads(old_payload)
+        current_user_id = payload.get('user').get('id')
+        if current_user_id not in old_payload.get('replies_from'):
+            old_payload['payloads'].append(payload)
+            old_payload['replies_from'].append(payload.get('user').get('id'))
+        else:
+            user_payloads = old_payload.get('payloads')
+            for data in user_payloads:
+                if data.get('user').get('id') == current_user_id:
+                    data['actions'] = payload.get('actions')
+
+        return old_payload
+
+
 def handle_request(request, path):
+
     try:
         payload = request.POST.get('payload')
         payload = json.loads(payload)
@@ -196,13 +228,21 @@ def handle_request(request, path):
         if not _is_safe_path(state_dir, answer_path):
             return HttpResponse(SLACK_ERR_INVALID_FILE_PATH, content_type="text/plain", status=400)
 
+        user = payload.get('channel').get("id")
+        final_payload = dict()
+
+        if user.startswith('C'):
+            final_payload = process_payload_for_channel(payload, answer_path)
+        else:
+            final_payload = payload
+
         try:
             answer_file = open(answer_path, 'w')  # nosemgrep
         except Exception as e:
             return HttpResponse(SLACK_ERR_COULD_NOT_OPEN_ANSWER_FILE.format(error=e), content_type="text/plain", status=400)
 
         try:
-            answer_file.write(json.dumps(payload))
+            answer_file.write(json.dumps(final_payload))
             answer_file.close()
         except Exception as e:
             return HttpResponse(SLACK_ERR_WHILE_WRITING_ANSWER_FILE.format(error=e), content_type="text/plain", status=400)
@@ -1074,12 +1114,9 @@ class SlackConnector(phantom.BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_SLACKBOT_STARTED)
 
-    def _ask_question(self, param):
+    def _handle_ask_question(self, action_result, param, user):
 
-        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
-        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
         config = self.get_config()
-
         local_data_state_dir = self.get_state_dir().rstrip('/')
         self._state['local_data_path'] = local_data_state_dir
         # Need to make sure the configured verification token is in the app state so the request_handler can use it to verify POST requests
@@ -1096,21 +1133,13 @@ class SlackConnector(phantom.BaseConnector):
             return self.set_status(phantom.APP_ERROR, SLACK_ENCRYPTION_ERR)
 
         self.save_state(self._state)
-
         # The default permission of state file in Phantom v4.9 is 600. So when from rest handler method (handle_request) reads this state file,
         # the action fails with "permission denied" error message
         # Adding the data of state file to another temporary file to resolve this issue
         _save_app_state(self._state, self.get_asset_id(), self)
-
         question = param['question']
         if len(question) > SLACK_MESSAGE_LIMIT:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_QUESTION_TOO_LONG.format(limit=SLACK_MESSAGE_LIMIT))
-
-        user = param['destination']
-        if user.startswith('#') or user.startswith('C'):
-            # Don't want to send question to channels because then we would not know who was answering
-            return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_UNABLE_TO_SEND_QUESTION_TO_CHANNEL)
-
         qid = uuid.uuid4().hex
 
         answer_filename = '{0}.json'.format(qid)
@@ -1146,7 +1175,8 @@ class SlackConnector(phantom.BaseConnector):
                 'actions': answers
             }
         ]
-
+        with open("/opt/phantom/newData.txt", "a") as file:
+            file.write(str(callback_id))
         params = {'channel': user, 'attachments': json.dumps(answer_json), 'as_user': True}
 
         ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_SEND_MESSAGE, params)
@@ -1156,7 +1186,47 @@ class SlackConnector(phantom.BaseConnector):
                 error_message = "{}: {}".format(SLACK_ERR_ASKING_QUESTION, message)
             else:
                 error_message = SLACK_ERR_ASKING_QUESTION
-            return action_result.set_status(phantom.APP_ERROR, error_message)
+            return action_result.set_status(phantom.APP_ERROR, error_message), None
+
+        data = {"qid": qid, "answer_path": answer_path}
+        return action_result.set_status(phantom.APP_SUCCESS), data
+
+    def _ask_question_channel(self, param):
+
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
+        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
+
+        user = param['destination']
+        if user.startswith('@') or user.startswith('U'):
+            # Don't want to send question to channels because then we would not know who was answering
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_UNABLE_TO_SEND_QUESTION_TO_USER)
+
+        ret_val, resp_json = self._handle_ask_question(action_result, param, user)
+
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+
+        action_result.add_data(resp_json)
+        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_ASKED_QUESTION)
+
+    def _ask_question(self, param):
+
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
+        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
+
+        user = param['destination']
+        if user.startswith('#') or user.startswith('C'):
+            # Don't want to send question to channels because then we would not know who was answering
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_UNABLE_TO_SEND_QUESTION_TO_CHANNEL)
+
+        ret_val, resp_json = self._handle_ask_question(action_result, param, user)
+
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+
+        self.debug_print("resp json : {}".format(resp_json))
+        answer_path = resp_json.get('answer_path')
+        qid = resp_json.get('qid')
 
         loop_count = (self._timeout * 60) / self._interval
         count = 0
@@ -1210,7 +1280,7 @@ class SlackConnector(phantom.BaseConnector):
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_UNABLE_TO_PARSE_RESPONSE)
 
         action_result.add_data(resp_json)
-        action_result.set_summary({'response_received': True, 'response': resp_json.get("actions", [{}])[0].get("value")})
+        # action_result.set_summary({'response_received': True, 'response': resp_json.get("actions", [{}])[0].get("value")})
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
@@ -1233,6 +1303,8 @@ class SlackConnector(phantom.BaseConnector):
             ret_val = self._add_reaction(param)
         elif action_id == ACTION_ID_ASK_QUESTION:
             ret_val = self._ask_question(param)
+        elif action_id == ACTION_ID_ASK_QUESTION_CHANNLE:
+            ret_val = self._ask_question_channel(param)
         elif action_id == ACTION_ID_GET_RESPONSE:
             ret_val = self._get_response(param)
         elif action_id == ACTION_ID_UPLOAD_FILE:
