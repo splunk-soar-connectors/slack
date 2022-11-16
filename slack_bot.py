@@ -31,6 +31,7 @@ from phantom.base_connector import APPS_STATE_PATH
 from slack_bolt import App as slack_app
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
+from slack_connector import process_payload_for_channel
 from slack_consts import *
 from slack_consts import SLACK_DEFAULT_TIMEOUT
 
@@ -1118,13 +1119,15 @@ class SlackBot(object):
                     answer_path = "{0}/{1}".format(state_dir, answer_filename)
                     tmp_log('**going to put answer file here: {}'.format(answer_path))
 
+                    final_payload = process_payload_for_channel(body, answer_path)
+
                     try:
                         answer_file = open(answer_path, 'w')  # nosemgrep
                     except Exception as e:
                         print('Exception occured while opening file at {}. Exception: {}'.format(answer_file, e))
 
                     try:
-                        answer_file.write(json.dumps(body))
+                        answer_file.write(json.dumps(final_payload))
                         answer_file.close()
                     except Exception as e:
                         print('Exception occured while writing reponse to {}. Exception: {}'.format(answer_path, e))
@@ -1249,7 +1252,7 @@ class SlackBot(object):
             return
 
         if not self._check_command_authorization(cmd_type):
-            msg = SLACK_ERR_COMMAND_NOT_PERMITTED
+            msg = SLACK_ERROR_COMMAND_NOT_PERMITTED
             self._post_message(msg, channel)
             return
 
@@ -1308,21 +1311,21 @@ if __name__ == '__main__':  # noqa: C901
             if bot_token:
                 bot_token = decrypt_state(asset_id, bot_token, "bot")
         except Exception:
-            print(SLACK_DECRYPTION_ERR)
+            print(SLACK_DECRYPTION_ERROR)
             sys.exit(1)
 
         try:
             if socket_token:
                 socket_token = decrypt_state(asset_id, socket_token, "socket")
         except Exception:
-            print(SLACK_DECRYPTION_ERR)
+            print(SLACK_DECRYPTION_ERROR)
             sys.exit(1)
 
         try:
             if ph_auth_token:
                 ph_auth_token = decrypt_state(asset_id, ph_auth_token, "ph_auth")
         except Exception:
-            print(SLACK_DECRYPTION_ERR)
+            print(SLACK_DECRYPTION_ERROR)
             sys.exit(1)
 
         sb = SlackBot(

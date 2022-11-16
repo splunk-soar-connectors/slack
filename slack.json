@@ -3313,11 +3313,6 @@
                     "description": "Message to user after response",
                     "data_type": "string",
                     "order": 3
-                },
-                "permitted_responders": {
-                    "description": "Comma separated User IDs permitted to respond to question. Leave blank to permit all. Useful when sending to groups or channels.",
-                    "data_type": "string",
-                    "order": 4
                 }
             },
             "output": [
@@ -3341,10 +3336,6 @@
                 },
                 {
                     "data_path": "action_result.parameter.responses",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.parameter.permitted_responders",
                     "data_type": "string"
                 },
                 {
@@ -3634,8 +3625,8 @@
         },
         {
             "action": "ask question channel",
-            "description": "Ask a question to a Slack user",
-            "verbose": "This action will send a Slack user a direct message containing a question with a series of buttons which represent possible responses. Once the user clicks on one of the responses, Slack will send the response back to Phantom. The action will succeed and output this response in the action result. If the user fails to respond within the timeout configured in the asset, the action will succeed, and output the <b>question ID</b> in the action result. The question ID can be used as input to the <b>get response</b> action.<br><br>If the <b>responses</b> parameter is not filled out, the response options will be <b>yes</b> and <b>no</b>.<br><br>The <b>confirmation</b> parameter takes a string that will be sent to the user after the user clicks a response. <b>Note:</b> It is recommended to use user ID instead of username since the latter usage has been deprecated by Slack.",
+            "description": "Ask a question in slack channel",
+            "verbose": "This action will send message in a channel, containing a question with a series of buttons which represent possible responses. Once the user clicks on one of the responses, Slack will send the response back to Phantom. The action will succeed and output this response in the action result. If the user fails to respond within the timeout configured in the asset, the action will succeed, and output the <b>question ID</b> in the action result. The question ID can be used as input to the <b>get response</b> action.<br><br>If the <b>responses</b> parameter is not filled out, the response options will be <b>yes</b> and <b>no</b>.<br><br>The <b>confirmation</b> parameter takes a string that will be sent to the user after the user clicks a response. <b>Note:</b> It is recommended to use user ID instead of username since the latter usage has been deprecated by Slack.",
             "type": "generic",
             "identifier": "ask_question_channel",
             "read_only": false,
@@ -3644,7 +3635,7 @@
             },
             "parameters": {
                 "destination": {
-                    "description": "User (e.g. @user or U1A1A1AAA) to ask question to",
+                    "description": "channel (e.g. #channel-name or C1A1A1AAA) to ask question to",
                     "data_type": "string",
                     "primary": true,
                     "required": true,
@@ -4348,7 +4339,7 @@
             },
             {
                 "module": "slack_sdk",
-                "input_file": "wheels/shared/slack_sdk-3.19.2-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/slack_sdk-3.19.3-py2.py3-none-any.whl"
             },
             {
                 "module": "soupsieve",
@@ -4424,7 +4415,7 @@
             },
             {
                 "module": "slack_sdk",
-                "input_file": "wheels/shared/slack_sdk-3.19.2-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/slack_sdk-3.19.3-py2.py3-none-any.whl"
             },
             {
                 "module": "soupsieve",
