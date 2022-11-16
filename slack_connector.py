@@ -149,7 +149,11 @@ def process_payload_for_channel(payload, answer_path):
             with open(answer_path, "r") as read_old_file:
                 old_payload = read_old_file.read()
         except Exception as e:
-            print(e)
+            return HttpResponse(
+                "Error while reading data from file: {}".format(e),
+                content_type="text/plain",
+                status=400
+            )
 
         old_payload = json.loads(old_payload)
         current_user_id = payload.get('user').get('id')
