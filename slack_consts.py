@@ -66,7 +66,7 @@ SLACK_TC_FILE = "slack_auth_task.out"
 SLACK_SUCCESSFULLY_MESSAGE = "Slack message post successfulLY"
 
 SLACK_ERROR_MESSAGE_RETURNED_NO_DATA = "Message post did not receive response"
-SLACK_ERROR_SERVER_CONNECTION = "Connection to server failed"
+SLACK_ERROR_SERVER_CONNECTIVITY = "Connection to server failed"
 SLACK_ERROR_UNSUPPORTED_METHOD = "Unsupported method"
 SLACK_ERROR_FROM_SERVER = "Got unknown error from the Slack server"
 SLACK_ERROR_NOT_IN_VAULT = "No item in vault has the supplied ID"
