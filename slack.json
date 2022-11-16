@@ -3635,7 +3635,7 @@
             },
             "parameters": {
                 "destination": {
-                    "description": "channel (e.g. #channel-name or C1A1A1AAA) to ask question to",
+                    "description": "Channel (e.g. #channel-name or C1A1A1AAA) to ask question to",
                     "data_type": "string",
                     "primary": true,
                     "required": true,
@@ -3924,7 +3924,7 @@
                     "data_path": "action_result.data.*.qid",
                     "data_type": "string",
                     "column_name": "Question ID",
-                    "column_order": 2,
+                    "column_order": 1,
                     "contains": [
                         "slack question id"
                     ]

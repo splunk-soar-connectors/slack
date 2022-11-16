@@ -586,7 +586,7 @@ class SlackConnector(phantom.BaseConnector):
         ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_AUTH_TEST, {})
 
         if not ret_val:
-            self.save_progress(SLACK_ERROR_TEST_CONN_FAILED)
+            self.save_progress(SLACK_ERROR_TEST_CONNECTIVITY_FAILED)
             return ret_val
 
         action_result.add_data(resp_json)
@@ -601,7 +601,7 @@ class SlackConnector(phantom.BaseConnector):
         self._state['bot_name'] = bot_username
         self._state['bot_id'] = bot_user_id
 
-        self.save_progress(SLACK_SUCC_TEST_CONN_PASSED)
+        self.save_progress(SLACK_SUCCESSFULLY_TEST_CONNECTIVITY_PASSED)
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
@@ -658,7 +658,7 @@ class SlackConnector(phantom.BaseConnector):
 
         action_result.add_data(resp_json)
 
-        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_CHANNEL_CREATED)
+        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_CHANNEL_CREATED)
 
     def _list_channels(self, param):
 
@@ -793,7 +793,7 @@ class SlackConnector(phantom.BaseConnector):
         name = user.get('name', '')
         user['name'] = '@{}'.format(name)
 
-        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_USER_DATA_RETRIEVED)
+        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_USER_DATA_RETRIEVED)
 
     def _invite_users(self, param):
 
@@ -846,7 +846,7 @@ class SlackConnector(phantom.BaseConnector):
 
         action_result.add_data(resp_json)
 
-        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_INVITE_SENT)
+        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_INVITE_SENT)
 
     def _send_message(self, param):
 
@@ -894,7 +894,7 @@ class SlackConnector(phantom.BaseConnector):
 
         action_result.add_data(resp_json)
 
-        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_MESSAGE_SENT)
+        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_MESSAGE_SENT)
 
     def _add_reaction(self, param):
 
@@ -918,7 +918,7 @@ class SlackConnector(phantom.BaseConnector):
 
         action_result.add_data(resp_json)
 
-        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_REACTION_ADDED)
+        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_REACTION_ADDED)
 
     def _upload_file(self, param):
 
@@ -1047,7 +1047,7 @@ class SlackConnector(phantom.BaseConnector):
 
         action_result.add_data(resp_json)
 
-        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_FILE_UPLOAD)
+        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_FILE_UPLOAD)
 
     def _stop_bot(self, param):
 
@@ -1062,7 +1062,7 @@ class SlackConnector(phantom.BaseConnector):
                 if 'slack_bot.py' in sh.ps('ww', pid):  # pylint: disable=E1101
                     try:
                         sh.kill(pid)  # pylint: disable=E1101
-                        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_SLACKBOT_STOPPED)
+                        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_SLACKBOT_STOPPED)
                     except Exception:
                         return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_COUDNT_STOP_SLACKBOT)
             except Exception:
@@ -1073,7 +1073,7 @@ class SlackConnector(phantom.BaseConnector):
                 pid = shlex.split(str(ps_out))[1]
                 try:
                     sh.kill(pid)  # pylint: disable=E1101
-                    return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_SLACKBOT_STOPPED)
+                    return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_SLACKBOT_STOPPED)
                 except Exception:
                     return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_COUDNT_STOP_SLACKBOT)
             except Exception:
@@ -1119,7 +1119,7 @@ class SlackConnector(phantom.BaseConnector):
 
                 if 'slack_bot.py' in sh.ps('ww', pid):  # pylint: disable=E1101
                     self.save_progress("Detected SlackBot running with pid {0}".format(pid))
-                    return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_SLACKBOT_RUNNING)
+                    return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_SLACKBOT_RUNNING)
             except Exception:
                 pass
 
@@ -1157,7 +1157,7 @@ class SlackConnector(phantom.BaseConnector):
         self._state['pid'] = proc.pid
         self.save_progress("Started SlackBot with pid: {0}".format(proc.pid))
 
-        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_SLACKBOT_STARTED)
+        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_SLACKBOT_STARTED)
 
     def _handle_ask_question(self, action_result, param, user):
 
@@ -1252,7 +1252,7 @@ class SlackConnector(phantom.BaseConnector):
             return action_result.get_status()
 
         action_result.add_data(resp_json)
-        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_ASKED_QUESTION)
+        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_ASKED_QUESTION)
 
     def _ask_question(self, param):
 
