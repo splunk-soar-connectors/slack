@@ -269,6 +269,11 @@ class SlackConnector(phantom.BaseConnector):
         self._timeout = None
         self._socket_token = None
         self._verification_token = None
+        self._permit_act = None
+        self._permit_playbook = None
+        self._permit_container = None
+        self._permit_list = None
+        self._permitted_users = None
 
     def encrypt_state(self, encrypt_var, token_name):
         """ Handle encryption of token.
@@ -298,6 +303,11 @@ class SlackConnector(phantom.BaseConnector):
         self._bot_token = config.get(SLACK_JSON_BOT_TOKEN)
         self._socket_token = config.get(SLACK_JSON_SOCKET_TOKEN)
         self._ph_auth_token = config.get(SLACK_JSON_PH_AUTH_TOKEN)
+        self._permit_act = config.get(SLACK_JSON_PERMIT_BOT_ACT, False)
+        self._permit_playbook = config.get(SLACK_JSON_PERMIT_BOT_PLAYBOOK, False)
+        self._permit_container = config.get(SLACK_JSON_PERMIT_BOT_CONTAINER, False)
+        self._permit_list = config.get(SLACK_JSON_PERMIT_BOT_LIST, False)
+        self._permitted_users = config.get(SLACK_JSON_PERMITTED_USERS, False)
         self._base_url = SLACK_BASE_URL
 
         self._verification_token = self._state.get('token')
@@ -319,6 +329,11 @@ class SlackConnector(phantom.BaseConnector):
         self._state[SLACK_JSON_PH_AUTH_TOKEN] = self._ph_auth_token
         self._state[SLACK_JSON_BOT_TOKEN] = self._bot_token
         self._state[SLACK_JSON_SOCKET_TOKEN] = self._socket_token
+        self._state[SLACK_JSON_PERMIT_BOT_ACT] = self._permit_act
+        self._state[SLACK_JSON_PERMIT_BOT_PLAYBOOK] = self._permit_playbook
+        self._state[SLACK_JSON_PERMIT_BOT_CONTAINER] = self._permit_container
+        self._state[SLACK_JSON_PERMIT_BOT_LIST] = self._permit_list
+        self._state[SLACK_JSON_PERMITTED_USERS] = self._permitted_users
 
         # Decrypting data from state file
         if self._state.get(SLACK_STATE_IS_ENCRYPTED):
@@ -358,8 +373,9 @@ class SlackConnector(phantom.BaseConnector):
         return phantom.APP_SUCCESS
 
     def _get_phantom_base_url_slack(self, action_result):
+        base_url = self.get_phantom_base_url()
+        rest_url = SLACK_PHANTOM_SYS_INFO_URL.format(url=base_url if base_url.endswith('/') else base_url + '/')
 
-        rest_url = SLACK_PHANTOM_SYS_INFO_URL.format(url=self.get_phantom_base_url())
         ret_val, resp_json = self._make_rest_call(action_result, rest_url, False)
 
         if phantom.is_fail(ret_val):
@@ -463,23 +479,27 @@ class SlackConnector(phantom.BaseConnector):
         :param e: Exception object
         :return: error message
         """
+        error_code = None
+        error_msg = SLACK_ERR_MSG_UNAVAILABLE
+
+        self.error_print("Error occurred.", e)
 
         try:
-            if e.args:
+            if hasattr(e, "args"):
                 if len(e.args) > 1:
                     error_code = e.args[0]
                     error_msg = e.args[1]
                 elif len(e.args) == 1:
-                    error_code = SLACK_ERR_CODE_UNAVAILABLE
                     error_msg = e.args[0]
-            else:
-                error_code = SLACK_ERR_CODE_UNAVAILABLE
-                error_msg = SLACK_ERR_MESSAGE_UNKNOWN
-        except Exception:
-            error_code = SLACK_ERR_CODE_UNAVAILABLE
-            error_msg = SLACK_ERR_MESSAGE_UNKNOWN
+        except Exception as e:
+            self.error_print("Error occurred while fetching exception information. Details: {}".format(str(e)))
 
-        return "Error Code: {0}. Error Message: {1}".format(error_code, error_msg)
+        if not error_code:
+            error_text = "Error Message: {}".format(error_msg)
+        else:
+            error_text = "Error Code: {}. Error Message: {}".format(error_code, error_msg)
+
+        return error_text
 
     def _make_rest_call(self, action_result, rest_url, verify, method=requests.get, headers={}, body={}):
 
@@ -1066,12 +1086,36 @@ class SlackConnector(phantom.BaseConnector):
             return ret_val
 
         bot_id = resp_json.get('user_id')
+        bot_username = resp_json.get('user')
+
         if not bot_id:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_COULD_NOT_GET_BOT_ID)
+
+        # we need to save the bot username and bot id to state file in case test connectivity has not been run
+        # certain bot actions will fail if these values do not exist in the state file loaded at bot start
+        self._state['bot_name'] = bot_username
+        self._state['bot_id'] = bot_id
+        self.save_state(self._state)
+
+        # we are using container count to decide if we will restart the bot or not
+        container_count = int(param.get('container_count'))
 
         pid = self._state.get('pid')
         if pid:
             try:
+                # use manual on poll action to 'reload' state file into slack_bot.py
+                if self.is_poll_now():
+                    self.save_progress("Container Count: {}".format(container_count))
+                    if container_count == 1234:
+                        sh.kill(pid)
+                        self.save_progress("Container count set to 1234, stopping slack_bot.py at pid {}".format(pid))
+                    elif container_count == int(pid):
+                        sh.kill(pid)
+                        self.save_progress("pid passed in as container count, stopping bot")
+                        return action_result.set_status(phantom.APP_SUCCESS, "bot has been stopped")
+                    else:
+                        self.save_progress("HINT: Set Maximum Containers to 1234 to restart slackbot, or set to PID to stop slackbot")
+
                 if 'slack_bot.py' in sh.ps('ww', pid):  # pylint: disable=E1101
                     self.save_progress("Detected SlackBot running with pid {0}".format(pid))
                     return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCC_SLACKBOT_RUNNING)
@@ -1228,6 +1272,13 @@ class SlackConnector(phantom.BaseConnector):
         answer_path = resp_json.get('answer_path')
         qid = resp_json.get('qid')
 
+        str_responders = param.get('permitted_responders')
+        if str_responders:
+            permitted_responders = str_responders.split(",")
+            self.save_progress('Permitted responders: {}'.format(permitted_responders))
+        else:
+            self.save_progress('No permitted responders specified. Defaulting to allow all')
+
         loop_count = (self._timeout * 60) / self._interval
         count = 0
 
@@ -1252,6 +1303,18 @@ class SlackConnector(phantom.BaseConnector):
             break
 
         action_result.add_data(resp_json)
+        # self.save_progress(str(resp_json))
+
+        responder_name = resp_json.get("user").get("name")
+        responder_id = resp_json.get("user").get("id")
+        self.save_progress('{} - {} responded to question'.format(responder_name, responder_id))
+
+        if str_responders:
+            if responder_id not in permitted_responders:
+                os.remove(answer_path)
+                self.save_progress('{} - {} is not a permitted responder'.format(responder_name, responder_id))
+                return action_result.set_status(phantom.APP_ERROR, SLACK_ERR_RESPONDER_NOT_PERMITTED)
+
         action_result.set_summary({'response_received': True, 'question_id': qid, 'response': resp_json.get("actions", [{}])[0].get("value")})
 
         os.remove(answer_path)

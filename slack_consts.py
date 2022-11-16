@@ -38,6 +38,11 @@ SLACK_JSON_BOT_TOKEN = "bot_token"
 SLACK_JSON_PH_AUTH_TOKEN = 'ph_auth_token'
 SLACK_JSON_VERIFICATION_TOKEN = "verification_token"
 SLACK_JSON_SOCKET_TOKEN = "socket_token"
+SLACK_JSON_PERMIT_BOT_ACT = "permit_bot_act"
+SLACK_JSON_PERMIT_BOT_PLAYBOOK = "permit_bot_playbook"
+SLACK_JSON_PERMIT_BOT_CONTAINER = "permit_bot_container"
+SLACK_JSON_PERMIT_BOT_LIST = "permit_bot_list"
+SLACK_JSON_PERMITTED_USERS = "permitted_bot_users"
 
 SLACK_PHANTOM_ASSET_INFO_URL = "{url}rest/asset/{asset_id}"
 SLACK_PHANTOM_SYS_INFO_URL = "{url}rest/system_info"
@@ -65,8 +70,7 @@ SLACK_ERR_SERVER_CONNECTION = "Connection to server failed"
 SLACK_ERR_UNSUPPORTED_METHOD = "Unsupported method"
 SLACK_ERR_FROM_SERVER = "Got unknown error from the Slack server"
 SLACK_ERR_NOT_IN_VAULT = "No item in vault has the supplied ID"
-SLACK_ERR_CODE_UNAVAILABLE = "Error code unavailable"
-SLACK_ERR_MESSAGE_UNKNOWN = "Unknown error occurred. Please check the asset configuration and|or action parameters"
+SLACK_ERR_MSG_UNAVAILABLE = "Error message unavailable. Please check the asset configuration and|or action parameters"
 SLACK_ERR_INVALID_FILE_PATH = "The file path is invalid"
 SLACK_ERR_INVALID_INT = "Please provide a valid integer value in the {key} parameter"
 SLACK_ERR_NEGATIVE_AND_ZERO_INT = "Please provide a valid non-zero positive integer value in the {key} parameter"
@@ -143,6 +147,8 @@ SLACK_ERR_LENGTH_LIMIT_EXCEEDED = ("Based on your asset_id length ({asset_length
                                    "valid length for the 'confirmation' parameter is {valid_length}")
 
 SLACK_ERR_BLOCKS_OR_MSG_REQD = "You must provide at least one of 'blocks' or 'message'"
+SLACK_ERR_COMMAND_NOT_PERMITTED = "This command is not permitted to be run on this asset"
+SLACK_ERR_RESPONDER_NOT_PERMITTED = "The user that responded to the question is not permitted"
 
 SLACK_RESP_POLL_INTERVAL_KEY = "'How often to poll for a response (in seconds)' configuration"
 SLACK_TIMEOUT_KEY = "'Question timeout (in minutes)' configuration"

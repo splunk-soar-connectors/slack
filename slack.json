@@ -3,6 +3,14 @@
     "name": "Slack",
     "description": "Integrate with Slack to post messages and attachments to channels",
     "publisher": "Splunk",
+    "contributors": [
+        {
+            "name": "Dallan Wagner"
+        },
+        {
+            "name": "Mhike Funderburk"
+        }
+    ],
     "package_name": "phantom_slack",
     "type": "information",
     "license": "Copyright (c) 2016-2022 Splunk Inc.",
@@ -12,11 +20,11 @@
     "product_vendor": "Slack Technologies",
     "product_name": "Slack",
     "product_version_regex": ".*",
-    "min_phantom_version": "5.2.0",
+    "min_phantom_version": "5.3.5.",
     "python_version": "3",
     "fips_compliant": true,
     "latest_tested_versions": [
-        "Cloud API, July 05, 2022"
+        "Cloud API, October 31, 2022"
     ],
     "logo": "logo_slack.svg",
     "logo_dark": "logo_slack_dark.svg",
@@ -61,6 +69,31 @@
             "data_type": "numeric",
             "default": 30,
             "order": 6
+        },
+        "permit_bot_act": {
+            "description": "Permit 'act' commands on Bot (I.E. @SOARbot act 'list channels' --container 123 --asset slack)",
+            "data_type": "boolean",
+            "order": 7
+        },
+        "permit_bot_playbook": {
+            "description": "Permit 'run_playbook' commands on Bot (I.E. @SOARbot run_playbook <playbook_id> <container_id>)",
+            "data_type": "boolean",
+            "order": 8
+        },
+        "permit_bot_container": {
+            "description": "Permit 'get_container' commands on Bot (I.E. @SOARbot get_container <container_id>)",
+            "data_type": "boolean",
+            "order": 9
+        },
+        "permit_bot_list": {
+            "description": "Permit 'list' commands on Bot (I.E. @SOARbot list [actions|containers])",
+            "data_type": "boolean",
+            "order": 10
+        },
+        "permitted_bot_users": {
+            "description": "Users permitted to use Bot Actions. Comma seperated list of Member IDs. Leave blank to allow all users (Default Setting)",
+            "data_type": "string",
+            "order": 11
         }
     },
     "actions": [
@@ -3280,6 +3313,11 @@
                     "description": "Message to user after response",
                     "data_type": "string",
                     "order": 3
+                },
+                "permitted_responders": {
+                    "description": "Comma separated User IDs permitted to respond to question. Leave blank to permit all. Useful when sending to groups or channels.",
+                    "data_type": "string",
+                    "order": 4
                 }
             },
             "output": [
@@ -3303,6 +3341,10 @@
                 },
                 {
                     "data_path": "action_result.parameter.responses",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.permitted_responders",
                     "data_type": "string"
                 },
                 {
@@ -4258,7 +4300,7 @@
         "wheel": [
             {
                 "module": "Django",
-                "input_file": "wheels/py3/Django-3.2.13-py3-none-any.whl"
+                "input_file": "wheels/py3/Django-3.2.16-py3-none-any.whl"
             },
             {
                 "module": "asgiref",
@@ -4334,7 +4376,7 @@
         "wheel": [
             {
                 "module": "Django",
-                "input_file": "wheels/py3/Django-3.2.13-py3-none-any.whl"
+                "input_file": "wheels/py3/Django-3.2.16-py3-none-any.whl"
             },
             {
                 "module": "asgiref",
