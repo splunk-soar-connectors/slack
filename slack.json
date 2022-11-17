@@ -3305,7 +3305,7 @@
                     "order": 1
                 },
                 "responses": {
-                    "description": "List of possible responses",
+                    "description": "List of possible responses (Maximum responses allowed are 5)",
                     "data_type": "string",
                     "order": 2
                 },
@@ -3626,7 +3626,7 @@
         {
             "action": "ask question channel",
             "description": "Ask a question in slack channel",
-            "verbose": "This action will send message in a channel, containing a question with a series of buttons which represent possible responses. Once the user clicks on one of the responses, Slack will send the response back to Phantom. The action will succeed and output this response in the action result. If the user fails to respond within the timeout configured in the asset, the action will succeed, and output the <b>question ID</b> in the action result. The question ID can be used as input to the <b>get response</b> action.<br><br>If the <b>responses</b> parameter is not filled out, the response options will be <b>yes</b> and <b>no</b>.<br><br>The <b>confirmation</b> parameter takes a string that will be sent to the user after the user clicks a response. <b>Note:</b> It is recommended to use user ID instead of username since the latter usage has been deprecated by Slack.",
+            "verbose": "This action will send message containing a question with a series of buttons which represent possible responses in a channel. Once the user clicks on one of the responses, Slack will send the response back to Phantom. The question ID can be used as input to the <b>get response</b> action.<br><br>If the <b>responses</b> parameter is not filled out, the response options will be <b>yes</b> and <b>no</b>.<br><br>The <b>confirmation</b> parameter takes a string that will be sent to the user after the user clicks a response. <b>Note:</b> To use the bot in a private channel you need to invite the bot first iin the private channel, else it would give channel not found error.",
             "type": "generic",
             "identifier": "ask_question_channel",
             "read_only": false,
@@ -3652,21 +3652,12 @@
                     "order": 1
                 },
                 "responses": {
-                    "description": "List of possible responses",
+                    "description": "List of possible responses (Maximum responses allowed are 5)",
                     "data_type": "string",
                     "order": 2
-                },
-                "confirmation": {
-                    "description": "Message to user after response",
-                    "data_type": "string",
-                    "order": 3
                 }
             },
             "output": [
-                {
-                    "data_path": "action_result.parameter.confirmation",
-                    "data_type": "string"
-                },
                 {
                     "data_path": "action_result.parameter.destination",
                     "data_type": "string",

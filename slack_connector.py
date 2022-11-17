@@ -1190,7 +1190,7 @@ class SlackConnector(phantom.BaseConnector):
 
         confirmation = param.get('confirmation', ' ')
         if len(confirmation) > SLACK_CONFIRMATION_LIMIT:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_CONFIRMATION_TOO_LONG.format(limit=SLACK_MESSAGE_LIMIT)))
+            return RetVal(action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_CONFIRMATION_TOO_LONG.format(limit=SLACK_CONFIRMATION_LIMIT)))
 
         path_json = {'qid': qid,
                      'asset_id': str(self.get_asset_id()),
@@ -1206,7 +1206,7 @@ class SlackConnector(phantom.BaseConnector):
         self.save_progress('Asking question with ID: {0}'.format(qid))
 
         answers = []
-        given_answers = [x.strip() for x in param.get('responses', 'yes,no').split(',')]
+        given_answers = [x.strip().lower() for x in param.get('responses', 'yes,no').split(',')]
         given_answers = list(set(given_answers))
         given_answers = list(filter(None, given_answers))
         for answer in given_answers:
@@ -1223,8 +1223,6 @@ class SlackConnector(phantom.BaseConnector):
                 'actions': answers
             }
         ]
-        # with open("/opt/phantom/newData.txt", "a") as file:
-        #     file.write(str(callback_id))
         params = {'channel': user, 'attachments': json.dumps(answer_json), 'as_user': True}
 
         ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_SEND_MESSAGE, params)
