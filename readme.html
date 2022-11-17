@@ -225,42 +225,50 @@ Fill out the required values in the <b>Asset Definition</b> tab.
   <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_asset_info.png">
 </a>
 <br><br>
-Fill out the <b>Bot User OAuth Access Token</b>, <b>OAuth Access Token</b>,<b>Socket Token</b> and <b>Verification Token</b> in the <b>Asset Settings</b> tab. Optionally specify permissions and authorized Member IDs if you intend to use SlackBot features.
+Fill out the <b>Bot User OAuth Access Token</b>, <b>OAuth Access Token</b>,<b>Socket Token</b> and <b>Verification
+  Token</b> in the <b>Asset Settings</b> tab. Optionally specify permissions and authorized Member IDs if you intend to
+use SlackBot features. Also, anytime you update the any of the tokens mentioned above, please stop the bot once and
+restart the on poll to reflect the latest changes.
 <br><br>
-<b>IMPORTANT NOTE:<b> if you modify the "Permit" check boxes or permitted users options (SlackBot permissions) after asset creation, you will need to run POLL NOW with Maximum containers set to 1234 to restart the bot. Alternatively, you can stop and restart the bot.
-<br><br>
-<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_new_settings.png">
-    <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_new_settings.png">
-</a>
-<br><br>
-Click <b>SAVE</b>, you will be asked to fill in the <b>Ingest Settings</b>, select one of the labels from the drop-down
-or you can create a new one and Click <b>SAVE</b>.
-<br><br>
-<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_ingest_settings.png">
-  <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_ingest_settings.png">
-</a>
-<br><br>
-<h3>Automation User</h3>
-The Slack app needs a SOAR authentication token to perform some tasks on the SOAR platform. To get this token, it is
-recommended that you create a new automation user. The steps for creating this user are as follows:
-<ul>
-  <li>On the SOAR platform, navigate to <b>Administration->User Management</b></li>
-  <li>Under <b>Users</b>, click <b>+ USER</b></li>
-  <li>In the <b>Add User</b> wizard, do the following:</li>
-  <ul>
-    <li>Set the <b>User Type</b> to <b>Automation</b></li>
-    <li>Give the user a <b>Username</b> like &quot;Slack Automation&quot;</li>
-    <li>For security reasons, accessing 127.0.0.1 is not allowed. Set <b>Allowed IPs</b> same as the <b>instance IP or
-        "any"</b>. (eg : If instance IP is 10.1.18.123, set allowed IP also 10.1.18.123)</li>
-    <li>Set the <b>Default Label</b> to the label seen in the Slack asset's <b>Ingest Settings</b></li>
-    <li>Under <b>Roles</b>, in addition to the default <b>Automation</b> role, add the <b>Observer</b> role</li>
-    <li>Click <b>CREATE</b>
-  </ul>
-  <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_automation_user.png">
-    <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_automation_user.png">
-  </a>
-  <br><br>
-  <li>Once the new user is created, click on the user in the user list</b></li>
+<b>IMPORTANT NOTE:<b> if you modify the "Permit" check boxes or permitted users options (SlackBot permissions) after
+    asset creation, you will need to run POLL NOW with Maximum containers set to 1234 to restart the bot. Alternatively,
+    you can stop and restart the bot.
+    <br><br>
+    <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_new_settings.png">
+      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_new_settings.png">
+    </a>
+    <br><br>
+    Click <b>SAVE</b>, you will be asked to fill in the <b>Ingest Settings</b>, select one of the labels from the
+    drop-down
+    or you can create a new one and Click <b>SAVE</b>.
+    <br><br>
+    <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_ingest_settings.png">
+      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_ingest_settings.png">
+    </a>
+    <br><br>
+    <h3>Automation User</h3>
+    The Slack app needs a SOAR authentication token to perform some tasks on the SOAR platform. To get this token, it is
+    recommended that you create a new automation user. The steps for creating this user are as follows:
+    <ul>
+      <li>On the SOAR platform, navigate to <b>Administration->User Management</b></li>
+      <li>Under <b>Users</b>, click <b>+ USER</b></li>
+      <li>In the <b>Add User</b> wizard, do the following:</li>
+      <ul>
+        <li>Set the <b>User Type</b> to <b>Automation</b></li>
+        <li>Give the user a <b>Username</b> like &quot;Slack Automation&quot;</li>
+        <li>For security reasons, accessing 127.0.0.1 is not allowed. Set <b>Allowed IPs</b> same as the <b>instance IP
+            or
+            "any"</b>. (eg : If instance IP is 10.1.18.123, set allowed IP also 10.1.18.123)</li>
+        <li>Set the <b>Default Label</b> to the label seen in the Slack asset's <b>Ingest Settings</b></li>
+        <li>Under <b>Roles</b>, in addition to the default <b>Automation</b> role, add the <b>Observer</b> role</li>
+        <li>Click <b>CREATE</b>
+      </ul>
+      <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_automation_user.png">
+        <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_automation_user.png">
+      </a>
+      <br><br>
+      <li>Once the new user is created, click on the user in the user list
+  </b></li>
   <li>On the user's page copy the <b>ph-auth-token</b> field from the <b>Authorization Configuration for REST API</b>
     box</li>
   <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_auth_token.png">
@@ -268,137 +276,157 @@ recommended that you create a new automation user. The steps for creating this u
   </a>
   <br><br>
   <li>Paste the copied token in the <b>Automation User Auth Token</b> on the Slack app's <b>Asset Settings</b> page
-</ul>
-<h3>Test Connectivity</h3>
-Now, on the <b>Asset Settings</b> page, click the <b>TEST CONNECTIVITY</b> button, which will display a text box with
-progress messages. It will show the bot username and bot user ID that SOAR received from Slack. Please ensure that these
-are correct.
-<br><br>
-<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_new_test_connectivity.png">
-  <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_new_test_connectivity.png">
-</a>
+    </ul>
+    <h3>Test Connectivity</h3>
+    Now, on the <b>Asset Settings</b> page, click the <b>TEST CONNECTIVITY</b> button, which will display a text box
+    with
+    progress messages. It will show the bot username and bot user ID that SOAR received from Slack. Please ensure that
+    these
+    are correct.
+    <br><br>
+    <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_new_test_connectivity.png">
+      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_new_test_connectivity.png">
+    </a>
 
-<h2>Set up Interactivity in Slack</h2>
-Go to the <b>Your apps</b> option in Slack. From the menu on the left select the <b>Interactivity & Shortcuts</b>
-option.
-<br><br>
-NOTE: Slack will only send POST requests to endpoints that have an SSL certificate signed by a certificate authority.
-<br><br>
-<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_interactive_messages.png">
-  <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_interactive_messages.png">
-</a>
-<br><br>
-Once on this page, toggle on <b>Interactivity</b>. Configure the <b>Request URL</b>. To do so just copy the value of url
-provided in the field<b>POST incoming for Slack to this location</b> in <b>Asset Settings</b> of slack asset and paste
-it in the <b>Request URL</b> field of <b>Slack Apps</b>.
-<br><br>
-<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_enable_interactive_messages.png">
-  <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_enable_interactive_messages.png">
-</a>
-<br><br>
-NOTE : Slack Apps provided two ways to handle interactions on their apps, using <b>Request URL</b> and
-<b>WebSockets</b>.At a time only one mode can be used, either Request URL or Socoket mode. The Slack Bot uses web
-sockets internally, there it is suggested to make to assests for using slack actions and bot simultaneously. One asset
-to perform slack actions from phantom and another asset to use commands on slack for phantom. Using one asset for both
-can cause issue.
-<br><br>
-<h2>Set up Socket Mode in Slack</h2>
-Go to the <b>Your apps</b> option in Slack. From the menu on the left select the <b>Socket Mode</b>
-option.
-<br><br>
-<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_socket_mode.png">
-  <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_socket_mode.png">
-</a>
-<br><br>
-Once on this page, toggle on <b>Socket Mode</b>. Then click on the event subscription option. This will redirect you to
-the Event Subscription page, and add the following subscriptions for bot.
-<br><br>
-<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_subscription_events.png">
-  <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_subscription_events.png">
-</a>
-<br><br>
-<h2>Slack Bot</h2>
-<h3>Ingest Settings</h3>
-To run the SOAR SlackBot that will get SOAR to take commands from Slack, ingestion needs to be enabled on the SOAR Slack
-Asset. To do this go back to the INGEST SETTINGS tab and enable polling and specify the Polling interval as <b>off</b>.
-The "Label to apply to objects from this source" setting is ignored by this app, so it can be set to anything.
-<br><br>
-<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_polling_enabled.png">
-  <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_polling_enabled.png">
-</a>
-<br><br>
-To check the status of the SOAR bot and restart it if not running, you can Click POLL NOW from the INGEST SETTINGS app
-and then POLL NOW again. The "Source ID", "Maximum containers", and "Maximum artifacts" settings can be ignored in this
-case.
-<br><br>
-<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_poll_now.png">
-  <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_poll_now.png">
-</a>
-<br><br>
-The POLL NOW window will display the PID of the SlackBot process as well as the number of artifacts and containers
-ingested (which will always be zero for this app).
-<br><br>
-<h3>Restarting SlackBot</h3>
-If SlackBot permissions are changed in the asset configuration, it is mandatory to restart SlackBot for the new settings to go into affect. To restart SlackBot, use the POLL NOW option with a Maximum container count of 1234.
-<br>
-<br><br>
-<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_restart_bot.png">
-    <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_restart_bot.png">
-</a>
-<br><br>
-<h3>Stopping SlackBot</h3>
-Once the SOAR SlackBot starts running, the <b>stop bot</b> action needs to be run to stop it. Simply disabling ingestion won't stop SlackBot. You may also run poll now with a Maximum container count of the PID to stop SlackBot. To obtain the PID, run Poll Now with default parameters.
-<br>
-<br>
-WARNING: Stopping SlackBot is required before upgrading or uninstalling the SOAR Slack App or else an untracked SlackBot
-process may be left running on the SOAR instance. In addition, deleting a Slack asset that has SlackBot running will
-result in SlackBot continuing to run, untracked.
-<br><br>
-<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_stop_bot.png">
-    <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_stop_bot.png">
-</a>
-<br><br>
-<h2>Slack Commands</h2>
-Once a Slack asset has been configured, and SlackBot is running on SOAR, it needs to be invited to the channel, and then
-commands from Slack can be received by SOAR. In Slack, just mention the bot to get a help message on running commands.
-All commands follow this syntax:
-<br><br>
-<p>@BOT_NAME COMMAND COMMAND_PARAMETERS</p>
-<br>
-<h3>SlackBot Permissions</h3>
-Granular permissions that control who, and what actions can be performed by SOAR SlackBot can be defined in the asset configuration.
-<ul>
-    <li>Permit 'act' commands on Bot (Boolean)</li>
+    <h2>Set up Interactivity in Slack</h2>
+    Go to the <b>Your apps</b> option in Slack. From the menu on the left select the <b>Interactivity & Shortcuts</b>
+    option.
+    <br><br>
+    NOTE: Slack will only send POST requests to endpoints that have an SSL certificate signed by a certificate
+    authority.
+    <br><br>
+    <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_interactive_messages.png">
+      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_interactive_messages.png">
+    </a>
+    <br><br>
+    Once on this page, toggle on <b>Interactivity</b>. Configure the <b>Request URL</b>. To do so just copy the value of
+    url
+    provided in the field<b>POST incoming for Slack to this location</b> in <b>Asset Settings</b> of slack asset and
+    paste
+    it in the <b>Request URL</b> field of <b>Slack Apps</b>.
+    <br><br>
+    <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_enable_interactive_messages.png">
+      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_enable_interactive_messages.png">
+    </a>
+    <br><br>
+    NOTE : Slack Apps provided two ways to handle interactions on their apps, using <b>Request URL</b> and
+    <b>WebSockets</b>.At a time only one mode can be used, either Request URL or Socoket mode. The Slack Bot uses web
+    sockets internally, there it is suggested to make to assests for using slack actions and bot simultaneously. One
+    asset
+    to perform slack actions from phantom and another asset to use commands on slack for phantom. Using one asset for
+    both
+    can cause issue.
+    <br><br>
+    <h2>Set up Socket Mode in Slack</h2>
+    Go to the <b>Your apps</b> option in Slack. From the menu on the left select the <b>Socket Mode</b>
+    option.
+    <br><br>
+    <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_socket_mode.png">
+      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_socket_mode.png">
+    </a>
+    <br><br>
+    Once on this page, toggle on <b>Socket Mode</b>. Then click on the event subscription option. This will redirect you
+    to
+    the Event Subscription page, and add the following subscriptions for bot.
+    <br><br>
+    <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_subscription_events.png">
+      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_subscription_events.png">
+    </a>
+    <br><br>
+    <h2>Slack Bot</h2>
+    <h3>Ingest Settings</h3>
+    To run the SOAR SlackBot that will get SOAR to take commands from Slack, ingestion needs to be enabled on the SOAR
+    Slack
+    Asset. To do this go back to the INGEST SETTINGS tab and enable polling and specify the Polling interval as
+    <b>off</b>.
+    The "Label to apply to objects from this source" setting is ignored by this app, so it can be set to anything.
+    <br><br>
+    <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_polling_enabled.png">
+      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_polling_enabled.png">
+    </a>
+    <br><br>
+    To check the status of the SOAR bot and restart it if not running, you can Click POLL NOW from the INGEST SETTINGS
+    app
+    and then POLL NOW again. The "Source ID", "Maximum containers", and "Maximum artifacts" settings can be ignored in
+    this
+    case.
+    <br><br>
+    <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_poll_now.png">
+      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_poll_now.png">
+    </a>
+    <br><br>
+    The POLL NOW window will display the PID of the SlackBot process as well as the number of artifacts and containers
+    ingested (which will always be zero for this app).
+    <br><br>
+    <h3>Restarting SlackBot</h3>
+    If SlackBot permissions are changed in the asset configuration, it is mandatory to restart SlackBot for the new
+    settings to go into affect. To restart SlackBot, use the POLL NOW option with a Maximum container count of 1234.
+    <br>
+    <br><br>
+    <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_restart_bot.png">
+      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_restart_bot.png">
+    </a>
+    <br><br>
+    <h3>Stopping SlackBot</h3>
+    Once the SOAR SlackBot starts running, the <b>stop bot</b> action needs to be run to stop it. Simply disabling
+    ingestion won't stop SlackBot. You may also run poll now with a Maximum container count of the PID to stop SlackBot.
+    To obtain the PID, run Poll Now with default parameters.
+    <br>
+    <br>
+    WARNING: Stopping SlackBot is required before upgrading or uninstalling the SOAR Slack App or else an untracked
+    SlackBot
+    process may be left running on the SOAR instance. In addition, deleting a Slack asset that has SlackBot running will
+    result in SlackBot continuing to run, untracked.
+    <br><br>
+    <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_stop_bot.png">
+      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_stop_bot.png">
+    </a>
+    <br><br>
+    <h2>Slack Commands</h2>
+    Once a Slack asset has been configured, and SlackBot is running on SOAR, it needs to be invited to the channel, and
+    then
+    commands from Slack can be received by SOAR. In Slack, just mention the bot to get a help message on running
+    commands.
+    All commands follow this syntax:
+    <br><br>
+    <p>@BOT_NAME COMMAND COMMAND_PARAMETERS</p>
+    <br>
+    <h3>SlackBot Permissions</h3>
+    Granular permissions that control who, and what actions can be performed by SOAR SlackBot can be defined in the
+    asset configuration.
     <ul>
-      <li>Allow SlackBot commands that leverage the "act" operator</li>
-      <li>Example:  @SOARbot act 'list channels' --container 123 --asset slack</li>
+      <li>Permit 'act' commands on Bot (Boolean)</li>
+      <ul>
+        <li>Allow SlackBot commands that leverage the "act" operator</li>
+        <li>Example: @SOARbot act 'list channels' --container 123 --asset slack</li>
+      </ul>
+      <li>Permit 'run_playbook' commands on Bot (Boolean)</li>
+      <ul>
+        <li>Allow playbooks to be run on specific containers through SlackBot</li>
+        <li>Example: @SOARbot run_playbook &lt;playbook_id&gt; &lt;container_id&gt;</li>
+      </ul>
+      <li>Permit 'get_container' commands on Bot (Boolean)</li>
+      <ul>
+        <li>Allow SlackBot to obtain information about a specified container</li>
+        <li>Example: @SOARbot get_container <container_id>)</li>
+      </ul>
+      <li>Permit 'list' commands on Bot (Boolean)</li>
+      <ul>
+        <li>Allow SlackBot commands that leverage the "list" operator</li>
+        <li>Example: @SOARbot list [actions|containers]</li>
+      </ul>
+      <li>Users permitted to use Bot Actions</li>
+      <ul>
+        <li>Provide Comma separated list of Member IDs to be permitted to use SlackBot commands. If left blank, all
+          users will be permitted (default setting)</li>
+        <li>Example: U01M3CLBL9Q, U01M4CLAP9M (NOTE: You must use the unique Member ID and not the username)
+      </ul>
     </ul>
-    <li>Permit 'run_playbook' commands on Bot (Boolean)</li>
-    <ul>
-      <li>Allow playbooks to be run on specific containers through SlackBot</li>
-      <li>Example: @SOARbot run_playbook &lt;playbook_id&gt;  &lt;container_id&gt;</li>
-    </ul>
-    <li>Permit 'get_container' commands on Bot (Boolean)</li>
-    <ul>
-      <li>Allow SlackBot to obtain information about a specified container</li>
-      <li>Example: @SOARbot get_container <container_id>)</li>
-    </ul>
-    <li>Permit 'list' commands on Bot (Boolean)</li>
-    <ul>
-      <li>Allow SlackBot commands that leverage the "list" operator</li>
-      <li>Example: @SOARbot list [actions|containers]</li>
-    </ul>
-    <li>Users permitted to use Bot Actions</li>
-    <ul>
-      <li>Provide Comma separated list of Member IDs to be permitted to use SlackBot commands. If left blank, all users will be permitted (default setting)</li>
-      <li>Example: U01M3CLBL9Q, U01M4CLAP9M (NOTE: You must use the unique Member ID and not the username)
-    </ul>
-</ul>
-<br>
-<h3>Running Actions</h3>
-To run an action on SOAR from Slack, use the <b>act</b> command. The syntax of which is:
-<br><br>
-<pre>
+    <br>
+    <h3>Running Actions</h3>
+    To run an action on SOAR from Slack, use the <b>act</b> command. The syntax of which is:
+    <br><br>
+    <pre>
 @BOT_NAME act ACTION_NAME [--container CONTAINER_ID] [--asset ASSET] [--name NAME]
     [--type TYPE] [--parameters PARAMETER:VALUE [PARAMETER:VALUE]*]
 
@@ -427,15 +455,17 @@ examples:
 
     @SOARbot act "whois ip" --container 123 --parameters ip:1.1.1.1 --name "All WhoIs"
 </pre>
-<br>
-After receiving an <b>act</b> command, SlackBot will kick off the action and send a link to the action page to Slack.
-When the action is complete, SlackBot will send a summary of the action results to Slack. If multiple actions are run at
-once, SlackBot will send action results for each action separately as each action completes.
-<br>
-<h3>Running Playbooks</h3>
-To run a playbook on SOAR from Slack, use the <b>run_playbook</b> command. The syntax of which is:
-<br><br>
-<pre>
+    <br>
+    After receiving an <b>act</b> command, SlackBot will kick off the action and send a link to the action page to
+    Slack.
+    When the action is complete, SlackBot will send a summary of the action results to Slack. If multiple actions are
+    run at
+    once, SlackBot will send action results for each action separately as each action completes.
+    <br>
+    <h3>Running Playbooks</h3>
+    To run a playbook on SOAR from Slack, use the <b>run_playbook</b> command. The syntax of which is:
+    <br><br>
+    <pre>
 @BOT_NAME run_playbook [--repo REPO] PLAYBOOK CONTAINER_ID
 
 required parameters:
@@ -455,15 +485,16 @@ examples:
 
     @SOARbot run_playbook 32 123
 </pre>
-<br>
-After receiving a <b>run_playbook</b> command, SlackBot will kick off the playbook and send a link to the container's
-mission control page to slack. When the playbook has finished running, SlackBot will send a status report of the
-playbook's run to Slack.
-<br>
-<h3>Getting Container Information</h3>
-To get information about a container, use the <b>get_container</b> command. The syntax of which is:
-<br><br>
-<pre>
+    <br>
+    After receiving a <b>run_playbook</b> command, SlackBot will kick off the playbook and send a link to the
+    container's
+    mission control page to slack. When the playbook has finished running, SlackBot will send a status report of the
+    playbook's run to Slack.
+    <br>
+    <h3>Getting Container Information</h3>
+    To get information about a container, use the <b>get_container</b> command. The syntax of which is:
+    <br><br>
+    <pre>
 @BOT_NAME get_container [--container CONTAINER] [--tags TAG [TAG]*]
 
 parameters:
@@ -486,13 +517,13 @@ examples:
 
     @SOARbot get_container --tags tag1 tag2 tag3
 </pre>
-Running a <b>get_container</b> command will result in SlackBot sending either a list of containers or a set of
-information on one container to Slack.
-<br>
-<h3>Listing Actions or Containers</h3>
-To get a list of actions or containers, use the <b>list</b> command. The syntax of which is:
-<br><br>
-<pre>
+    Running a <b>get_container</b> command will result in SlackBot sending either a list of containers or a set of
+    information on one container to Slack.
+    <br>
+    <h3>Listing Actions or Containers</h3>
+    To get a list of actions or containers, use the <b>list</b> command. The syntax of which is:
+    <br><br>
+    <pre>
 @BOT_NAME list [actions|containers]
 
 parameters:
@@ -509,5 +540,5 @@ examples:
 
     @SOARbot list containers
 </pre>
-Running a <b>list</b> command will result in SlackBot sending a list of either actions or containers to Slack.
-<br>
+    Running a <b>list</b> command will result in SlackBot sending a list of either actions or containers to Slack.
+    <br>
