@@ -232,13 +232,7 @@ def handle_request(request, path):
         if not _is_safe_path(state_dir, answer_path):
             return HttpResponse(SLACK_ERROR_INVALID_FILE_PATH, content_type="text/plain", status=400)
 
-        # user = payload.get('channel').get("id")
-        # final_payload = dict()
-
-        # if user.startswith('C'):
         final_payload = process_payload_for_channel(payload, answer_path)
-        # else:
-        #     final_payload = payload
 
         try:
             answer_file = open(answer_path, 'w')  # nosemgrep
@@ -1194,9 +1188,13 @@ class SlackConnector(phantom.BaseConnector):
         answer_filename = '{0}.json'.format(qid)
         answer_path = "{0}/{1}".format(local_data_state_dir, answer_filename)
 
+        confirmation = param.get('confirmation', ' ')
+        if len(confirmation) > SLACK_CONFIRMATION_LIMIT:
+            return RetVal(action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_CONFIRMATION_TOO_LONG.format(limit=SLACK_MESSAGE_LIMIT)))
+
         path_json = {'qid': qid,
                      'asset_id': str(self.get_asset_id()),
-                     'confirmation': param.get('confirmation', ' ')}
+                     'confirmation': confirmation}
 
         callback_id = json.dumps(path_json)
         if len(callback_id) > 255:
@@ -1209,6 +1207,7 @@ class SlackConnector(phantom.BaseConnector):
 
         answers = []
         given_answers = [x.strip() for x in param.get('responses', 'yes,no').split(',')]
+        given_answers = list(set(given_answers))
         given_answers = list(filter(None, given_answers))
         for answer in given_answers:
             answer_json = {'name': answer, 'text': answer, 'value': answer, 'type': 'button'}

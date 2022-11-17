@@ -33,6 +33,7 @@ ACTION_ID_INVITE_USERS = "invite_users"
 SLACK_BASE_URL = "https://slack.com/api/"
 SLACK_MESSAGE_LIMIT = 4000
 SLACK_DEFAULT_LIMIT = 100
+SLACK_CONFIRMATION_LIMIT = 174
 
 SLACK_JSON_BOT_TOKEN = "bot_token"
 SLACK_JSON_PH_AUTH_TOKEN = 'ph_auth_token'
@@ -117,6 +118,7 @@ SLACK_ERROR_FETCHING_USER = "Error fetching user"
 SLACK_SUCCESSFULLY_INVITE_SENT = "Invite sent to user(s)"
 SLACK_ERROR_MESSAGE_TOO_LONG = "Message too long. Please limit messages to {limit} characters."
 SLACK_ERROR_QUESTION_TOO_LONG = "Question too long. Please limit questions to {limit} characters."
+SLACK_ERROR_CONFIRMATION_TOO_LONG = "Confirmation too long. Please limit questions to {limit} characters."
 SLACK_SUCCESSFULLY_MESSAGE_SENT = "Message sent successfully"
 SLACK_SUCCESSFULLY_REACTION_ADDED = "Reaction added successfully"
 SLACK_SUCCESSFULLY_ASKED_QUESTION = "Asked question in channel successfully"
