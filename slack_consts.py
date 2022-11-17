@@ -171,4 +171,4 @@ SLACK_DECRYPT_TOKEN = "Decrypting the {} token"
 SLACK_ENCRYPTION_ERROR = "Error occurred while encrypting the state file"
 SLACK_DECRYPTION_ERROR = "Error occurred while decrypting the state file"
 
-SLACK_ERROR_MESSAG_UNAVAILABLE = "Define an error for slack"
+SLACK_ERROR_MESSAGE_UNAVAILABLE = "Error message unavailable. Please check the asset configuration and|or action parameters"

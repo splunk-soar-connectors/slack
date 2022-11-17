@@ -135,7 +135,7 @@ def rest_log(msg):
         highscore.write(msg + "\n")
 
 
-def process_payload_for_channel(payload, answer_path):
+def process_payload(payload, answer_path):
 
     if not exists(answer_path):
         final_payload = {
@@ -147,15 +147,13 @@ def process_payload_for_channel(payload, answer_path):
         old_payload = dict()
         try:
             with open(answer_path, "r") as read_old_file:
-                old_payload = read_old_file.read()
+                old_payload = json.loads(read_old_file.read())
         except Exception as e:
             return HttpResponse(
                 "Error while reading data from file: {}".format(e),
                 content_type="text/plain",
                 status=400
             )
-
-        old_payload = json.loads(old_payload)
         current_user_id = payload.get('user').get('id')
         if current_user_id not in old_payload.get('replies_from'):
             old_payload['payloads'].append(payload)
@@ -232,16 +230,11 @@ def handle_request(request, path):
         if not _is_safe_path(state_dir, answer_path):
             return HttpResponse(SLACK_ERROR_INVALID_FILE_PATH, content_type="text/plain", status=400)
 
-        final_payload = process_payload_for_channel(payload, answer_path)
+        final_payload = process_payload(payload, answer_path)
 
         try:
-            answer_file = open(answer_path, 'w')  # nosemgrep
-        except Exception as e:
-            return HttpResponse(SLACK_ERROR_COULD_NOT_OPEN_ANSWER_FILE.format(error=e), content_type="text/plain", status=400)
-
-        try:
-            answer_file.write(json.dumps(final_payload))
-            answer_file.close()
+            with open(answer_path, 'w') as answer_file:  # nosemgrep
+                answer_file.write(json.dumps(final_payload))
         except Exception as e:
             return HttpResponse(SLACK_ERROR_WHILE_WRITING_ANSWER_FILE.format(error=e), content_type="text/plain", status=400)
 
@@ -479,7 +472,6 @@ class SlackConnector(phantom.BaseConnector):
         """
         error_code = None
         error_message = SLACK_ERROR_MESSAGE_UNAVAILABLE
-        # RESOLVE THIS COMMENT
 
         self.error_print("Error occurred.", e)
 

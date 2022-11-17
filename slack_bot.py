@@ -31,7 +31,7 @@ from phantom.base_connector import APPS_STATE_PATH
 from slack_bolt import App as slack_app
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-from slack_connector import process_payload_for_channel
+from slack_connector import process_payload
 from slack_consts import *
 from slack_consts import SLACK_DEFAULT_TIMEOUT
 
@@ -1110,7 +1110,6 @@ class SlackBot(object):
                 if body:
                     callback_id = body.get('callback_id')
                     callback_json = json.loads(UnicodeDammit(callback_id).unicode_markup)
-                    # asset_id = callback_json.get('asset_id')
                     qid = callback_json.get('qid')
                     confirmation_message = callback_json.get('confirmation')
                     state_dir = '{0}/{1}'.format(APPS_STATE_PATH, SLACK_APP_ID)
@@ -1119,19 +1118,13 @@ class SlackBot(object):
                     answer_path = "{0}/{1}".format(state_dir, answer_filename)
                     tmp_log('**going to put answer file here: {}'.format(answer_path))
 
-                    final_payload = process_payload_for_channel(body, answer_path)
+                    final_payload = process_payload(body, answer_path)
 
                     try:
-                        answer_file = open(answer_path, 'w')  # nosemgrep
-                    except Exception as e:
-                        print('Exception occured while opening file at {}. Exception: {}'.format(answer_file, e))
-
-                    try:
-                        answer_file.write(json.dumps(final_payload))
-                        answer_file.close()
+                        with open(answer_path, 'w') as answer_file:  # nosemgrep
+                            answer_file.write(json.dumps(final_payload))
                     except Exception as e:
                         print('Exception occured while writing reponse to {}. Exception: {}'.format(answer_path, e))
-
                     respond(confirmation_message)
             except Exception as e:
                 print('Unknown exception occured while processing answer response. Exception: {}'.format(e))
