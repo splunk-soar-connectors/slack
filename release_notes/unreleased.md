@@ -1,1 +1,4 @@
 **Unreleased**
+* Fix 'ask question' action works with Socket mode
+* Added new action to 'ask question channel' and alow specific users to respond the question [PAPP-27491]
+* Added access control around Slack Bot functionality.
