@@ -2,11 +2,11 @@
 # Slack
 
 Publisher: Splunk  
-Connector Version: 2\.4\.0  
+Connector Version: 2\.5\.0  
 Product Vendor: Slack Technologies  
 Product Name: Slack  
 Product Version Supported (regex): "\.\*"  
-Minimum Product Version: 5\.2\.0  
+Minimum Product Version: 5\.3\.5  
 
 Integrate with Slack to post messages and attachments to channels
 
@@ -199,12 +199,13 @@ The required scopes are given below, please add the particular scope to use that
 </ul></td>
 </tr>
 <tr class="odd">
-<td>Ask Question</td>
+<td>Ask Question/Ask Question Channel</td>
 <td><ul>
 <li>chat:write</li>
 </ul></td>
 <td><ul>
 <li>chat:write</li>
+<li>chat:write.public</li>
 <li>chat:write:user</li>
 <li>chat:write:bot</li>
 </ul></td>
@@ -241,9 +242,15 @@ Fill out the required values in the **Asset Definition** tab.
 [![](img/slack_asset_info.png)](img/slack_asset_info.png)  
   
 Fill out the **Bot User OAuth Access Token** , **OAuth Access Token** , **Socket Token** and
-**Verification Token** in the **Asset Settings** tab.  
+**Verification Token** in the **Asset Settings** tab. Optionally specify permissions and authorized
+Member IDs if you intend to use SlackBot features. Also, anytime you update the any of the tokens
+mentioned above, please stop the bot once and restart the on poll to reflect the latest changes.  
   
-[![](img/slack_asset_settings.png)](img/slack_asset_settings.png)  
+**IMPORTANT NOTE:** if you modify the "Permit" check boxes or permitted users options (SlackBot
+permissions) after asset creation, you will need to run POLL NOW with Maximum containers set to 1234
+to restart the bot. Alternatively, you can stop and restart the bot.  
+  
+[![](img/slack_new_settings.png)](img/slack_new_settings.png)  
   
 Click **SAVE** , you will be asked to fill in the **Ingest Settings** , select one of the labels
 from the drop-down or you can create a new one and Click **SAVE** .  
@@ -279,6 +286,8 @@ user are as follows:
 
 -   Once the new user is created, click on the user in the user list
 
+<!-- -->
+
 -   On the user's page copy the **ph-auth-token** field from the **Authorization Configuration for
     REST API** box
 
@@ -297,18 +306,6 @@ from Slack. Please ensure that these are correct.
   
 [![](img/slack_new_test_connectivity.png)](img/slack_new_test_connectivity.png)
 
-## Set up Socket Mode in Slack
-
-Go to the **Your apps** option in Slack. From the menu on the left select the **Socket Mode**
-option.  
-  
-[![](img/slack_socket_mode.png)](img/slack_socket_mode.png)  
-  
-Once on this page, toggle on **Socket Mode** . Then click on the event subscription option. This
-will redirect you to the Event Subscription page, and add the following subscriptions for bot.  
-  
-[![](img/slack_subscription_events.png)](img/slack_subscription_events.png)
-
 ## Set up Interactivity in Slack
 
 Go to the **Your apps** option in Slack. From the menu on the left select the **Interactivity &
@@ -319,9 +316,31 @@ certificate authority.
   
 [![](img/slack_interactive_messages.png)](img/slack_interactive_messages.png)  
   
-Once on this page, toggle on **Interactivity** .  
+Once on this page, toggle on **Interactivity** . Configure the **Request URL** . To do so just copy
+the value of url provided in the field **POST incoming for Slack to this location** in **Asset
+Settings** of slack asset and paste it in the **Request URL** field of **Slack Apps** .  
   
-[![](img/slack_enable_interactive_messages.png)](img/slack_enable_interactive_messages.png)
+[![](img/slack_enable_interactive_messages.png)](img/slack_enable_interactive_messages.png)  
+  
+NOTE : Slack Apps provided two ways to handle interactions on their apps, using **Request URL** and
+**WebSockets** .At a time only one mode can be used, either Request URL or Socoket mode. The Slack
+Bot uses web sockets internally, there it is suggested to make to assests for using slack actions
+and bot simultaneously. One asset to perform slack actions from phantom and another asset to use
+commands on slack for phantom. Using one asset for both can cause issue.  
+  
+
+## Set up Socket Mode in Slack
+
+Go to the **Your apps** option in Slack. From the menu on the left select the **Socket Mode**
+option.  
+  
+[![](img/slack_socket_mode.png)](img/slack_socket_mode.png)  
+  
+Once on this page, toggle on **Socket Mode** . Then click on the event subscription option. This
+will redirect you to the Event Subscription page, and add the following subscriptions for bot.  
+  
+[![](img/slack_subscription_events.png)](img/slack_subscription_events.png)  
+  
 
 ## Slack Bot
 
@@ -344,13 +363,27 @@ The POLL NOW window will display the PID of the SlackBot process as well as the 
 and containers ingested (which will always be zero for this app).  
   
 
+### Restarting SlackBot
+
+If SlackBot permissions are changed in the asset configuration, it is mandatory to restart SlackBot
+for the new settings to go into affect. To restart SlackBot, use the POLL NOW option with a Maximum
+container count of 1234.  
+  
+  
+[![](img/slack_restart_bot.png)](img/slack_restart_bot.png)  
+  
+
 ### Stopping SlackBot
 
 Once the SOAR SlackBot starts running, the **stop bot** action needs to be run to stop it. Simply
-disabling ingestion won't stop SlackBot.  
+disabling ingestion won't stop SlackBot. You may also run poll now with a Maximum container count of
+the PID to stop SlackBot. To obtain the PID, run Poll Now with default parameters.  
+  
 WARNING: Stopping SlackBot is required before upgrading or uninstalling the SOAR Slack App or else
 an untracked SlackBot process may be left running on the SOAR instance. In addition, deleting a
 Slack asset that has SlackBot running will result in SlackBot continuing to run, untracked.  
+  
+[![](img/slack_stop_bot.png)](img/slack_stop_bot.png)  
   
 
 ## Slack Commands
@@ -361,6 +394,50 @@ get a help message on running commands. All commands follow this syntax:
   
 
 @BOT_NAME COMMAND COMMAND_PARAMETERS
+
+  
+
+### SlackBot Permissions
+
+Granular permissions that control who, and what actions can be performed by SOAR SlackBot can be
+defined in the asset configuration.
+
+-   Permit 'act' commands on Bot (Boolean)
+
+      
+
+    -   Allow SlackBot commands that leverage the "act" operator
+    -   Example: @SOARbot act 'list channels' --container 123 --asset slack
+
+-   Permit 'run_playbook' commands on Bot (Boolean)
+
+      
+
+    -   Allow playbooks to be run on specific containers through SlackBot
+    -   Example: @SOARbot run_playbook \<playbook_id> \<container_id>
+
+-   Permit 'get_container' commands on Bot (Boolean)
+
+      
+
+    -   Allow SlackBot to obtain information about a specified container
+    -   Example: @SOARbot get_container )
+
+-   Permit 'list' commands on Bot (Boolean)
+
+      
+
+    -   Allow SlackBot commands that leverage the "list" operator
+    -   Example: @SOARbot list \[actions\|containers\]
+
+-   Users permitted to use Bot Actions
+
+      
+
+    -   Provide Comma separated list of Member IDs to be permitted to use SlackBot commands. If left
+        blank, all users will be permitted (default setting)
+    -   Example: U01M3CLBL9Q, U01M4CLAP9M (NOTE: You must use the unique Member ID and not the
+        username)
 
   
 
@@ -499,6 +576,11 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 **ph\_auth\_token** |  optional  | password | Automation User Auth Token
 **timeout** |  optional  | numeric | Question timeout \(in minutes\)
 **response\_poll\_interval** |  optional  | numeric | How often to poll for a response \(in seconds\)
+**permit\_bot\_act** |  optional  | boolean | Permit 'act' commands on Bot \(I\.E\. \@SOARbot act 'list channels' \-\-container 123 \-\-asset slack\)
+**permit\_bot\_playbook** |  optional  | boolean | Permit 'run\_playbook' commands on Bot \(I\.E\. \@SOARbot run\_playbook <playbook\_id> <container\_id>\)
+**permit\_bot\_container** |  optional  | boolean | Permit 'get\_container' commands on Bot \(I\.E\. \@SOARbot get\_container <container\_id>\)
+**permit\_bot\_list** |  optional  | boolean | Permit 'list' commands on Bot \(I\.E\. \@SOARbot list \[actions\|containers\]\)
+**permitted\_bot\_users** |  optional  | string | Users permitted to use Bot Actions\. Comma seperated list of Member IDs\. Leave blank to allow all users \(Default Setting\)
 
 ### Supported Actions  
 [test connectivity](#action-test-connectivity) - Tests authorization with Slack  
@@ -511,6 +593,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 [add reaction](#action-add-reaction) - React to a message in Slack  
 [upload file](#action-upload-file) - Upload file to Slack  
 [ask question](#action-ask-question) - Ask a question to a Slack user  
+[ask question channel](#action-ask-question-channel) - Ask a question in slack channel  
 [get response](#action-get-response) - Get the response to a previously asked question  
 [on poll](#action-on-poll) - Start SlackBot and make health checks to it  
 [stop bot](#action-stop-bot) - Stop SlackBot  
@@ -1091,7 +1174,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 --------- | -------- | ----------- | ---- | --------
 **destination** |  required  | User \(e\.g\. \@user or U1A1A1AAA\) to ask question to | string |  `slack user name`  `slack user id` 
 **question** |  required  | Question to ask | string | 
-**responses** |  optional  | List of possible responses | string | 
+**responses** |  optional  | Comma separated string values for responses\. \(Maximum responses allowed are 5\) | string | 
 **confirmation** |  optional  | Message to user after response | string | 
 
 #### Action Output
@@ -1160,33 +1243,54 @@ action\_result\.summary\.response\_received | boolean |
 summary\.total\_objects | numeric | 
 summary\.total\_objects\_successful | numeric |   
 
-## action: 'get response'
-Get the response to a previously asked question
+## action: 'ask question channel'
+Ask a question in slack channel
 
-Type: **investigate**  
-Read only: **True**
+Type: **generic**  
+Read only: **False**
 
-The purpose of the 'get response' action is to get the response of a question, asked using the 'ask question' action, that timed out before it could get the response\.<br>The action will check to see if a question has been answered\.<br><ul><li>If the user has answered the question, the question id generated in the 'ask question' action can be used to get the response\.</li><li>If no response is yet available, the action will fail\.</li></ul>
+This action will send message containing a question with a series of buttons which represent possible responses in a channel\. Once the user clicks on one of the responses, Slack will send the response back to Phantom\. The question ID can be used as input to the <b>get response</b> action\.<br><br>If the <b>responses</b> parameter is not filled out, the response options will be <b>yes</b> and <b>no</b>\.<br><br>The <b>confirmation</b> parameter takes a string that will be sent to the user after the user clicks a response\. <b>Note\:</b> To use the bot in a private channel you need to invite the bot first iin the private channel, else it would give channel not found error\.
 
 #### Action Parameters
 PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 --------- | -------- | ----------- | ---- | --------
-**question\_id** |  required  | Question ID | string |  `slack question id` 
+**destination** |  required  | Channel \(e\.g\. \#channel\-name or C1A1A1AAA\) to ask question to | string |  `slack user name`  `slack user id` 
+**question** |  required  | Question to ask | string | 
+**responses** |  optional  | Comma separated string values for responses\. \(Maximum responses allowed are 5\) | string | 
 
 #### Action Output
 DATA PATH | TYPE | CONTAINS
 --------- | ---- | --------
-action\_result\.parameter\.question\_id | string |  `slack question id` 
+action\_result\.parameter\.destination | string |  `slack user name`  `slack user id` 
+action\_result\.parameter\.question | string | 
+action\_result\.parameter\.responses | string | 
 action\_result\.data\.\*\.action\_ts | string | 
 action\_result\.data\.\*\.actions\.\*\.name | string | 
 action\_result\.data\.\*\.actions\.\*\.type | string | 
-action\_result\.data\.\*\.actions\.\*\.value | string | 
 action\_result\.data\.\*\.attachment\_id | string | 
 action\_result\.data\.\*\.callback\_id | string | 
+action\_result\.data\.\*\.channel | string |  `slack channel id` 
 action\_result\.data\.\*\.channel\.id | string | 
 action\_result\.data\.\*\.channel\.name | string | 
 action\_result\.data\.\*\.is\_app\_unfurl | boolean | 
+action\_result\.data\.\*\.message\.attachments\.\*\.actions\.\*\.id | string | 
+action\_result\.data\.\*\.message\.attachments\.\*\.actions\.\*\.name | string | 
+action\_result\.data\.\*\.message\.attachments\.\*\.actions\.\*\.style | string | 
+action\_result\.data\.\*\.message\.attachments\.\*\.actions\.\*\.text | string | 
+action\_result\.data\.\*\.message\.attachments\.\*\.actions\.\*\.type | string | 
+action\_result\.data\.\*\.message\.attachments\.\*\.actions\.\*\.value | string | 
+action\_result\.data\.\*\.message\.attachments\.\*\.callback\_id | string | 
+action\_result\.data\.\*\.message\.attachments\.\*\.color | string | 
+action\_result\.data\.\*\.message\.attachments\.\*\.fallback | string | 
+action\_result\.data\.\*\.message\.attachments\.\*\.id | numeric | 
+action\_result\.data\.\*\.message\.attachments\.\*\.text | string | 
+action\_result\.data\.\*\.message\.bot\_id | string | 
+action\_result\.data\.\*\.message\.text | string | 
+action\_result\.data\.\*\.message\.ts | string | 
+action\_result\.data\.\*\.message\.type | string | 
+action\_result\.data\.\*\.message\.user | string | 
 action\_result\.data\.\*\.message\_ts | string |  `slack message ts` 
+action\_result\.data\.\*\.ok | boolean | 
 action\_result\.data\.\*\.original\_message\.attachments\.\*\.actions\.\*\.id | string | 
 action\_result\.data\.\*\.original\_message\.attachments\.\*\.actions\.\*\.name | string | 
 action\_result\.data\.\*\.original\_message\.attachments\.\*\.actions\.\*\.style | string | 
@@ -1207,8 +1311,66 @@ action\_result\.data\.\*\.response\_url | string |
 action\_result\.data\.\*\.team\.domain | string |  `domain` 
 action\_result\.data\.\*\.team\.id | string | 
 action\_result\.data\.\*\.token | string | 
+action\_result\.data\.\*\.ts | string | 
 action\_result\.data\.\*\.user\.id | string | 
 action\_result\.data\.\*\.user\.name | string | 
+action\_result\.status | string | 
+action\_result\.message | string | 
+action\_result\.data\.\*\.qid | string |  `slack question id` 
+action\_result\.summary\.response | string | 
+action\_result\.summary\.response\_received | boolean | 
+summary\.total\_objects | numeric | 
+summary\.total\_objects\_successful | numeric |   
+
+## action: 'get response'
+Get the response to a previously asked question
+
+Type: **investigate**  
+Read only: **True**
+
+The purpose of the 'get response' action is to get the response of a question, asked using the 'ask question' action, that timed out before it could get the response\.<br>The action will check to see if a question has been answered\.<br><ul><li>If the user has answered the question, the question id generated in the 'ask question' action can be used to get the response\.</li><li>If no response is yet available, the action will fail\.</li></ul>
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**question\_id** |  required  | Question ID | string |  `slack question id` 
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS
+--------- | ---- | --------
+action\_result\.parameter\.question\_id | string |  `slack question id` 
+action\_result\.data\.\*\.payloads\.\*\.action\_ts | string | 
+action\_result\.data\.\*\.payloads\.\*\.actions\.\*\.name | string | 
+action\_result\.data\.\*\.payloads\.\*\.actions\.\*\.type | string | 
+action\_result\.data\.\*\.payloads\.\*\.actions\.\*\.value | string | 
+action\_result\.data\.\*\.payloads\.\*\.attachment\_id | string | 
+action\_result\.data\.\*\.payloads\.\*\.callback\_id | string | 
+action\_result\.data\.\*\.payloads\.\*\.channel\.id | string | 
+action\_result\.data\.\*\.payloads\.\*\.channel\.name | string | 
+action\_result\.data\.\*\.payloads\.\*\.is\_app\_unfurl | boolean | 
+action\_result\.data\.\*\.payloads\.\*\.message\_ts | string |  `slack message ts` 
+action\_result\.data\.\*\.payloads\.\*\.original\_message\.attachments\.\*\.actions\.\*\.id | string | 
+action\_result\.data\.\*\.payloads\.\*\.original\_message\.attachments\.\*\.actions\.\*\.name | string | 
+action\_result\.data\.\*\.payloads\.\*\.original\_message\.attachments\.\*\.actions\.\*\.style | string | 
+action\_result\.data\.\*\.payloads\.\*\.original\_message\.attachments\.\*\.actions\.\*\.text | string | 
+action\_result\.data\.\*\.payloads\.\*\.original\_message\.attachments\.\*\.actions\.\*\.type | string | 
+action\_result\.data\.\*\.payloads\.\*\.original\_message\.attachments\.\*\.actions\.\*\.value | string | 
+action\_result\.data\.\*\.payloads\.\*\.original\_message\.attachments\.\*\.callback\_id | string | 
+action\_result\.data\.\*\.payloads\.\*\.original\_message\.attachments\.\*\.color | string | 
+action\_result\.data\.\*\.payloads\.\*\.original\_message\.attachments\.\*\.fallback | string | 
+action\_result\.data\.\*\.payloads\.\*\.original\_message\.attachments\.\*\.id | numeric | 
+action\_result\.data\.\*\.payloads\.\*\.original\_message\.attachments\.\*\.text | string | 
+action\_result\.data\.\*\.payloads\.\*\.original\_message\.bot\_id | string | 
+action\_result\.data\.\*\.payloads\.\*\.original\_message\.text | string | 
+action\_result\.data\.\*\.payloads\.\*\.original\_message\.ts | string |  `slack message ts` 
+action\_result\.data\.\*\.payloads\.\*\.original\_message\.type | string | 
+action\_result\.data\.\*\.payloads\.\*\.original\_message\.user | string | 
+action\_result\.data\.\*\.payloads\.\*\.response\_url | string | 
+action\_result\.data\.\*\.payloads\.\*\.team\.domain | string |  `domain` 
+action\_result\.data\.\*\.payloads\.\*\.team\.id | string | 
+action\_result\.data\.\*\.payloads\.\*\.token | string | 
+action\_result\.data\.\*\.payloads\.\*\.user\.id | string | 
+action\_result\.data\.\*\.payloads\.\*\.user\.name | string | 
 action\_result\.status | string | 
 action\_result\.message | string | 
 action\_result\.summary\.response | string | 
