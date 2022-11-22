@@ -1,5 +1,5 @@
 beautifulsoup4==4.10.0
-Django==3.2.13
+Django==3.2.16
 idna==3.3
 requests==2.27.1
 sh==1.14.2
