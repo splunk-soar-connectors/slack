@@ -54,31 +54,31 @@ app also needs a verification token to verify POST requests received from Slack.
 ### Create a Slack App
 
 Creating a Slack App is required to get the proper bot token for authenticating the SOAR Slack App.
-To do this, go to <https://api.slack.com/apps> in a browser, and select **Create New App** .  
+To do this, go to <https://api.slack.com/apps> in a browser, and select **Create New App**.  
   
 [![](img/slack_your_apps.png)](img/slack_your_apps.png)  
   
-In the pop up window, there are two options, select **From scratch** .This would open another pop
+In the pop up window, there are two options, select **From scratch**.This would open another pop
 up, give the app name and associate it with a Slack team/your Workspace, then click **Create App**
 .  
   
 [![](img/slack_create_an_app.png)](img/slack_create_an_app.png)  
   
-On the next page, there is a **Verification Token** . This token will be needed during asset
+On the next page, there is a **Verification Token**. This token will be needed during asset
 configuration.  
   
 [![](img/slack_basic_info.png)](img/slack_basic_info.png)  
   
-On the same page, there is a **App Level tokens** . This dialog box will have a **Generate Token and
-Scope** button, click on it. It would again open an pop up, give token name **socket_token** . Just
+On the same page, there is a **App Level tokens**. This dialog box will have a **Generate Token and
+Scope** button, click on it. It would again open an pop up, give token name **socket_token**. Just
 below this would be the **Add Scope** button, add **connection:write & authorization:read** and
-click on **Generate** . This token will be needed during asset configuration.  
+click on **Generate**. This token will be needed during asset configuration.  
   
 [![](img/slack_socket_token.png)](img/slack_socket_token.png)  
   
-In the menu bar on the left, select **OAuth & Permissions** . On that page, Scroll down to the
+In the menu bar on the left, select **OAuth & Permissions**. On that page, Scroll down to the
 **Scopes** section and click **Add an OAuth Scope** to add scopes to your **Bot Token** and **User
-Token** .  
+Token**.  
   
 [![](img/slack_add_scopes.png)](img/slack_add_scopes.png)  
   
@@ -86,140 +86,171 @@ The required scopes are given below, please add the particular scope to use that
   
 
 <table>
-<colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Required Action Scopes</th>
-<th></th>
-<th></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<th>Action Name</th>
-<th>Bot Token Scopes</th>
-<th>User Token Scopes</th>
-</tr>
-
-<tr class="odd">
-<td>Create Channel</td>
-<td><ul>
-<li>channels:manage</li>
-<li>groups:write</li>
-<li>im:write</li>
-<li>mpim:write</li>
-</ul></td>
-<td><ul>
-<li>channels:write</li>
-<li>groups:write</li>
-<li>im:write</li>
-<li>mpim:write</li>
-</ul></td>
-</tr>
-<tr class="even">
-<td>List Channels</td>
-<td><ul>
-<li>channels:read</li>
-<li>groups:read</li>
-<li>im:read</li>
-<li>mpim:read</li>
-</ul></td>
-<td><ul>
-<li>channels:read</li>
-<li>groups:read</li>
-<li>im:read</li>
-<li>mpim:read</li>
-</ul></td>
-</tr>
-<tr class="odd">
-<td>List Users</td>
-<td><ul>
-<li>users:read</li>
-</ul></td>
-<td><ul>
-<li>users:read</li>
-</ul></td>
-</tr>
-<tr class="even">
-<td>Get User</td>
-<td><ul>
-<li>users:read</li>
-</ul></td>
-<td><ul>
-<li>users:read</li>
-</ul></td>
-</tr>
-<tr class="odd">
-<td>Invite User</td>
-<td><ul>
-<li>channels:manage</li>
-<li>groups:write</li>
-<li>im:write</li>
-<li>mpim:write</li>
-</ul></td>
-<td><ul>
-<li>channels:write</li>
-<li>groups:write</li>
-<li>im:write</li>
-<li>mpim:write</li>
-</ul></td>
-</tr>
-<tr class="even">
-<td>Send Message</td>
-<td><ul>
-<li>chat:write</li>
-</ul></td>
-<td><ul>
-<li>chat:write</li>
-<li>chat:write:user</li>
-<li>chat:write:bot</li>
-</ul></td>
-</tr>
-<tr class="odd">
-<td>Add Reaction</td>
-<td><ul>
-<li>reactions:write</li>
-</ul></td>
-<td><ul>
-<li>reactions:write</li>
-</ul></td>
-</tr>
-<tr class="even">
-<td>Upload File</td>
-<td><ul>
-<li>files:write</li>
-</ul></td>
-<td><ul>
-<li>files:write</li>
-<li>files:write:user</li>
-</ul></td>
-</tr>
-<tr class="odd">
-<td>Ask Question/Ask Question Channel</td>
-<td><ul>
-<li>chat:write</li>
-</ul></td>
-<td><ul>
-<li>chat:write</li>
-<li>chat:write.public</li>
-<li>chat:write:user</li>
-<li>chat:write:bot</li>
-</ul></td>
-</tr>
-</tbody>
+  <colgroup>
+    <col style="width: 33%" />
+    <col style="width: 33%" />
+    <col style="width: 33%" />
+  </colgroup>
+  <thead>
+    <tr class="header">
+      <th>Required Action Scopes</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="odd">
+      <th>Action Name</th>
+      <th>Bot Token Scopes</th>
+      <th>User Token Scopes</th>
+    </tr>
+    <tr class="odd">
+      <td>Create Channel</td>
+      <td>
+        <ul>
+          <li>channels:manage</li>
+          <li>groups:write</li>
+          <li>im:write</li>
+          <li>mpim:write</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>channels:write</li>
+          <li>groups:write</li>
+          <li>im:write</li>
+          <li>mpim:write</li>
+        </ul>
+      </td>
+    </tr>
+    <tr class="even">
+      <td>List Channels</td>
+      <td>
+        <ul>
+          <li>channels:read</li>
+          <li>groups:read</li>
+          <li>im:read</li>
+          <li>mpim:read</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>channels:read</li>
+          <li>groups:read</li>
+          <li>im:read</li>
+          <li>mpim:read</li>
+        </ul>
+      </td>
+    </tr>
+    <tr class="odd">
+      <td>List Users</td>
+      <td>
+        <ul>
+          <li>users:read</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>users:read</li>
+        </ul>
+      </td>
+    </tr>
+    <tr class="even">
+      <td>Get User</td>
+      <td>
+        <ul>
+          <li>users:read</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>users:read</li>
+        </ul>
+      </td>
+    </tr>
+    <tr class="odd">
+      <td>Invite User</td>
+      <td>
+        <ul>
+          <li>channels:manage</li>
+          <li>groups:write</li>
+          <li>im:write</li>
+          <li>mpim:write</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>channels:write</li>
+          <li>groups:write</li>
+          <li>im:write</li>
+          <li>mpim:write</li>
+        </ul>
+      </td>
+    </tr>
+    <tr class="even">
+      <td>Send Message</td>
+      <td>
+        <ul>
+          <li>chat:write</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>chat:write</li>
+        </ul>
+      </td>
+    </tr>
+    <tr class="odd">
+      <td>Add Reaction</td>
+      <td>
+        <ul>
+          <li>reactions:write</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>reactions:write</li>
+        </ul>
+      </td>
+    </tr>
+    <tr class="even">
+      <td>Upload File</td>
+      <td>
+        <ul>
+          <li>files:write</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>files:write</li>
+          <li>files:write:user</li>
+        </ul>
+      </td>
+    </tr>
+    <tr class="odd">
+      <td>Ask Question/Ask Question Channel</td>
+      <td>
+        <ul>
+          <li>chat:write</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>chat:write</li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
 </table>
 
+
   
   
-Next, click on **Install App** in the side bar. On that page, click **Install to Workspace** .  
+Next, click on **Install App** in the side bar. On that page, click **Install to Workspace**.  
   
 [![](img/slack_install_app.png)](img/slack_install_app.png)  
   
-On the next page, click **Allow** .  
+On the next page, click **Allow**.  
   
 [![](img/slack_allow_app.png)](img/slack_allow_app.png)  
   
@@ -231,7 +262,7 @@ OAuth Access Token** and **OAuth Access Token** will be required during asset co
 ## SOAR Base URL
 
 The app uses the SOAR **Base URL** configuration to generate links to actions, so please make sure a
-valid url is specified in the **System Settings** .  
+valid url is specified in the **System Settings**.  
   
 [![](img/slack_system_settings.png)](img/slack_system_settings.png)
 
@@ -253,7 +284,7 @@ to restart the bot. Alternatively, you can stop and restart the bot.
 [![](img/slack_new_settings.png)](img/slack_new_settings.png)  
   
 Click **SAVE** , you will be asked to fill in the **Ingest Settings** , select one of the labels
-from the drop-down or you can create a new one and Click **SAVE** .  
+from the drop-down or you can create a new one and Click **SAVE**.  
   
 [![](img/slack_ingest_settings.png)](img/slack_ingest_settings.png)  
   
@@ -275,7 +306,7 @@ user are as follows:
     -   Set the **User Type** to **Automation**
     -   Give the user a **Username** like "Slack Automation"
     -   For security reasons, accessing 127.0.0.1 is not allowed. Set **Allowed IPs** same as the
-        **instance IP or "any"** . (eg : If instance IP is 10.1.18.123, set allowed IP also
+        **instance IP or "any"**. (eg : If instance IP is 10.1.18.123, set allowed IP also
         10.1.18.123)
     -   Set the **Default Label** to the label seen in the Slack asset's **Ingest Settings**
     -   Under **Roles** , in addition to the default **Automation** role, add the **Observer** role
@@ -316,14 +347,14 @@ certificate authority.
   
 [![](img/slack_interactive_messages.png)](img/slack_interactive_messages.png)  
   
-Once on this page, toggle on **Interactivity** . Configure the **Request URL** . To do so just copy
+Once on this page, toggle on **Interactivity**. Configure the **Request URL**. To do so just copy
 the value of url provided in the field **POST incoming for Slack to this location** in **Asset
-Settings** of slack asset and paste it in the **Request URL** field of **Slack Apps** .  
+Settings** of slack asset and paste it in the **Request URL** field of **Slack Apps**.  
   
 [![](img/slack_enable_interactive_messages.png)](img/slack_enable_interactive_messages.png)  
   
 NOTE : Slack Apps provided two ways to handle interactions on their apps, using **Request URL** and
-**WebSockets** .At a time only one mode can be used, either Request URL or Socoket mode. The Slack
+**WebSockets**.At a time only one mode can be used, either Request URL or Socoket mode. The Slack
 Bot uses web sockets internally, there it is suggested to make to assests for using slack actions
 and bot simultaneously. One asset to perform slack actions from phantom and another asset to use
 commands on slack for phantom. Using one asset for both can cause issue.  
@@ -336,7 +367,7 @@ option.
   
 [![](img/slack_socket_mode.png)](img/slack_socket_mode.png)  
   
-Once on this page, toggle on **Socket Mode** . Then click on the event subscription option. This
+Once on this page, toggle on **Socket Mode**. Then click on the event subscription option. This
 will redirect you to the Event Subscription page, and add the following subscriptions for bot.  
   
 [![](img/slack_subscription_events.png)](img/slack_subscription_events.png)  
@@ -348,7 +379,7 @@ will redirect you to the Event Subscription page, and add the following subscrip
 
 To run the SOAR SlackBot that will get SOAR to take commands from Slack, ingestion needs to be
 enabled on the SOAR Slack Asset. To do this go back to the INGEST SETTINGS tab and enable polling
-and specify the Polling interval as **off** . The "Label to apply to objects from this source"
+and specify the Polling interval as **off**. The "Label to apply to objects from this source"
 setting is ignored by this app, so it can be set to anything.  
   
 [![](img/slack_polling_enabled.png)](img/slack_polling_enabled.png)  
