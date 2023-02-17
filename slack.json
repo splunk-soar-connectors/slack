@@ -13,7 +13,7 @@
     ],
     "package_name": "phantom_slack",
     "type": "information",
-    "license": "Copyright (c) 2016-2022 Splunk Inc.",
+    "license": "Copyright (c) 2016-2023 Splunk Inc.",
     "main_module": "slack_connector.py",
     "app_version": "2.5.0",
     "utctime_updated": "2022-02-04T18:14:51.000000Z",
@@ -4294,7 +4294,7 @@
             },
             {
                 "module": "certifi",
-                "input_file": "wheels/py3/certifi-2022.9.24-py3-none-any.whl"
+                "input_file": "wheels/py3/certifi-2022.12.7-py3-none-any.whl"
             },
             {
                 "module": "charset_normalizer",
@@ -4306,7 +4306,7 @@
             },
             {
                 "module": "pytz",
-                "input_file": "wheels/shared/pytz-2022.6-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/pytz-2022.7.1-py2.py3-none-any.whl"
             },
             {
                 "module": "requests",
@@ -4330,7 +4330,7 @@
             },
             {
                 "module": "slack_sdk",
-                "input_file": "wheels/shared/slack_sdk-3.19.3-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/slack_sdk-3.20.0-py2.py3-none-any.whl"
             },
             {
                 "module": "soupsieve",
@@ -4346,7 +4346,7 @@
             },
             {
                 "module": "urllib3",
-                "input_file": "wheels/shared/urllib3-1.26.12-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/urllib3-1.26.14-py2.py3-none-any.whl"
             },
             {
                 "module": "websocket_client",
@@ -4362,7 +4362,7 @@
             },
             {
                 "module": "asgiref",
-                "input_file": "wheels/py3/asgiref-3.5.2-py3-none-any.whl"
+                "input_file": "wheels/py3/asgiref-3.6.0-py3-none-any.whl"
             },
             {
                 "module": "beautifulsoup4",
@@ -4370,7 +4370,7 @@
             },
             {
                 "module": "certifi",
-                "input_file": "wheels/py3/certifi-2022.9.24-py3-none-any.whl"
+                "input_file": "wheels/py3/certifi-2022.12.7-py3-none-any.whl"
             },
             {
                 "module": "charset_normalizer",
@@ -4382,7 +4382,7 @@
             },
             {
                 "module": "pytz",
-                "input_file": "wheels/shared/pytz-2022.6-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/pytz-2022.7.1-py2.py3-none-any.whl"
             },
             {
                 "module": "requests",
@@ -4406,11 +4406,11 @@
             },
             {
                 "module": "slack_sdk",
-                "input_file": "wheels/shared/slack_sdk-3.19.3-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/slack_sdk-3.20.0-py2.py3-none-any.whl"
             },
             {
                 "module": "soupsieve",
-                "input_file": "wheels/py3/soupsieve-2.3.2.post1-py3-none-any.whl"
+                "input_file": "wheels/py3/soupsieve-2.4-py3-none-any.whl"
             },
             {
                 "module": "sqlparse",
@@ -4418,7 +4418,7 @@
             },
             {
                 "module": "urllib3",
-                "input_file": "wheels/shared/urllib3-1.26.12-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/urllib3-1.26.14-py2.py3-none-any.whl"
             },
             {
                 "module": "websocket_client",
