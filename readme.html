@@ -156,8 +156,6 @@ The required scopes are given below, please add the particular scope to use that
     </td>
     <td>
       <li>chat:write</li>
-      <li>chat:write:user</li>
-      <li>chat:write:bot</li>
     </td>
   </tr>
   <tr>
@@ -176,7 +174,6 @@ The required scopes are given below, please add the particular scope to use that
     </td>
     <td>
       <li>files:write</li>
-      <li>files:write:user</li>
     </td>
   </tr>
   <tr>
@@ -187,8 +184,6 @@ The required scopes are given below, please add the particular scope to use that
     <td>
       <li>chat:write</li>
       <li>chat:write.public</li>
-      <li>chat:write:user</li>
-      <li>chat:write:bot</li>
     </td>
   </tr>
 </table>
@@ -219,6 +214,11 @@ specified in the <b>System Settings</b>.
 <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_system_settings.png">
   <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_system_settings.png">
 </a>
+<br><br>
+NOTE: If you are using other PORT than 443, please add the port value in <b>BASE URL</b>.
+<br><br>
+<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_system_settings_with_port.png">
+  <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_system_settings_with_port.png">
 <h2>SOAR Slack Asset</h2>
 Fill out the required values in the <b>Asset Definition</b> tab.
 <br><br>
@@ -332,6 +332,13 @@ restart the on poll to reflect the latest changes.
     <br><br>
     <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_subscription_events.png">
       <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_subscription_events.png">
+    </a>
+    <br><br>
+    Note: When socket mode is enabled, make sure that <b>Request URL</b> field should be empty in <b>interactivity</b> section.
+    It should be looked like below, It should be removed from this section if it is not.
+    <br><br>
+    <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_interactivitypage_without_requesturl.png">
+      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_interactivitypage_without_requesturl.png">
     </a>
     <br><br>
     <h2>Slack Bot</h2>

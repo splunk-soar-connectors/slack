@@ -1291,7 +1291,7 @@ class SlackConnector(phantom.BaseConnector):
 
         payload = resp_json.get('payloads')[0]
         action_result.add_data(payload)
-        action_result.set_summary({'response_received': True, 'question_id': qid, 'response': resp_json.get("actions", [{}])[0].get("value")})
+        action_result.set_summary({'response_received': True, 'question_id': qid, 'response': payload.get("actions", [{}])[0].get("value")})
 
         os.remove(answer_path)
 
