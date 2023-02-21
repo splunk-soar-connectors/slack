@@ -15,7 +15,7 @@
     "type": "information",
     "license": "Copyright (c) 2016-2023 Splunk Inc.",
     "main_module": "slack_connector.py",
-    "app_version": "2.5.0",
+    "app_version": "2.6.0",
     "utctime_updated": "2022-02-04T18:14:51.000000Z",
     "product_vendor": "Slack Technologies",
     "product_name": "Slack",
@@ -24,7 +24,7 @@
     "python_version": "3",
     "fips_compliant": true,
     "latest_tested_versions": [
-        "Cloud API, November 17, 2022"
+        "Cloud API, February 17, 2023"
     ],
     "logo": "logo_slack.svg",
     "logo_dark": "logo_slack_dark.svg",

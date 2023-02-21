@@ -35,7 +35,130 @@
 <p>
   SOAR's Slack App needs a bot token to read messages from and post messages to slack channels. The app also needs a
   verification token to verify POST requests received from Slack.
-<h3>Create a Slack App</h3>
+<h3>Steps for Create a Slack App Using App Manifest File</h3>
+App manifest file in (.yaml):
+<br><br>
+Use below manifest file for creating slack app.
+<br><br>
+<pre>
+  display_information:
+  name: k_app_using_manifest
+features:
+  bot_user:
+    display_name: k_app_using_manifest
+    always_online: false
+oauth_config:
+  scopes:
+    user:
+      - channels:write
+      - groups:write
+      - im:write
+      - mpim:write
+      - channels:read
+      - groups:read
+      - im:read
+      - mpim:read
+      - users:read
+      - chat:write
+      - reactions:write
+      - files:write
+    bot:
+      - channels:manage
+      - groups:write
+      - im:write
+      - mpim:read
+      - mpim:write
+      - channels:read
+      - groups:read
+      - im:read
+      - users:read
+      - chat:write
+      - reactions:write
+      - files:write
+      - chat:write.public
+      - app_mentions:read
+      - channels:history
+      - im:history
+settings:
+  event_subscriptions:
+    bot_events:
+      - app_mention
+      - message.channels
+      - message.im
+  interactivity:
+    is_enabled: true
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false
+</pre>
+<br><br>
+Select <b> From an app manifest </b> option.
+<br><br>
+<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_select_from_app_manifest.png">
+  <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_select_from_app_manifest.png">
+</a>
+<br><br>
+Select a workspace.
+<br><br>
+<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_select_workspace.png">
+      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_select_workspace.png">
+</a>
+<br><br>
+Paste above manifest file in <b>yaml</b> section.
+<br><br>
+<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_enter_app_manifest.png">
+      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_enter_app_manifest.png">
+</a>
+<br><br>
+Once click on next, verify all scopes for Bot and User which is added from the manifest file.
+<br><br>
+<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_review_summary_oauth.png">
+      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_review_summary_oauth.png">
+</a>
+<br><br>
+Event subscriptions for the bot will be added from the manifest file, Click on create.
+<br><br>
+<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_review_summary_settings.png">
+      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_review_summary_settings.png">
+</a>
+<br><br>
+On the next page, there is a <b>Verification Token</b>. This token will be needed during asset configuration.
+<br><br>
+<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_basic_info.png">
+  <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_basic_info.png">
+</a>
+<br><br>
+On the same page, there is a <b>App Level tokens</b>. This dialog box will have a <b>Generate Token and Scope</b>
+button, click on it. It would again open an pop up, give token name <b>socket_token</b>. Just below this would be the
+<b>Add Scope</b> button, add <b>connection:write & authorization:read</b> and click on <b>Generate</b>. This token will
+be needed during asset configuration.
+<br><br>
+<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_socket_token.png">
+  <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_socket_token.png">
+</a>
+<br><br>
+On the same page click <b>Install to Workspace</b> which is inside <b> Install your app</b> section.
+<br><br>
+<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_install_app_manifest.png">
+  <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_install_app_manifest.png">
+</a>
+<br><br>
+On the next page, click <b>Allow</b>.
+<br><br>
+<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_allow_app_manifest.png">
+  <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_allow_app_manifest.png">
+</a>
+<br><br>
+After authorizing the app, In the menu bar on the left, select <b>OAuth & Permissions</b>. The <b>Bot User OAuth Access
+  Token</b> and <b>OAuth Access Token</b> will be required during asset configuration.
+<br><br>
+<a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_auth_tokens.png">
+  <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_auth_tokens.png">
+</a>
+<br><br>
+On the same page, Scroll down to the <b>Scopes</b> section, verify the scopes for Bot and User which are added from the manifest file.
+<br><br>
+<h3>Steps for Create a Slack App From scratch</h3>
 Creating a Slack App is required to get the proper bot token for authenticating the SOAR Slack App. To do this, go to <a
   href="https://api.slack.com/apps">https://api.slack.com/apps</a> in a browser, and select <b>Create New App</b>.
 <br><br>
@@ -180,14 +303,14 @@ The required scopes are given below, please add the particular scope to use that
     <td>Ask Question/Ask Question Channel</td>
     <td>
       <li>chat:write</li>
+      <li>chat:write.public</li>
     </td>
     <td>
       <li>chat:write</li>
-      <li>chat:write.public</li>
     </td>
   </tr>
 </table>
-
+NOTE: <b>chat:write</b> replaces both <b>chat:write:user</b> and <b>chat:write:bot</b> and <b>files:write</b> replaces both <b>files:write:user</b> and <b>files:write:bot</b>
 <br><br>
 Next, click on <b>Install App</b> in the side bar. On that page, click <b>Install to Workspace</b>.
 <br><br>
@@ -215,7 +338,7 @@ specified in the <b>System Settings</b>.
   <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_system_settings.png">
 </a>
 <br><br>
-NOTE: If you are using other PORT than 443, please add the port value in <b>BASE URL</b>.
+NOTE: If you are using PORT other than 443, please add the port value in <b>BASE URL</b>.
 <br><br>
 <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_system_settings_with_port.png">
   <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_system_settings_with_port.png">
@@ -334,11 +457,11 @@ restart the on poll to reflect the latest changes.
       <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_subscription_events.png">
     </a>
     <br><br>
-    Note: When socket mode is enabled, make sure that <b>Request URL</b> field should be empty in <b>interactivity</b> section.
-    It should be looked like below, It should be removed from this section if it is not.
+    Note: When socket mode is enabled, On left menu bar click on <b>Interactivity & Shortcuts</b> and verify that <b>Request URL</b> field should be empty in <b>interactivity</b> section and
+    It should be looked like below.
     <br><br>
-    <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_interactivitypage_without_requesturl.png">
-      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_interactivitypage_without_requesturl.png">
+    <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_interactivity_without_requesturl.png">
+      <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_interactivity_without_requesturl.png">
     </a>
     <br><br>
     <h2>Slack Bot</h2>
