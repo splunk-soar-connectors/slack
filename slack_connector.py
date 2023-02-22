@@ -1201,6 +1201,10 @@ class SlackConnector(phantom.BaseConnector):
         given_answers = [x.strip().lower() for x in param.get('responses', 'yes,no').split(',')]
         given_answers = list(set(given_answers))
         given_answers = list(filter(None, given_answers))
+
+        if not given_answers:
+            given_answers = ['yes', 'no']
+
         for answer in given_answers:
             answer_json = {'name': answer, 'text': answer, 'value': answer, 'type': 'button'}
             answers.append(answer_json)
