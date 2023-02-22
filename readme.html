@@ -35,17 +35,17 @@
 <p>
   SOAR's Slack App needs a bot token to read messages from and post messages to slack channels. The app also needs a
   verification token to verify POST requests received from Slack.
-<h3>Steps for Create a Slack App Using App Manifest File</h3>
+<h3>Steps for Create a Slack App Using App Manifest File (Recommended)</h3>
 App manifest file in (.yaml):
 <br><br>
 Use below manifest file for creating slack app.
 <br><br>
 <pre>
   display_information:
-  name: k_app_using_manifest
+  name: soarbot
 features:
   bot_user:
-    display_name: k_app_using_manifest
+    display_name: soarbot
     always_online: false
 oauth_config:
   scopes:
@@ -149,8 +149,8 @@ On the next page, click <b>Allow</b>.
   <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_allow_app_manifest.png">
 </a>
 <br><br>
-After authorizing the app, In the menu bar on the left, select <b>OAuth & Permissions</b>. The <b>Bot User OAuth Access
-  Token</b> and <b>OAuth Access Token</b> will be required during asset configuration.
+After authorizing the app, In the menu bar on the left, select <b>OAuth & Permissions</b>. The <b>Bot User OAuth Token
+</b> and <b>User OAuth Token</b> will be required during asset configuration.
 <br><br>
 <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_auth_tokens.png">
   <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_auth_tokens.png">
@@ -158,7 +158,7 @@ After authorizing the app, In the menu bar on the left, select <b>OAuth & Permis
 <br><br>
 On the same page, Scroll down to the <b>Scopes</b> section, verify the scopes for Bot and User which are added from the manifest file.
 <br><br>
-<h3>Steps for Create a Slack App From scratch</h3>
+<h3>Steps for Create a Slack App From Scratch</h3>
 Creating a Slack App is required to get the proper bot token for authenticating the SOAR Slack App. To do this, go to <a
   href="https://api.slack.com/apps">https://api.slack.com/apps</a> in a browser, and select <b>Create New App</b>.
 <br><br>
@@ -324,8 +324,8 @@ On the next page, click <b>Allow</b>.
   <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_allow_app.png">
 </a>
 <br><br>
-After authorizing the app, the next window will show the app's authorization tokens. The <b>Bot User OAuth Access
-  Token</b> and <b>OAuth Access Token</b> will be required during asset configuration.
+After authorizing the app, the next window will show the app's authorization tokens. The <b>Bot User OAuth Token</b>
+and <b>User OAuth Token</b> will be required during asset configuration.
 <br><br>
 <a href="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_auth_tokens.png">
   <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_auth_tokens.png">
@@ -349,7 +349,7 @@ Fill out the required values in the <b>Asset Definition</b> tab.
   <img src="/app_resource/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/img/slack_asset_info.png">
 </a>
 <br><br>
-Fill out the <b>Bot User OAuth Access Token</b>, <b>OAuth Access Token</b>,<b>Socket Token</b> and <b>Verification
+Fill out the <b>Bot User OAuth Token</b>, <b>User OAuth Token</b>,<b>Socket Token</b> and <b>Verification
   Token</b> in the <b>Asset Settings</b> tab. Optionally specify permissions and authorized Member IDs if you intend to
 use SlackBot features. Also, anytime you update the any of the tokens mentioned above, please stop the bot once and
 restart the on poll to reflect the latest changes.
