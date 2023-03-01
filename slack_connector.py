@@ -1,6 +1,6 @@
 # File: slack_connector.py
 #
-# Copyright (c) 2016-2022 Splunk Inc.
+# Copyright (c) 2016-2023 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1201,6 +1201,10 @@ class SlackConnector(phantom.BaseConnector):
         given_answers = [x.strip().lower() for x in param.get('responses', 'yes,no').split(',')]
         given_answers = list(set(given_answers))
         given_answers = list(filter(None, given_answers))
+
+        if not given_answers:
+            given_answers = ['yes', 'no']
+
         for answer in given_answers:
             answer_json = {'name': answer, 'text': answer, 'value': answer, 'type': 'button'}
             answers.append(answer_json)
@@ -1291,7 +1295,7 @@ class SlackConnector(phantom.BaseConnector):
 
         payload = resp_json.get('payloads')[0]
         action_result.add_data(payload)
-        action_result.set_summary({'response_received': True, 'question_id': qid, 'response': resp_json.get("actions", [{}])[0].get("value")})
+        action_result.set_summary({'response_received': True, 'question_id': qid, 'response': payload.get("actions", [{}])[0].get("value")})
 
         os.remove(answer_path)
 
