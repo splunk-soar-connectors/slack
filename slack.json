@@ -13,18 +13,18 @@
     ],
     "package_name": "phantom_slack",
     "type": "information",
-    "license": "Copyright (c) 2016-2022 Splunk Inc.",
+    "license": "Copyright (c) 2016-2023 Splunk Inc.",
     "main_module": "slack_connector.py",
-    "app_version": "2.5.0",
+    "app_version": "2.6.0",
     "utctime_updated": "2022-02-04T18:14:51.000000Z",
     "product_vendor": "Slack Technologies",
     "product_name": "Slack",
     "product_version_regex": ".*",
-    "min_phantom_version": "5.3.5",
+    "min_phantom_version": "5.5.0",
     "python_version": "3",
     "fips_compliant": true,
     "latest_tested_versions": [
-        "Cloud API, November 17, 2022"
+        "Cloud API, February 17, 2023"
     ],
     "logo": "logo_slack.svg",
     "logo_dark": "logo_slack_dark.svg",
@@ -33,7 +33,7 @@
     "configuration": {
         "bot_token": {
             "data_type": "password",
-            "description": "Bot User OAuth Access Token",
+            "description": "Bot User OAuth Token",
             "required": true,
             "order": 0
         },
@@ -45,7 +45,7 @@
         },
         "user_token": {
             "data_type": "password",
-            "description": "OAuth Access Token",
+            "description": "User OAuth Token",
             "order": 2
         },
         "socket_token": {
@@ -111,7 +111,7 @@
         {
             "action": "create channel",
             "description": "Create a new Slack channel",
-            "verbose": "To create a private channel, use the 'channel_type' selection parameter. This action requires a OAuth Access Token defined in the asset. For naming conventions, see https://api.slack.com/methods/conversations.create.",
+            "verbose": "To create a private channel, use the 'channel_type' selection parameter. This action requires a User OAuth Token defined in the asset. For naming conventions, see https://api.slack.com/methods/conversations.create.",
             "type": "generic",
             "identifier": "create_channel",
             "read_only": false,
@@ -1560,7 +1560,7 @@
         {
             "action": "invite users",
             "description": "Invite user(s) to a Slack channel",
-            "verbose": "Up to 1000 users may be added at one time. This action requires a OAuth Access Token defined in the asset. For permissions, see: https://api.slack.com/methods/conversations.invite.",
+            "verbose": "Up to 1000 users may be added at one time. This action requires a User OAuth Token defined in the asset. For permissions, see: https://api.slack.com/methods/conversations.invite.",
             "type": "generic",
             "identifier": "invite_users",
             "read_only": false,
@@ -4294,7 +4294,7 @@
             },
             {
                 "module": "certifi",
-                "input_file": "wheels/py3/certifi-2022.9.24-py3-none-any.whl"
+                "input_file": "wheels/py3/certifi-2022.12.7-py3-none-any.whl"
             },
             {
                 "module": "charset_normalizer",
@@ -4306,7 +4306,7 @@
             },
             {
                 "module": "pytz",
-                "input_file": "wheels/shared/pytz-2022.6-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/pytz-2022.7.1-py2.py3-none-any.whl"
             },
             {
                 "module": "requests",
@@ -4330,7 +4330,7 @@
             },
             {
                 "module": "slack_sdk",
-                "input_file": "wheels/shared/slack_sdk-3.19.3-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/slack_sdk-3.20.0-py2.py3-none-any.whl"
             },
             {
                 "module": "soupsieve",
@@ -4346,7 +4346,7 @@
             },
             {
                 "module": "urllib3",
-                "input_file": "wheels/shared/urllib3-1.26.12-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/urllib3-1.26.14-py2.py3-none-any.whl"
             },
             {
                 "module": "websocket_client",
@@ -4362,7 +4362,7 @@
             },
             {
                 "module": "asgiref",
-                "input_file": "wheels/py3/asgiref-3.5.2-py3-none-any.whl"
+                "input_file": "wheels/py3/asgiref-3.6.0-py3-none-any.whl"
             },
             {
                 "module": "beautifulsoup4",
@@ -4370,7 +4370,7 @@
             },
             {
                 "module": "certifi",
-                "input_file": "wheels/py3/certifi-2022.9.24-py3-none-any.whl"
+                "input_file": "wheels/py3/certifi-2022.12.7-py3-none-any.whl"
             },
             {
                 "module": "charset_normalizer",
@@ -4382,7 +4382,7 @@
             },
             {
                 "module": "pytz",
-                "input_file": "wheels/shared/pytz-2022.6-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/pytz-2022.7.1-py2.py3-none-any.whl"
             },
             {
                 "module": "requests",
@@ -4406,11 +4406,11 @@
             },
             {
                 "module": "slack_sdk",
-                "input_file": "wheels/shared/slack_sdk-3.19.3-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/slack_sdk-3.20.0-py2.py3-none-any.whl"
             },
             {
                 "module": "soupsieve",
-                "input_file": "wheels/py3/soupsieve-2.3.2.post1-py3-none-any.whl"
+                "input_file": "wheels/py3/soupsieve-2.4-py3-none-any.whl"
             },
             {
                 "module": "sqlparse",
@@ -4418,7 +4418,7 @@
             },
             {
                 "module": "urllib3",
-                "input_file": "wheels/shared/urllib3-1.26.12-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/urllib3-1.26.14-py2.py3-none-any.whl"
             },
             {
                 "module": "websocket_client",
