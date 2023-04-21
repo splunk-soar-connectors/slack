@@ -2,7 +2,7 @@
 # Slack
 
 Publisher: Splunk  
-Connector Version: 2.6.0  
+Connector Version: 2.6.1  
 Product Vendor: Slack Technologies  
 Product Name: Slack  
 Product Version Supported (regex): ".\*"  
