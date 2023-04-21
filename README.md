@@ -1037,7 +1037,7 @@ Send a message to Slack
 Type: **generic**  
 Read only: **False**
 
-The <b>destination</b> parameter can be a channel ID (e.g. C1A1A1AAA), a channel name (e.g. #general). When sending a message to a channel, the configured bot user must have been added to the channel. Messages are recommended to 4000 characters and limited to 40000 characters. Passing a "username" as a channel value is deprecated, along with the whole concept of usernames on Slack. Please always use channel-like IDs instead to make sure your message gets to where it's going.
+The <b>destination</b> parameter can be a channel ID (e.g. C1A1A1AAA), a channel name (e.g. #general). When sending a message to a channel, the configured bot user must have been added to the channel. Slack recommends limiting messages to 4000 characters but the enforced limit is 40000 characters. Passing a "username" as a channel value is deprecated, along with the whole concept of usernames on Slack. Please always use channel-like IDs instead to make sure your message gets to where it's going.
 
 #### Action Parameters
 PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
@@ -1309,7 +1309,7 @@ Ask a question to a Slack user
 Type: **generic**  
 Read only: **False**
 
-This action will send a Slack user a direct message containing a question with a series of buttons which represent possible responses. Questions are recommended to 4000 characters and limited to 40000 characters. Once the user clicks on one of the responses, Slack will send the response back to Phantom. The action will succeed and output this response in the action result. If the user fails to respond within the timeout configured in the asset, the action will succeed, and output the <b>question ID</b> in the action result. The question ID can be used as input to the <b>get response</b> action.<br><br>If the <b>responses</b> parameter is not filled out, the response options will be <b>yes</b> and <b>no</b>.<br><br>The <b>confirmation</b> parameter takes a string that will be sent to the user after the user clicks a response. <b>Note:</b> It is recommended to use user ID instead of username since the latter usage has been deprecated by Slack.
+This action will send a Slack user a direct message containing a question with a series of buttons which represent possible responses. Slack recommends limiting questions to 4000 characters but the enforced limit is 40000 characters. Once the user clicks on one of the responses, Slack will send the response back to Phantom. The action will succeed and output this response in the action result. If the user fails to respond within the timeout configured in the asset, the action will succeed, and output the <b>question ID</b> in the action result. The question ID can be used as input to the <b>get response</b> action.<br><br>If the <b>responses</b> parameter is not filled out, the response options will be <b>yes</b> and <b>no</b>.<br><br>The <b>confirmation</b> parameter takes a string that will be sent to the user after the user clicks a response. <b>Note:</b> It is recommended to use user ID instead of username since the latter usage has been deprecated by Slack.
 
 #### Action Parameters
 PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
