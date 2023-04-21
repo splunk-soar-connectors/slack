@@ -15,12 +15,12 @@
     "type": "information",
     "license": "Copyright (c) 2016-2023 Splunk Inc.",
     "main_module": "slack_connector.py",
-    "app_version": "2.6.0",
+    "app_version": "2.6.5",
     "utctime_updated": "2022-02-04T18:14:51.000000Z",
     "product_vendor": "Slack Technologies",
     "product_name": "Slack",
     "product_version_regex": ".*",
-    "min_phantom_version": "5.5.0",
+    "min_phantom_version": "5.3.0",
     "python_version": "3",
     "fips_compliant": true,
     "latest_tested_versions": [
@@ -1157,13 +1157,23 @@
             "read_only": true,
             "parameters": {
                 "user_id": {
-                    "description": "ID of user to get info of",
+                    "description": "Unique ID of user to get info of",
                     "data_type": "string",
                     "primary": true,
-                    "required": true,
+                    "required": false,
                     "order": 0,
                     "contains": [
                         "slack user id"
+                    ]
+                },
+                "email_address": {
+                    "description": "Email address of user to get info of. Will not be used if User ID is specified",
+                    "data_type": "string",
+                    "primary": true,
+                    "required": false,
+                    "order": 1,
+                    "contains": [
+                        "email"
                     ]
                 }
             },
@@ -1173,6 +1183,13 @@
                     "data_type": "string",
                     "contains": [
                         "slack user id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.email_address",
+                    "data_type": "string",
+                    "contains": [
+                        "email"
                     ]
                 },
                 {

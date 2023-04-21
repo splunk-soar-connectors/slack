@@ -58,6 +58,7 @@ SLACK_LIST_CHANNEL = "conversations.list"
 SLACK_AUTH_TEST = "auth.test"
 SLACK_USER_LIST = "users.list"
 SLACK_USER_INFO = "users.info"
+SLACK_USER_LOOKUP_BY_EMAIL = "users.lookupByEmail"
 SLACK_SEND_MESSAGE = "chat.postMessage"
 SLACK_UPLOAD_FILE = "files.upload"
 

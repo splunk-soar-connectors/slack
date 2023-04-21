@@ -523,7 +523,6 @@ class SlackConnector(phantom.BaseConnector):
     def _make_slack_rest_call(self, action_result, endpoint, body, headers={}, files={}):
 
         body.update({'token': self._bot_token})
-
         # send api call to slack
         try:
             response = requests.post("{}{}".format(self._base_url, endpoint),
@@ -758,12 +757,36 @@ class SlackConnector(phantom.BaseConnector):
         self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
-        user_id = param['user_id']
+        user_id = param.get('user_id')
+        email_address = param.get('email_address')
 
-        if not user_id.startswith('U'):
-            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_NOT_A_USER_ID)
+        if user_id:
+            if not user_id.startswith('U') and not user_id.startswith('W'):
+                return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_NOT_A_USER_ID)
 
-        ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_USER_INFO, {'user': user_id})
+            ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_USER_INFO, {'user': user_id})
+
+        elif email_address:
+            bot_token = self._bot_token
+
+            if not bot_token:
+                return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_USER_TOKEN_NOT_PROVIDED)
+            endpoint = "{}{}?email={}".format(SLACK_BASE_URL, SLACK_USER_LOOKUP_BY_EMAIL, email_address)
+
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer {}'.format(bot_token)
+            }
+
+            self.debug_print("Making rest call to lookup user")
+
+            ret_val, resp_json = self._make_rest_call(
+                action_result,
+                endpoint,
+                False,
+                method=requests.get,
+                headers=headers
+            )
 
         if not ret_val:
             message = action_result.get_message()
@@ -1199,8 +1222,11 @@ class SlackConnector(phantom.BaseConnector):
 
         answers = []
         given_answers = [x.strip().lower() for x in param.get('responses', 'yes,no').split(',')]
-        given_answers = list(set(given_answers))
-        given_answers = list(filter(None, given_answers))
+        ordered_answers = []
+        for answer in given_answers:
+            if answer not in ordered_answers:
+                ordered_answers.append(answer)
+        given_answers = list(filter(None, ordered_answers))
 
         if not given_answers:
             given_answers = ['yes', 'no']
