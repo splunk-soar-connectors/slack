@@ -1,2 +1,2 @@
 **Unreleased**
-* Allow message or question size limit to 40000 [PAPP-29995]
+*  Increase message and question character limit to 40000 [PAPP-29995]
