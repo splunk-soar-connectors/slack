@@ -31,7 +31,7 @@ ACTION_ID_CREATE_CHANNEL = "create_channel"
 ACTION_ID_INVITE_USERS = "invite_users"
 
 SLACK_BASE_URL = "https://slack.com/api/"
-SLACK_MESSAGE_LIMIT = 4000
+SLACK_MESSAGE_LIMIT = 40000
 SLACK_DEFAULT_LIMIT = 100
 SLACK_CONFIRMATION_LIMIT = 174
 
@@ -108,6 +108,7 @@ SLACK_ERROR_CREATING_CHANNEL = "Error creating channel"
 SLACK_SUCCESSFULLY_CHANNEL_CREATED = "Channel created successfully"
 SLACK_ERROR_DATA_NOT_FOUND_IN_OUTPUT = "{key} data not found in json output"
 SLACK_ERROR_NOT_A_USER_ID = "The user parameter must be a user ID"
+SLACK_ERROR_NO_USERID_OR_EMAIL = "No User ID or Email was provided. Please provide a User ID or Email address for the target user."
 SLACK_SUCCESSFULLY_USER_DATA_RETRIEVED = "User data successfully retrieved"
 SLACK_ERROR_INVALID_USER = "Please provide a valid value in 'users' action parameter"
 SLACK_ERROR_INVITING_CHANNEL = "Error inviting to channel"

@@ -759,7 +759,8 @@ class SlackConnector(phantom.BaseConnector):
 
         user_id = param.get('user_id')
         email_address = param.get('email_address')
-
+        if not user_id and not email_address:
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_NO_USERID_OR_EMAIL)
         if user_id:
             if not user_id.startswith('U') and not user_id.startswith('W'):
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_NOT_A_USER_ID)
