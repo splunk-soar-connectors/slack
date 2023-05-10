@@ -19,11 +19,9 @@ import re
 import shlex
 import sys
 from argparse import ArgumentParser
-from datetime import datetime
 from pathlib import Path
 
 import encryption_helper
-import pytz
 import requests
 import simplejson as json
 import six
@@ -1267,6 +1265,7 @@ class SlackBot(object):
 
         self._post_message(msg, channel)
 
+
 def set_up_logging():
     """ Set up logging for the bot. """
     log_file = Path(tempfile.gettempdir()) / 'slack.log'
@@ -1280,6 +1279,7 @@ def set_up_logging():
     logger.addHandler(log_handler)
     logger.setLevel(logging.DEBUG)
     return logger
+
 
 if __name__ == '__main__':  # noqa: C901
     set_up_logging()
