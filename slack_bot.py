@@ -1283,7 +1283,6 @@ def set_up_logging():
 
 if __name__ == '__main__':  # noqa: C901
     set_up_logging()
-    logging.getLogger().setLevel(log_level)
 
     logging.info('**Spawning slack_bot.py...')
     if (not os.path.exists('./bot_config.py')):
