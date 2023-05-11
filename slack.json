@@ -4436,14 +4436,6 @@
     "pip_dependencies": {
         "wheel": [
             {
-                "module": "Django",
-                "input_file": "wheels/py3/Django-3.2.16-py3-none-any.whl"
-            },
-            {
-                "module": "asgiref",
-                "input_file": "wheels/py3/asgiref-3.4.1-py3-none-any.whl"
-            },
-            {
                 "module": "beautifulsoup4",
                 "input_file": "wheels/py3/beautifulsoup4-4.10.0-py3-none-any.whl"
             },
@@ -4511,14 +4503,6 @@
     },
     "pip39_dependencies": {
         "wheel": [
-            {
-                "module": "Django",
-                "input_file": "wheels/py3/Django-3.2.16-py3-none-any.whl"
-            },
-            {
-                "module": "asgiref",
-                "input_file": "wheels/py3/asgiref-3.6.0-py3-none-any.whl"
-            },
             {
                 "module": "beautifulsoup4",
                 "input_file": "wheels/py3/beautifulsoup4-4.10.0-py3-none-any.whl"

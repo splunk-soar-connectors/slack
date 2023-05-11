@@ -12,16 +12,17 @@
 # the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
+import logging
+import logging.handlers
 import os
 import re
 import shlex
 import sys
+import tempfile
 from argparse import ArgumentParser
-from datetime import datetime
 from pathlib import Path
 
 import encryption_helper
-import pytz
 import requests
 import simplejson as json
 import six
@@ -129,19 +130,6 @@ For example:
   or
     @<bot_username> list actions
                           """
-
-
-def tmp_log(msg):
-    log_dir = "/tmp"
-    log_path = Path(log_dir) / "slack.log"
-    log_path.touch()
-
-    tz_Denver = pytz.timezone('America/Denver')
-    now = datetime.now(tz_Denver)
-    current_time = now.strftime("%Y-%m-%d %H:%M:%S")
-
-    with log_path.open('a') as bubbly:
-        bubbly.write(current_time + ": " + msg + "\n")
 
 
 def _load_app_state(asset_id):
@@ -1116,7 +1104,7 @@ class SlackBot(object):
 
                     answer_filename = '{0}.json'.format(qid)
                     answer_path = "{0}/{1}".format(state_dir, answer_filename)
-                    tmp_log('**going to put answer file here: {}'.format(answer_path))
+                    logging.debug('**going to put answer file here: {}'.format(answer_path))
 
                     final_payload = process_payload(body, answer_path)
 
@@ -1136,17 +1124,17 @@ class SlackBot(object):
             is mentioned in the cat. It receives a json body which contains the data of the event. The command and
             channel name are parsed from the body and passed to command handler to further process the command.
             """
-            tmp_log('**app_mention handler hit')
+            logging.info('**app_mention handler hit')
             if body:
-                # tmp_log('**body from app mention: {}'.format(body))
+                # logging.debug('**body from app mention: {}'.format(body))
                 user = body.get("event", {}).get("user")
-                tmp_log('**user that spawned bot command is {}'.format(user))
+                logging.info('**user that spawned bot command is {}'.format(user))
                 if not self._check_user_authorization(user):
                     say('`User {} is not authorized to use this bot`'.format(user))
                     return
 
                 out_text = body.get("event", {}).get("text")
-                tmp_log('**body exists, app_mention text: {}'.format(out_text))
+                logging.debug('**body exists, app_mention text: {}'.format(out_text))
 
                 if out_text and out_text.startswith(self.cmd_start):
                     if out_text.strip() == self.cmd_start:
@@ -1178,54 +1166,54 @@ class SlackBot(object):
         handler.start()
 
     def _check_user_authorization(self, user):
-        tmp_log('**Checking authorization for user "{}"'.format(user))
+        logging.info('**Checking authorization for user "{}"'.format(user))
         permitted_users = self.permitted_users
 
         if not permitted_users:
-            tmp_log('**No permitted users specified. falling back to allow all')
+            logging.info('**No permitted users specified. falling back to allow all')
             return True
 
         else:
             user_list = permitted_users.split(",")
-            tmp_log('**Permitted_users: {}'.format(user_list))
+            logging.debug('**Permitted_users: {}'.format(user_list))
             if user in user_list:
-                tmp_log('**User "{}" is permitted to use bot'.format(user))
+                logging.info('**User "{}" is permitted to use bot'.format(user))
                 return True
             else:
-                tmp_log('**User "{}" is not permitted to use bot'.format(user))
+                logging.info('**User "{}" is not permitted to use bot'.format(user))
                 return False
 
     def _check_command_authorization(self, cmd_type):
         if cmd_type == "act":
             if self.permit_act:
-                tmp_log('**Command: "{}" is permitted'.format(cmd_type))
+                logging.info('**Command: "{}" is permitted'.format(cmd_type))
                 return True
             else:
-                tmp_log('**Command:"{}" is not permitted'.format(cmd_type))
+                logging.info('**Command:"{}" is not permitted'.format(cmd_type))
                 return False
 
         if cmd_type == "run_playbook":
             if self.permit_playbook:
-                tmp_log('**Command: "{}" is permitted'.format(cmd_type))
+                logging.info('**Command: "{}" is permitted'.format(cmd_type))
                 return True
             else:
-                tmp_log('**Command: "{}" is not permitted'.format(cmd_type))
+                logging.info('**Command: "{}" is not permitted'.format(cmd_type))
                 return False
 
         if cmd_type == "get_container":
             if self.permit_container:
-                tmp_log('**Command:" {}" is permitted'.format(cmd_type))
+                logging.info('**Command:" {}" is permitted'.format(cmd_type))
                 return True
             else:
-                tmp_log('**Command: "{}" is not permitted'.format(cmd_type))
+                logging.info('**Command: "{}" is not permitted'.format(cmd_type))
                 return False
 
         if cmd_type == "list":
             if self.permit_list:
-                tmp_log('**Command: "{}" is permitted'.format(cmd_type))
+                logging.info('**Command: "{}" is permitted'.format(cmd_type))
                 return True
             else:
-                tmp_log('**Command: "{}" is not permitted'.format(cmd_type))
+                logging.info('**Command: "{}" is not permitted'.format(cmd_type))
                 return False
         else:
             return False
@@ -1250,7 +1238,7 @@ class SlackBot(object):
             return
 
         if cmd_type == "act":
-            tmp_log("**permit_bot_act: {}".format(self.permit_act))
+            logging.info("**permit_bot_act: {}".format(self.permit_act))
             status, result = self._parse_action(args[1:])
             if (status):
                 msg = self._action_run_request(result, channel)
@@ -1258,7 +1246,7 @@ class SlackBot(object):
                 msg = result
 
         elif cmd_type == "run_playbook":
-            tmp_log("**permit_bot_playbook: {}".format(self.permit_playbook))
+            logging.info("**permit_bot_playbook: {}".format(self.permit_playbook))
             status, result = self._parse_playbook(args[1:])
             if (status):
                 msg = self._playbook_request(result, channel)
@@ -1266,11 +1254,11 @@ class SlackBot(object):
                 msg = result
 
         elif cmd_type == "get_container":
-            tmp_log("**permit_bot_container: {}".format(self.permit_container))
+            logging.info("**permit_bot_container: {}".format(self.permit_container))
             status, msg = self._parse_container(args[1:])
 
         elif cmd_type == "list":
-            tmp_log("**permit_bot_list: {}".format(self.permit_list))
+            logging.info("**permit_bot_list: {}".format(self.permit_list))
             status, msg = self._parse_list(args[1:])
 
         else:
@@ -1279,9 +1267,25 @@ class SlackBot(object):
         self._post_message(msg, channel)
 
 
-if __name__ == '__main__':  # noqa: C901
+def set_up_logging():
+    """ Set up logging for the bot. """
+    log_file = Path(tempfile.gettempdir()) / 'slack.log'
+    max_bytes = 5 * 1024 * 1024  # 5MB
+    log_formatter = logging.Formatter('[%(process)d][%(asctime)s][%(levelname)s] %(message)s')
 
-    tmp_log('**Spawning slack_bot.py...')
+    log_handler = logging.handlers.RotatingFileHandler(log_file, maxBytes=max_bytes, backupCount=4)
+    log_handler.setFormatter(log_formatter)
+
+    logger = logging.getLogger()
+    logger.addHandler(log_handler)
+    logger.setLevel(logging.DEBUG)
+    return logger
+
+
+if __name__ == '__main__':  # noqa: C901
+    set_up_logging()
+
+    logging.info('**Spawning slack_bot.py...')
     if (not os.path.exists('./bot_config.py')):
         if (len(sys.argv) != 3):
             print("Please create a bot_config.py file, and place it in this directory")
