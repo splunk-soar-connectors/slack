@@ -1,2 +1,1 @@
 **Unreleased**
-* Add log rotation for bot log files [PAPP-30433]
