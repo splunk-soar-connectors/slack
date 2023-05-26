@@ -4501,7 +4501,7 @@
             },
             {
                 "module": "charset_normalizer",
-                "input_file": "wheels/py3/charset_normalizer-2.0.12-py3-none-any.whl"
+                "input_file": "wheels/py39/charset_normalizer-3.1.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
             },
             {
                 "module": "idna",
@@ -4509,7 +4509,7 @@
             },
             {
                 "module": "requests",
-                "input_file": "wheels/shared/requests-2.27.1-py2.py3-none-any.whl"
+                "input_file": "wheels/py3/requests-2.31.0-py3-none-any.whl"
             },
             {
                 "module": "sh",
@@ -4537,7 +4537,7 @@
             },
             {
                 "module": "urllib3",
-                "input_file": "wheels/shared/urllib3-1.26.15-py2.py3-none-any.whl"
+                "input_file": "wheels/py3/urllib3-2.0.2-py3-none-any.whl"
             },
             {
                 "module": "websocket_client",
