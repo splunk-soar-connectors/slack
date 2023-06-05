@@ -1253,6 +1253,7 @@
         {
             "action": "get user",
             "description": "Get information about a user of a Slack team",
+            "verbose": "This action will ignore email_address parameter when user_id parameter is provided.",
             "type": "investigate",
             "identifier": "get_user",
             "read_only": true,
