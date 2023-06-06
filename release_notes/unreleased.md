@@ -1,3 +1,1 @@
 **Unreleased**
-* Updated ordering bug in ask_question
-* Added support to lookup user by email address
