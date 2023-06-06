@@ -41,7 +41,7 @@ App manifest file in (.yaml):
 Use below manifest file for creating slack app.
 <br><br>
 <pre>
-  display_information:
+display_information:
   name: soarbot
 features:
   bot_user:
@@ -59,6 +59,7 @@ oauth_config:
       - im:read
       - mpim:read
       - users:read
+      - users:read.email
       - chat:write
       - reactions:write
       - files:write
@@ -72,6 +73,7 @@ oauth_config:
       - groups:read
       - im:read
       - users:read
+      - users:read.email
       - chat:write
       - reactions:write
       - files:write
@@ -243,18 +245,22 @@ The required scopes are given below, please add the particular scope to use that
     <td>List Users</td>
     <td>
       <li>users:read</li>
+      <li>users:read.email</li>
     </td>
     <td>
       <li>users:read</li>
+      <li>users:read.email</li>
     </td>
   </tr>
   <tr>
     <td>Get User</td>
     <td>
       <li>users:read</li>
+      <li>users:read.email</li>
     </td>
     <td>
       <li>users:read</li>
+      <li>users:read.email</li>
     </td>
   </tr>
   <tr>

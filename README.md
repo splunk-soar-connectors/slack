@@ -2,7 +2,7 @@
 # Slack
 
 Publisher: Splunk  
-Connector Version: 2.6.2  
+Connector Version: 2.6.1  
 Product Vendor: Slack Technologies  
 Product Name: Slack  
 Product Version Supported (regex): ".\*"  
@@ -58,7 +58,7 @@ App manifest file in (.yaml):
 Use below manifest file for creating slack app.  
   
 
-      display_information:
+    display_information:
       name: soarbot
     features:
       bot_user:
@@ -76,6 +76,7 @@ Use below manifest file for creating slack app.
           - im:read
           - mpim:read
           - users:read
+          - users:read.email 
           - chat:write
           - reactions:write
           - files:write
@@ -89,6 +90,7 @@ Use below manifest file for creating slack app.
           - groups:read
           - im:read
           - users:read
+          - users:read.email 
           - chat:write
           - reactions:write
           - files:write
@@ -248,18 +250,22 @@ The required scopes are given below, please add the particular scope to use that
 <td>List Users</td>
 <td><ul>
 <li>users:read</li>
+<li>users:read.email</li>
 </ul></td>
 <td><ul>
 <li>users:read</li>
+<li>users:read.email</li>
 </ul></td>
 </tr>
 <tr class="even">
 <td>Get User</td>
 <td><ul>
 <li>users:read</li>
+<li>users:read.email</li>
 </ul></td>
 <td><ul>
 <li>users:read</li>
+<li>users:read.email</li>
 </ul></td>
 </tr>
 <tr class="odd">
