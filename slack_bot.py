@@ -224,7 +224,7 @@ class App():
 class SlackBot(object):
 
     def __init__(self, bot_token, socket_token, bot_id, base_url="https://127.0.0.1/", verify=False, auth_token='',
-                 permit_act=False, permit_playbook=False, permit_container=False, permit_list=False, permitted_users='', auth_basic=()):
+                 permit_act=False, permit_playbook=False, permit_container=False, permit_list=False, permitted_users='', auth_basic=(), app_id=''):
         """ This should be changed to some kind of load config thing
         """
         self.bot_token = bot_token
@@ -238,6 +238,7 @@ class SlackBot(object):
         self.cmd_start = "<@{}>".format(bot_id)
         self.auth = auth_basic
         self.verify = verify
+        self.app_id = app_id
         base_url += "/" if not base_url.endswith("/") else ""
         self.base_url = base_url
         self.phantom_url = base_url
@@ -1100,7 +1101,7 @@ class SlackBot(object):
                     callback_json = json.loads(UnicodeDammit(callback_id).unicode_markup)
                     qid = callback_json.get('qid')
                     confirmation_message = callback_json.get('confirmation')
-                    state_dir = '{0}/{1}'.format(APPS_STATE_PATH, SLACK_APP_ID)
+                    state_dir = '{0}/{1}'.format(APPS_STATE_PATH, self.app_id)
 
                     answer_filename = '{0}.json'.format(qid)
                     answer_path = "{0}/{1}".format(state_dir, answer_filename)
@@ -1287,11 +1288,12 @@ if __name__ == '__main__':  # noqa: C901
 
     logging.info('**Spawning slack_bot.py...')
     if (not os.path.exists('./bot_config.py')):
-        if (len(sys.argv) != 3):
+        if (len(sys.argv) != 4):
             print("Please create a bot_config.py file, and place it in this directory")
             sys.exit(1)
 
         asset_id = sys.argv[1]
+        app_id = sys.argv[3]
         state = _load_app_state(asset_id)
         bot_id = state.get('bot_id')
         ph_base_url = state.get('ph_base_url')
@@ -1335,7 +1337,8 @@ if __name__ == '__main__':  # noqa: C901
             permit_playbook=permit_playbook,
             permit_container=permit_container,
             permit_list=permit_list,
-            permitted_users=permitted_users
+            permitted_users=permitted_users,
+            app_id=app_id
         )
         sb._from_on_poll()
         sys.exit(0)
@@ -1343,6 +1346,15 @@ if __name__ == '__main__':  # noqa: C901
     import bot_config
 
     fail = False
+
+    try:
+        app_id = bot_config.APP_ID
+        if(not isinstance(app_id, str)):
+            print("The APP_ID entry in the bot_config file appears to not be a string")
+            fail = True
+    except:
+        print("Could not find an APP_ID entry in bot_config file")
+        fail = True
 
     try:
 
@@ -1457,5 +1469,6 @@ if __name__ == '__main__':  # noqa: C901
         base_url=bot_config.PHANTOM_URL,
         verify=bot_config.VERIFY_CERT,
         auth_token=pt,
-        auth_basic=auth)
+        auth_basic=auth,
+        app_id=app_id)
     sb._from_on_poll()
