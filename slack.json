@@ -4917,6 +4917,178 @@
                 "height": 5
             },
             "versions": "EQ(*)"
+        },
+        {
+            "action": "get history",
+            "description": "Get conversation history from specific Slack channel",
+            "type": "investigate",
+            "identifier": "get_history",
+            "read_only": true,
+            "parameters": {
+                "channel_id": {
+                    "description": "Unique ID of a Slack channel",
+                    "data_type": "string",
+                    "primary": true,
+                    "order": 0,
+                    "contains": [
+                        "slack channel id"
+                    ],
+                    "required": true
+                },
+                "message_ts": {
+                    "description": "Message timestamp (e.g. 1234567890.123456)",
+                    "data_type": "string",
+                    "primary": true,
+                    "order": 1,
+                    "contains": [
+                        "slack message timestamp"
+                    ],
+                    "required": false
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.channel_id",
+                    "data_type": "string",
+                    "contains": [
+                        "slack channel id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.message_ts",
+                    "data_type": "string",
+                    "contains": [
+                        "slack message timestamp"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.ok",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "message"
+                    ],
+                    "column_name": "Type",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.user",
+                    "data_type": "string",
+                    "example_values": [
+                        "U123ABC456"
+                    ],
+                    "column_name": "User",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.text",
+                    "data_type": "string",
+                    "example_values": [
+                        "Hello, this is a test message"
+                    ],
+                    "column_name": "Message",
+                    "column_order": 2
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.ts",
+                    "data_type": "string",
+                    "example_values": [
+                        "1512085950.000216"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.thread_ts",
+                    "data_type": "string",
+                    "example_values": [
+                        "1512085950.000216"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.client_msg_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "aa73fcc6-e1d4-480e-a466-3edad41bf011"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.parent_user_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "U123ABC456"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.reply_count",
+                    "data_type": "numeric",
+                    "example_values": [
+                        "1"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.reply_users_count",
+                    "data_type": "numeric",
+                    "example_values": [
+                        "1"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.latest_reply",
+                    "data_type": "string",
+                    "example_values": [
+                        "1704970971.951549"
+                    ]
+                },
+                {
+                    "data_path": "action_result.summary.num_users",
+                    "data_type": "numeric",
+                    "example_values": [
+                        28
+                    ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        "Num users: 28"
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                }
+            ],
+            "render": {
+                "width": 12,
+                "title": "Get History",
+                "type": "table",
+                "height": 5
+            },
+            "versions": "EQ(*)"
         }
     ],
     "pip_dependencies": {
