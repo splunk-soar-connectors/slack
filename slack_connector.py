@@ -1290,6 +1290,7 @@ class SlackConnector(phantom.BaseConnector):
         channel_id = param.get('channel_id')
         message_ts = param.get('message_ts')
 
+        self.debug_print(f"Executing Get History action for channel {channel_id}")
         # If user did not specify Channel ID
         if not channel_id:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_NO_CHANNEL_ID)
