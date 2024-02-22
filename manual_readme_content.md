@@ -1,5 +1,5 @@
 [comment]: # " File: README.md"
-[comment]: # "  Copyright (c) 2016-2023 Splunk Inc."
+[comment]: # "  Copyright (c) 2016-2024 Splunk Inc."
 [comment]: # ""
 [comment]: # "  Licensed under Apache 2.0 (https://www.apache.org/licenses/LICENSE-2.0.txt)"
 [comment]: # ""
@@ -85,6 +85,7 @@ Use below manifest file for creating slack app.
           - chat:write.public
           - app_mentions:read
           - channels:history
+          - groups:history
           - im:history
     settings:
       event_subscriptions:
@@ -306,6 +307,15 @@ The required scopes are given below, please add the particular scope to use that
 </ul></td>
 <td><ul>
 <li>chat:write</li>
+</ul></td>
+</tr>
+<tr class="even">
+<td>Get History</td>
+<td><ul>
+<li>channels:history</li>
+<li>groups:history</li>
+</ul></td>
+<td><ul>
 </ul></td>
 </tr>
 </tbody>
