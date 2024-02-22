@@ -4921,7 +4921,7 @@
         {
             "action": "get history",
             "description": "Get conversation history from specific Slack channel",
-            "verbose": "To get conversation history from a specified Slack channel. It also supports `message_ts` filter to retrieve a specific message. If `message_ts` is not provided then it will retrieve the latest 100 messages",
+            "verbose": "To get conversation history from a specified Slack channel. It also supports `message_ts` filter to retrieve a specific message. If `message_ts` is not provided then it will retrieve the latest 100 messages.",
             "type": "investigate",
             "identifier": "get_history",
             "read_only": true,

@@ -1299,6 +1299,7 @@ class SlackConnector(phantom.BaseConnector):
             if not channel_id.startswith('C'):
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_NOT_A_CHANNEL_ID)
 
+            self.save_progress(f"Fetching messages from channel {channel_id}...")
             ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_CONVERSATIONS_HISTORY, {'channel': channel_id})
 
             if not ret_val:
@@ -1315,6 +1316,7 @@ class SlackConnector(phantom.BaseConnector):
             final_resp = {'messages': []}
             self.debug_print(message_timestamps)
             for timestamp in message_timestamps:
+                self.save_progress(f"Fetching message history for {timestamp}...")
                 ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_THREADS_HISTORY, {'channel': channel_id, 'ts': timestamp})
 
                 if not ret_val:
@@ -1332,6 +1334,7 @@ class SlackConnector(phantom.BaseConnector):
 
         # If user specified bot Channel ID and Message ts (getting messages from specific thread)
         else:
+            self.save_progress(f"Fetching message history for {message_ts}...")
             ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_THREADS_HISTORY, {'channel': channel_id, 'ts': message_ts})
 
             if not resp_json:
