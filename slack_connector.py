@@ -1,6 +1,6 @@
 # File: slack_connector.py
 #
-# Copyright (c) 2016-2023 Splunk Inc.
+# Copyright (c) 2016-2024 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1297,7 +1297,15 @@ class SlackConnector(phantom.BaseConnector):
         answer_path = resp_json.get('answer_path')
         qid = resp_json.get('qid')
 
-        loop_count = (self._timeout * 60) / self._interval
+        timeout_in_seconds = self._timeout * 60
+
+        if self._interval > self._timeout:
+            self.debug_print("question timeout is grater than polling interval")
+            self._interval = timeout_in_seconds
+            loop_count = 1
+        else:
+            loop_count = timeout_in_seconds / self._interval
+
         count = 0
 
         while True:
