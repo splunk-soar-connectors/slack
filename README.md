@@ -2,11 +2,11 @@
 # Slack
 
 Publisher: Splunk  
-Connector Version: 2.7.0  
+Connector Version: 2.8.0  
 Product Vendor: Slack Technologies  
 Product Name: Slack  
 Product Version Supported (regex): ".\*"  
-Minimum Product Version: 6.0.0  
+Minimum Product Version: 6.1.1  
 
 Integrate with Slack to post messages and attachments to channels
 
