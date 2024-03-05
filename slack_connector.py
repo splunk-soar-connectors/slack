@@ -126,8 +126,8 @@ def _is_safe_path(basedir, path, follow_symlinks=True):
     return basedir == os.path.commonpath((basedir, matchpath))
 
 
-def rest_log(msg):
-    state_dir = "{0}/{1}".format(APPS_STATE_PATH, SLACK_APP_ID)
+def rest_log(msg, app_id):
+    state_dir = "{0}/{1}".format(APPS_STATE_PATH, app_id)
     path.unlink()
     path = Path(state_dir) / "resthandler.log"
     path.touch()  # default exists_ok=True
@@ -168,11 +168,13 @@ def process_payload(payload, answer_path):
 
 
 def handle_request(request, path):
+    app_file_name = request.path.split("/")[3]
+    app_id = app_file_name.split("_")[-1]
 
     try:
         payload = request.POST.get('payload')
         payload = json.loads(payload)
-        state_dir = "{0}/{1}".format(APPS_STATE_PATH, SLACK_APP_ID)
+        state_dir = "{0}/{1}".format(APPS_STATE_PATH, app_id)
 
         if not payload:
             return HttpResponse(SLACK_ERROR_PAYLOAD_NOT_FOUND, content_type="text/plain", status=400)
@@ -196,7 +198,7 @@ def handle_request(request, path):
             return HttpResponse(SLACK_ERROR_STATE_FILE_NOT_FOUND, content_type="text/plain", status=400)
 
         state_filename = "{0}_state.json".format(asset_id)
-        state_dir = "{0}/{1}".format(APPS_STATE_PATH, SLACK_APP_ID)
+        state_dir = "{0}/{1}".format(APPS_STATE_PATH, app_id)
         state_path = "{0}/{1}".format(state_dir, state_filename)
 
         try:
@@ -1139,6 +1141,7 @@ class SlackConnector(phantom.BaseConnector):
 
         asset_id = self.get_asset_id()
         app_version = self.get_app_json().get('app_version', '')
+        app_id = self.get_app_id()
 
         try:
             ps_out = sh.grep(sh.ps('ww', 'aux'), 'slack_bot.py')  # pylint: disable=E1101
@@ -1167,7 +1170,7 @@ class SlackConnector(phantom.BaseConnector):
             return action_result.set_status(phantom.APP_ERROR, SLACK_SOCKET_TOKEN_ERROR)
 
         self.save_progress("Starting SlackBot")
-        proc = subprocess.Popen(['phenv', 'python3', slack_bot_filename, asset_id, app_version])
+        proc = subprocess.Popen(['phenv', 'python3', slack_bot_filename, asset_id, app_version, app_id])
         self._state['pid'] = proc.pid
         self.save_progress("Started SlackBot with pid: {0}".format(proc.pid))
 
