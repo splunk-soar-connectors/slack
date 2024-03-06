@@ -1,1 +1,3 @@
 **Unreleased**
+* Fix 'ask question' action to work with different app id [PAPP-31954]
+* Fix timeout behavior for 'ask question' action [PAPP-33176]
