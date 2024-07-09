@@ -1379,7 +1379,6 @@ class SlackConnector(phantom.BaseConnector):
         _save_app_state(self._state, self.get_asset_id(), self)
 
         block = param.get('block')
-        failure_message = param.get('failure_message', SLACK_ANSWER_FAILURE)
         answer_feedback = param.get('answer_feedback', SLACK_USER_FEEDBACK)
         show_user_answer = param.get('show_user_answer')
 
@@ -1412,10 +1411,9 @@ class SlackConnector(phantom.BaseConnector):
                 for element in block['elements']:
                     # Modify the action_id for each button element
                     element['action_id'] = 'button:' + element['action_id']
-        
+
         block = json.dumps(block_json)
-        params = {'channel': user, 'blocks': block, 'as_user': True, 'text':'This is example'}
-            
+        params = {'channel': user, 'blocks': block, 'as_user': True, 'text': 'This is example'}
 
         ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_SEND_MESSAGE, params)
         if not ret_val:
@@ -1439,7 +1437,7 @@ class SlackConnector(phantom.BaseConnector):
             "confirmation": confirmation
         }
         return action_result.set_status(phantom.APP_SUCCESS), data
-    
+
     def _ask_question_with_block(self, param):
 
         self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
@@ -1497,7 +1495,7 @@ class SlackConnector(phantom.BaseConnector):
 
         payload = resp_json
 
-        if len(json.loads(param.get('block')))> 1:
+        if len(json.loads(param.get('block'))) > 1:
             try:
                 parsed_question = json.loads(param.get('block'))[0].get('elements')[0].get('text')
                 payload['asked_question'] = parsed_question
