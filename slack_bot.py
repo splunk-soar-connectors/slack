@@ -1117,6 +1117,37 @@ class SlackBot(object):
             except Exception as e:
                 print('Unknown exception occured while processing answer response. Exception: {}'.format(e))
 
+        @app.action(re.compile(r'^button:'))
+        def block_action(ack, body, action, respond):
+            # Acknowledge action request
+            ack()
+            try:
+                block_id = body.get('message').get('blocks')[0].get('block_id')
+                callback_json = json.loads(UnicodeDammit(block_id).unicode_markup)
+                qid = callback_json.get('qid')
+                confirmation_message = callback_json.get('confirmation')
+                show_user_answer = callback_json.get('show_user_answer')
+                answer_feedback = callback_json.get('answer_feedback')
+                state_dir = '{0}/{1}'.format(APPS_STATE_PATH, SLACK_APP_ID)
+
+                answer_filename = '{0}.json'.format(qid)
+                answer_path = "{0}/{1}".format(state_dir, answer_filename)
+                logging.debug('**going to put answer file here: {}'.format(answer_path))
+
+                final_payload = body
+
+                try:
+                    with open(answer_path, 'w') as answer_file:  # nosemgrep
+                        answer_file.write(json.dumps(final_payload))
+                except Exception as e:
+                    print('Exception occured while writing reponse to {}. Exception: {}'.format(answer_path, e))
+                response = confirmation_message
+                if show_user_answer:
+                    response = f"{response} {answer_feedback} {action['value']}"
+                respond(f"{response}", delete_original=True)
+            except Exception as e:
+                print('Unknown exception occured while processing answer response. Exception: {}'.format(e))
+
         @app.event("app_mention")
         def mention_handler(body, say):
             """
