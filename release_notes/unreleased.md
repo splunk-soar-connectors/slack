@@ -1,2 +1,2 @@
 **Unreleased**
-* Updated package versions - using platform idna package [PSAAS-18505]
+* Updated bundled packages - using some platform provided packages [PSAAS-18505]
