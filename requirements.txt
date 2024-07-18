@@ -1,7 +1,7 @@
-beautifulsoup4==4.10.0
-idna==3.3
+beautifulsoup4
+idna
 sh==1.14.2
 simplejson==3.17.5
-six==1.15.0
+six
 slack-bolt==1.14.0
 websocket-client==1.2.1
