@@ -1,4 +1,3 @@
-sh==1.14.2
 simplejson==3.17.5
 slack-bolt==1.14.0
 websocket-client==1.2.1
