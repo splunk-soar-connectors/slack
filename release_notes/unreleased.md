@@ -1,2 +1,1 @@
 **Unreleased**
-* Updated bundled packages - using some platform provided packages [PSAAS-18505]
