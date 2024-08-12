@@ -4597,6 +4597,507 @@
             "versions": "EQ(*)"
         },
         {
+            "action": "ask question with block",
+            "description": "Ask a question using Slack blocks",
+            "verbose": "This action will send a Slack user a direct message containing a question with a series of buttons which represent possible responses. Slack recommends limiting questions to 4000 characters but the enforced limit is 40000 characters. Once the user clicks on one of the responses, Slack will send the response back to Splunk SOAR. The action will succeed and output this response in the action result. If the user fails to respond within the timeout configured in the asset, the action will succeed, and output the <b>question ID</b> in the action result. The question ID can be used as input to the <b>get response</b> action.<br><br>If the <b>responses</b> parameter is not filled out, the response options will be <b>yes</b> and <b>no</b>.<br><br>The <b>confirmation</b> parameter takes a string that will be sent to the user after the user clicks a response. <b>Note:</b> It is recommended to use user ID instead of username since the latter usage has been deprecated by Slack.",
+            "type": "generic",
+            "identifier": "ask_question_with_block",
+            "read_only": false,
+            "lock": {
+                "enabled": false
+            },
+            "parameters": {
+                "destination": {
+                    "description": "User (e.g. @user or U1A1A1AAA) to ask question to",
+                    "data_type": "string",
+                    "primary": true,
+                    "required": true,
+                    "order": 0,
+                    "contains": [
+                        "slack user name",
+                        "slack user id"
+                    ]
+                },
+                "block": {
+                    "description": "Slack block json",
+                    "data_type": "string",
+                    "required": false,
+                    "order": 1
+                },
+                "confirmation": {
+                    "description": "Message to user after response",
+                    "data_type": "string",
+                    "order": 2
+                },
+                "timeout": {
+                    "description": "Number of seconds after wich question times out. Default: 1800s (30min)",
+                    "data_type": "numeric",
+                    "order": 3
+                },
+                "failure_message": {
+                    "description": "Custom message to be sent when question times out",
+                    "data_type": "string",
+                    "order": 4
+                },
+                "answer_feedback": {
+                    "description": "Custom message to send when users answers the question",
+                    "data_type": "string",
+                    "order": 5
+                },
+                "show_user_answer": {
+                    "description": "Option to show or not user's answer in feedback message",
+                    "data_type": "boolean",
+                    "order": 6
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.confirmation",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.destination",
+                    "data_type": "string",
+                    "contains": [
+                        "slack user name",
+                        "slack user id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.block",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.responses",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.asked_question",
+                    "data_type": "string",
+                    "column_order": 0,
+                    "column_name": "Question"
+                },
+                {
+                    "data_path": "action_result.data.*.action_ts",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.actions.*.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.actions.*.type",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.actions.*.value",
+                    "data_type": "string",
+                    "column_name": "Response",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.data.*.attachment_id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.callback_id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.channel",
+                    "data_type": "string",
+                    "contains": [
+                        "slack channel id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.channel.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.enterprise.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "E02PYRE04SJ"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.enterprise.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test Soar Sandbox"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.is_app_unfurl",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.is_enterprise_install",
+                    "example_values": [
+                        true,
+                        false
+                    ],
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.actions.*.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.actions.*.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.actions.*.style",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.actions.*.text",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.actions.*.type",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.actions.*.value",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.callback_id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.color",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.fallback",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.id",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.message.attachments.*.text",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.bot_id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.text",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.ts",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.type",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message.user",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.message_ts",
+                    "data_type": "string",
+                    "contains": [
+                        "slack message ts"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.ok",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.app_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "A056963QALF"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.attachments.*.actions.*.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.attachments.*.actions.*.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.attachments.*.actions.*.style",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.attachments.*.actions.*.text",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.attachments.*.actions.*.type",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.attachments.*.actions.*.value",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.attachments.*.callback_id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.attachments.*.color",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.attachments.*.fallback",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.attachments.*.id",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.attachments.*.text",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.bot_id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.bot_profile.app_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "A056963QALF"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.bot_profile.deleted",
+                    "example_values": [
+                        true,
+                        false
+                    ],
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.bot_profile.icons.image_36",
+                    "data_type": "string",
+                    "example_values": [
+                        "https://a.slack-edge.com/80588/img/plugins/app/bot_36.png"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.bot_profile.icons.image_48",
+                    "data_type": "string",
+                    "example_values": [
+                        "https://a.slack-edge.com/80588/img/plugins/app/bot_48.png"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.bot_profile.icons.image_72",
+                    "data_type": "string",
+                    "example_values": [
+                        "https://a.slack-edge.com/80588/img/plugins/app/service_72.png"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.bot_profile.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "B05696DUY4X"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.bot_profile.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "Heena_bot"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.bot_profile.team_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "T02Q675CX6W"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.bot_profile.updated",
+                    "example_values": [
+                        1677140860
+                    ],
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.team",
+                    "data_type": "string",
+                    "example_values": [
+                        "T02Q675CX6W"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.text",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.ts",
+                    "data_type": "string",
+                    "contains": [
+                        "slack message ts"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.type",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.original_message.user",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.response_url",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.team.domain",
+                    "data_type": "string",
+                    "contains": [
+                        "domain"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.team.enterprise_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "E02PYRE04SJ"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.team.enterprise_name",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test Soar Sandbox"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.team.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.token",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.trigger_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "5352404279280.2822243439234.8b1d29c8cf8df1243f25ac510252c95c"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.ts",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "interactive_message"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.user.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.user.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.user.team_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "T02Q675CX6W"
+                    ]
+                },
+                {
+                    "data_path": "action_result.summary.question_id",
+                    "data_type": "string",
+                    "column_name": "Question ID",
+                    "column_order": 2,
+                    "contains": [
+                        "slack question id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.summary.response",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.summary.response_received",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
+                    ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        "Response received: True, Question id: c2bc5f7cfbb34e13a7ada4aa6e6bb7b5, Response: yes"
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                }
+            ],
+            "render": {
+                "width": 12,
+                "title": "Question",
+                "type": "table",
+                "height": 5
+            },
+            "versions": "EQ(*)"
+        },
+        {
             "action": "get response",
             "description": "Get the response to a previously asked question",
             "verbose": "The purpose of the 'get response' action is to get the response of a question, asked using the 'ask question' action, that timed out before it could get the response.<br>The action will check to see if a question has been answered.<br><ul><li>If the user has answered the question, the question id generated in the 'ask question' action can be used to get the response.</li><li>If no response is yet available, the action will fail.</li></ul>",
