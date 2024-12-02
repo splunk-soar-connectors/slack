@@ -1251,6 +1251,278 @@
             "versions": "EQ(*)"
         },
         {
+            "action": "archive channel",
+            "identifier": "archive_channel",
+            "description": "archive a Slack channel",
+            "type": "investigate",
+            "read_only": false,
+            "parameters": {
+                "channel": {
+                    "description": "id of channel to archive",
+                    "data_type": "string",
+                    "required": true,
+                    "contains": [
+                        "slack channel id"
+                    ],
+                    "order": 0,
+                    "name": "channel"
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "column_order": 0,
+                    "column_name": "Status"
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.channel_id",
+                    "data_type": "string",
+                    "contains": [
+                        "slack channel id"
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.ok",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.error",
+                    "data_type": "string"
+                }
+            ],
+            "render": {
+                "width": 12,
+                "height": 5,
+                "type": "table",
+                "title": "Archive Channel"
+            },
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "get channel",
+            "identifier": "get_channel",
+            "description": "Search Slack channels, and return the channel ID and info, can search by name or ID",
+            "verbose": "The output of this action is details for a public and/or private channel. The channels will be listed with the channel ID.",
+            "type": "investigate",
+            "read_only": true,
+            "parameters": {
+                "name": {
+                    "description": "search by name (name or id is required but not both)",
+                    "data_type": "string",
+                    "required": false,
+                    "default": "",
+                    "order": 0,
+                    "name": "name"
+                },
+                "id": {
+                    "description": "search by id (name or id is required but not both)",
+                    "data_type": "string",
+                    "required": false,
+                    "default": "",
+                    "order": 1,
+                    "name": "id"
+                },
+                "public_channels": {
+                    "description": "include public channels",
+                    "data_type": "boolean",
+                    "required": false,
+                    "default": true,
+                    "order": 2,
+                    "name": "public_channels"
+                },
+                "private_channels": {
+                    "description": "include private channels",
+                    "data_type": "boolean",
+                    "required": false,
+                    "default": false,
+                    "order": 3,
+                    "name": "private_channels"
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "column_order": 0,
+                    "column_name": "Status"
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.public_channels",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.parameter.private_channels",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.parameter.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.id",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.ok",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.id",
+                    "data_type": "string",
+                    "contains": [
+                        "slack channel id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.channel.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.is_channel",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.is_group",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.is_im",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.created",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.creator",
+                    "data_type": "string",
+                    "contains": [
+                        "slack user id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.channel.is_archived",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.is_general",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.unlinked",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.name_normalized",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.is_read_only",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.is_shared",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.parent_conversation",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.is_ext_shared",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.is_org_shared",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.is_pending_ext_shared",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.is_member",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.is_private",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.is_mpim",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.last_read",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.topic.value",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.topic.creator",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.topic.last_set",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.purpose.value",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.purpose.creator",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.purpose.last_set",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.previous_names",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.channel.locale",
+                    "data_type": "string"
+                }
+            ],
+            "render": {
+                "width": 12,
+                "height": 5,
+                "type": "table",
+                "title": "Get Channel"
+            },
+            "versions": "EQ(*)"
+        },
+        {
             "action": "get user",
             "description": "Get information about a user of a Slack team",
             "verbose": "This action will ignore email_address parameter when user_id parameter is provided.",

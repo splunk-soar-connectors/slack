@@ -302,7 +302,8 @@ class SlackConnector(phantom.BaseConnector):
         self._base_url = SLACK_BASE_URL
 
         self._verification_token = self._state.get('token')
-        self._interval = self._validate_integers(self, config.get("response_poll_interval", 30), SLACK_RESP_POLL_INTERVAL_KEY)
+        self._interval = self._validate_integers(self, config.get(
+            "response_poll_interval", 30), SLACK_RESP_POLL_INTERVAL_KEY)
         if self._interval is None:
             return self.get_status()
 
@@ -580,7 +581,8 @@ class SlackConnector(phantom.BaseConnector):
 
         action_result.add_data(resp_json)
 
-        self.save_progress("Auth check to Slack passed. Configuring app for team, {}".format(resp_json.get('team', 'Unknown Team')))
+        self.save_progress("Auth check to Slack passed. Configuring app for team, {}".format(
+            resp_json.get('team', 'Unknown Team')))
 
         bot_username = resp_json.get('user')
         bot_user_id = resp_json.get('user_id')
@@ -648,6 +650,66 @@ class SlackConnector(phantom.BaseConnector):
         action_result.add_data(resp_json)
 
         return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_CHANNEL_CREATED)
+
+    def _get_channel(self, param):
+        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
+        searchbyname = False
+        searchbyid = False
+
+        channel_types = []
+        if param.get("private_channels"):
+            channel_types.append("private_channel")
+        if param.get("public_channels"):
+            channel_types.append("public_channel")
+        if param.get("name"):
+            endpoint = "conversations.list"
+            searchbyname = True
+        if param.get("id"):
+            endpoint = "conversations.info"
+            searchbyid = True
+
+        if (searchbyname == False) and (searchbyid == False):
+            return action_result.set_status(phantom.APP_ERROR)
+
+        channel_types = ",".join(channel_types)
+
+        if searchbyname:
+            limit = self._validate_integers(action_result, param.get("limit", SLACK_DEFAULT_LIMIT), SLACK_LIMIT_KEY)
+            if limit is None:
+                return action_result.get_status()
+
+            ret_val, resp_json = self._paginator(action_result, SLACK_LIST_CHANNEL, "channels", limit=limit)
+
+            if not ret_val:
+                return action_result.get_status()
+
+            for channel in resp_json.get("channels", []):
+                if channel.get("name") == param.get("name"):
+                    action_result.add_data({"ok": resp_json.get("ok"), "channel": channel})
+                    return action_result.set_status(phantom.APP_SUCCESS)
+        elif searchbyid:
+            ret_val, resp_json = self._make_slack_rest_call(
+                action_result, endpoint, {'channel': param.get("id")}
+            )
+            action_result.add_data({"ok": resp_json.get("ok"), "channel": resp_json.get("channel")})
+            return action_result.set_status(phantom.APP_SUCCESS)
+
+        return action_result.set_status(phantom.APP_ERROR)
+
+    def _archive_channel(self, param):
+        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
+        endpoint = "conversations.archive"
+
+        ret_val, response = self._make_slack_rest_call(
+            action_result, endpoint, {'channel': param['channel']}
+        )
+
+        if not ret_val:
+            return ret_val
+
+        action_result.add_data(response.data)
+
+        return action_result.set_status(phantom.APP_SUCCESS)
 
     def _list_channels(self, param):
 
@@ -1129,7 +1191,8 @@ class SlackConnector(phantom.BaseConnector):
                         self.save_progress("pid passed in as container count, stopping bot")
                         return action_result.set_status(phantom.APP_SUCCESS, "bot has been stopped")
                     else:
-                        self.save_progress("HINT: Set Maximum Containers to 1234 to restart slackbot, or set to PID to stop slackbot")
+                        self.save_progress(
+                            "HINT: Set Maximum Containers to 1234 to restart slackbot, or set to PID to stop slackbot")
 
                 if 'slack_bot.py' in sh.ps('ww', pid):  # pylint: disable=E1101
                     self.save_progress("Detected SlackBot running with pid {0}".format(pid))
@@ -1144,7 +1207,8 @@ class SlackConnector(phantom.BaseConnector):
             ps_out = sh.grep(sh.ps('ww', 'aux'), 'slack_bot.py')  # pylint: disable=E1101
             old_pid = shlex.split(str(ps_out))[1]
             if app_version not in ps_out:
-                self.save_progress("Found an old version of slackbot running with pid {}, going to kill it".format(old_pid))
+                self.save_progress(
+                    "Found an old version of slackbot running with pid {}, going to kill it".format(old_pid))
                 sh.kill(old_pid)  # pylint: disable=E1101
             elif asset_id in ps_out:  # pylint: disable=E1101
                 self._state['pid'] = int(old_pid)
@@ -1322,7 +1386,8 @@ class SlackConnector(phantom.BaseConnector):
 
         payload = resp_json.get('payloads')[0]
         action_result.add_data(payload)
-        action_result.set_summary({'response_received': True, 'question_id': qid, 'response': payload.get("actions", [{}])[0].get("value")})
+        action_result.set_summary({'response_received': True, 'question_id': qid,
+                                  'response': payload.get("actions", [{}])[0].get("value")})
 
         os.remove(answer_path)
 
@@ -1391,6 +1456,10 @@ class SlackConnector(phantom.BaseConnector):
             ret_val = self._create_channel(param)
         elif action_id == ACTION_ID_INVITE_USERS:
             ret_val = self._invite_users(param)
+        elif action_id == ACTION_ID_ARCHIVE_CHANNEL:
+            ret_val = self._archive_channel(param)
+        elif action_id == ACTION_ID_GET_CHANNEL:
+            ret_val = self._get_channel(param)
 
         return ret_val
 
