@@ -29,6 +29,8 @@ ACTION_ID_STOP_BOT = "stop_bot"
 ACTION_ID_ON_POLL = "on_poll"
 ACTION_ID_CREATE_CHANNEL = "create_channel"
 ACTION_ID_INVITE_USERS = "invite_users"
+ACTION_ID_ARCHIVE_CHANNEL = "archive_channel"
+ACTION_ID_GET_CHANNEL = "get_channel"
 
 SLACK_BASE_URL = "https://slack.com/api/"
 SLACK_MESSAGE_LIMIT = 40000
