@@ -4922,24 +4922,8 @@
     "pip_dependencies": {
         "wheel": [
             {
-                "module": "beautifulsoup4",
-                "input_file": "wheels/py3/beautifulsoup4-4.10.0-py3-none-any.whl"
-            },
-            {
-                "module": "idna",
-                "input_file": "wheels/py3/idna-3.3-py3-none-any.whl"
-            },
-            {
-                "module": "sh",
-                "input_file": "wheels/shared/sh-1.14.2-py2.py3-none-any.whl"
-            },
-            {
                 "module": "simplejson",
                 "input_file": "wheels/py36/simplejson-3.17.5-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
-            },
-            {
-                "module": "six",
-                "input_file": "wheels/shared/six-1.15.0-py2.py3-none-any.whl"
             },
             {
                 "module": "slack_bolt",
@@ -4947,11 +4931,7 @@
             },
             {
                 "module": "slack_sdk",
-                "input_file": "wheels/shared/slack_sdk-3.27.0-py2.py3-none-any.whl"
-            },
-            {
-                "module": "soupsieve",
-                "input_file": "wheels/py3/soupsieve-2.3.2.post1-py3-none-any.whl"
+                "input_file": "wheels/shared/slack_sdk-3.33.5-py2.py3-none-any.whl"
             },
             {
                 "module": "websocket_client",
@@ -4962,24 +4942,8 @@
     "pip39_dependencies": {
         "wheel": [
             {
-                "module": "beautifulsoup4",
-                "input_file": "wheels/py3/beautifulsoup4-4.10.0-py3-none-any.whl"
-            },
-            {
-                "module": "idna",
-                "input_file": "wheels/py3/idna-3.3-py3-none-any.whl"
-            },
-            {
-                "module": "sh",
-                "input_file": "wheels/shared/sh-1.14.2-py2.py3-none-any.whl"
-            },
-            {
                 "module": "simplejson",
                 "input_file": "wheels/py39/simplejson-3.17.5-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
-            },
-            {
-                "module": "six",
-                "input_file": "wheels/shared/six-1.15.0-py2.py3-none-any.whl"
             },
             {
                 "module": "slack_bolt",
@@ -4987,11 +4951,7 @@
             },
             {
                 "module": "slack_sdk",
-                "input_file": "wheels/shared/slack_sdk-3.27.0-py2.py3-none-any.whl"
-            },
-            {
-                "module": "soupsieve",
-                "input_file": "wheels/py3/soupsieve-2.5-py3-none-any.whl"
+                "input_file": "wheels/shared/slack_sdk-3.33.5-py2.py3-none-any.whl"
             },
             {
                 "module": "websocket_client",

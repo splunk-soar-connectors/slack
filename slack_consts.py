@@ -36,7 +36,7 @@ SLACK_DEFAULT_LIMIT = 100
 SLACK_CONFIRMATION_LIMIT = 174
 
 SLACK_JSON_BOT_TOKEN = "bot_token"
-SLACK_JSON_PH_AUTH_TOKEN = 'ph_auth_token'
+SLACK_JSON_PH_AUTH_TOKEN = "ph_auth_token"
 SLACK_JSON_VERIFICATION_TOKEN = "verification_token"
 SLACK_JSON_SOCKET_TOKEN = "socket_token"
 SLACK_JSON_PERMIT_BOT_ACT = "permit_bot_act"
@@ -100,8 +100,9 @@ SLACK_ERROR_UNABLE_TO_DECODE_JSON_RESPONSE = "Unable to decode the response as J
 SLACK_ERROR_REST_CALL_FAILED = "REST call failed"
 SLACK_ERROR_TEST_CONNECTIVITY_FAILED = "Test Connectivity Failed"
 SLACK_SUCCESSFULLY_TEST_CONNECTIVITY_PASSED = "Test Connectivity Passed"
-SLACK_ERROR_USER_TOKEN_NOT_PROVIDED = ("'OAuth Access Token' is required for this action. "
-                                       "Navigate to the asset's configuration and add a token now and try again.")
+SLACK_ERROR_USER_TOKEN_NOT_PROVIDED = (
+    "'OAuth Access Token' is required for this action. " "Navigate to the asset's configuration and add a token now and try again."
+)
 SLACK_ERROR_CREATING_CHANNEL = "Error creating channel"
 SLACK_SUCCESSFULLY_CHANNEL_CREATED = "Channel created successfully"
 SLACK_ERROR_DATA_NOT_FOUND_IN_OUTPUT = "{key} data not found in json output"
@@ -133,20 +134,24 @@ SLACK_INGESTION_DISABLED = "{message} Ingestion has been disabled."
 SLACK_ERROR_COULD_NOT_GET_BOT_ID = "Could not get bot ID from Slack"
 SLACK_SUCCESSFULLY_SLACKBOT_RUNNING = "SlackBot already running"
 SLACK_ERROR_AUTH_TOKEN_NOT_PROVIDED = "The 'ph_auth_token' asset configuration parameter is required to run the on_poll action"
-SLACK_ERROR_SLACKBOT_RUNNING_WITH_SAME_BOT_TOKEN = ("Detected an instance of SlackBot running with the same bot token. "
-                                                    "Not going to start new instance.")
+SLACK_ERROR_SLACKBOT_RUNNING_WITH_SAME_BOT_TOKEN = (
+    "Detected an instance of SlackBot running with the same bot token. " "Not going to start new instance."
+)
 SLACK_SUCCESSFULLY_SLACKBOT_STARTED = "SlackBot started"
 SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_CHANNEL = (
-    "Questions can only be sent as direct messages to users using this action. To send message in channel, use the ask question channel action.")
+    "Questions can only be sent as direct messages to users using this action. To send message in channel, use the ask question channel action."
+)
 SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_USER = (
-    "Questions can only be sent in channel using this action. To send message to a user, use the ask question action.")
+    "Questions can only be sent in channel using this action. To send message to a user, use the ask question action."
+)
 
 SLACK_ERROR_UNABLE_TO_PARSE_RESPONSE = "Error occurred while parsing the response"
 SLACK_ERROR_QUESTION_RESPONSE_NOT_AVAILABLE = "Response to question not available"
 SLACK_ERROR_NO_RESPONSE_FROM_SERVER = "Got no response from the Slack server"
 SLACK_ERROR_INVALID_CHANNEL_TYPE = "Please provide a valid value in the 'channel_type' action parameter"
-SLACK_ERROR_LENGTH_LIMIT_EXCEEDED = ("Based on your asset_id length ({asset_length}), "
-                                     "valid length for the 'confirmation' parameter is {valid_length}")
+SLACK_ERROR_LENGTH_LIMIT_EXCEEDED = (
+    "Based on your asset_id length ({asset_length}), " "valid length for the 'confirmation' parameter is {valid_length}"
+)
 
 SLACK_ERROR_BLOCKS_OR_MESSAGE_REQD = "You must provide at least one of 'blocks' or 'message'"
 SLACK_ERROR_COMMAND_NOT_PERMITTED = "This command is not permitted to be run on this asset"
@@ -159,11 +164,13 @@ SLACK_LIMIT_KEY = "'limit' action"
 
 SLACK_DEFAULT_TIMEOUT = 30
 
-SLACK_STATE_FILE_CORRUPT_ERROR = ("Error occurred while loading the state file due to it's unexpected format. Resetting "
-                                  "the state file with the default format. Please test the connectivity.")
+SLACK_STATE_FILE_CORRUPT_ERROR = (
+    "Error occurred while loading the state file due to it's unexpected format. Resetting "
+    "the state file with the default format. Please test the connectivity."
+)
 SLACK_SOCKET_TOKEN_ERROR = "Invalid Socket Token please update the configuration file and rerun test connectivity"
 
-SLACK_STATE_IS_ENCRYPTED = 'is_encrypted'
+SLACK_STATE_IS_ENCRYPTED = "is_encrypted"
 
 # For encryption and decryption
 SLACK_ENCRYPT_TOKEN = "Encrypting the {} token"
