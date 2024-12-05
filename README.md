@@ -687,7 +687,7 @@ Slack.
 
 
 ### Configuration Variables
-The below configuration variables are required for this Connector to operate.  These variables are specified when configuring a Slack asset in SOAR.
+This table lists the configuration variables required to operate Slack. These variables are specified when configuring a Slack asset in Splunk SOAR.
 
 VARIABLE | REQUIRED | TYPE | DESCRIPTION
 -------- | -------- | ---- | -----------
