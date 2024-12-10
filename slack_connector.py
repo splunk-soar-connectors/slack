@@ -941,10 +941,8 @@ class SlackConnector(phantom.BaseConnector):
 
         caption = param.get('caption', '')
 
-        if caption:
-            caption += ' -- '
-
-        caption += 'Uploaded from Phantom'
+        if isnull(caption):
+            caption = 'Uploaded from Phantom'
 
         kwargs = {}
         params = {'channels': param['destination'], 'initial_comment': caption}
