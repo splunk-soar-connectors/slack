@@ -6,7 +6,7 @@ Connector Version: 2.8.0
 Product Vendor: Slack Technologies  
 Product Name: Slack  
 Product Version Supported (regex): ".\*"  
-Minimum Product Version: 6.1.1  
+Minimum Product Version: 6.3.0  
 
 Integrate with Slack to post messages and attachments to channels
 
@@ -686,7 +686,7 @@ Running a **list** command will result in SlackBot sending a list of either acti
 Slack.  
 
 
-### Configuration Variables
+### Configuration variables
 This table lists the configuration variables required to operate Slack. These variables are specified when configuring a Slack asset in Splunk SOAR.
 
 VARIABLE | REQUIRED | TYPE | DESCRIPTION
