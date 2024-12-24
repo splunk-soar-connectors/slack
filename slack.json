@@ -4919,26 +4919,6 @@
             "versions": "EQ(*)"
         }
     ],
-    "pip_dependencies": {
-        "wheel": [
-            {
-                "module": "simplejson",
-                "input_file": "wheels/py36/simplejson-3.17.5-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
-            },
-            {
-                "module": "slack_bolt",
-                "input_file": "wheels/shared/slack_bolt-1.14.0-py2.py3-none-any.whl"
-            },
-            {
-                "module": "slack_sdk",
-                "input_file": "wheels/shared/slack_sdk-3.33.5-py2.py3-none-any.whl"
-            },
-            {
-                "module": "websocket_client",
-                "input_file": "wheels/shared/websocket_client-1.2.1-py2.py3-none-any.whl"
-            }
-        ]
-    },
     "pip39_dependencies": {
         "wheel": [
             {
