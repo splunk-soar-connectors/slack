@@ -1277,11 +1277,11 @@ class SlackConnector(phantom.BaseConnector):
         timeout_in_seconds = self._timeout * 60
 
         if self._interval > self._timeout:
-            self.debug_print("question timeout is grater than polling interval")
+            self.debug_print("question timeout is greater than the polling interval")
             self._interval = timeout_in_seconds
             loop_count = 1
         else:
-            loop_count = timeout_in_seconds / self._interval
+            loop_count = timeout_in_seconds // self._interval
 
         count = 0
 
