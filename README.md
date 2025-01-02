@@ -11,7 +11,7 @@ Minimum Product Version: 6.3.0
 Integrate with Slack to post messages and attachments to channels
 
 [comment]: # " File: README.md"
-[comment]: # "  Copyright (c) 2016-2024 Splunk Inc."
+[comment]: # "  Copyright (c) 2016-2025 Splunk Inc."
 [comment]: # ""
 [comment]: # "  Licensed under Apache 2.0 (https://www.apache.org/licenses/LICENSE-2.0.txt)"
 [comment]: # ""
