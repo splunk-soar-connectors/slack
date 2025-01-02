@@ -126,13 +126,13 @@ def _is_safe_path(basedir, path, follow_symlinks=True):
     return basedir == os.path.commonpath((basedir, matchpath))
 
 
-def rest_log(msg, app_id):
-    state_dir = "{0}/{1}".format(APPS_STATE_PATH, app_id)
-    path.unlink()
-    path = Path(state_dir) / "resthandler.log"
-    path.touch()  # default exists_ok=True
-    with path.open("a") as highscore:
-        highscore.write(msg + "\n")
+# def rest_log(msg, app_id):
+#     state_dir = "{0}/{1}".format(APPS_STATE_PATH, app_id)
+#     path.unlink()
+#     path = Path(state_dir) / "resthandler.log"
+#     path.touch()  # default exists_ok=True
+#     with path.open("a") as highscore:
+#         highscore.write(msg + "\n")
 
 
 def process_payload(payload, answer_path):
@@ -1277,7 +1277,7 @@ class SlackConnector(phantom.BaseConnector):
         timeout_in_seconds = self._timeout * 60
 
         if self._interval > timeout_in_seconds:
-            self.debug_print("question timeout is greater than the polling interval")
+            self.debug_print("Question timeout is greater than the polling interval")
             self._interval = timeout_in_seconds
             loop_count = 1
         else:
