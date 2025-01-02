@@ -19,7 +19,6 @@ import sys
 import time
 import uuid
 from os.path import exists
-from pathlib import Path
 from urllib.parse import unquote
 
 import encryption_helper
@@ -1277,7 +1276,7 @@ class SlackConnector(phantom.BaseConnector):
         timeout_in_seconds = self._timeout * 60
 
         if self._interval > timeout_in_seconds:
-            self.debug_print("Question timeout is greater than the polling interval")
+            self.debug_print("uestion timeout is greater than the polling interval")
             self._interval = timeout_in_seconds
             loop_count = 1
         else:
