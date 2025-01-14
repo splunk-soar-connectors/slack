@@ -719,6 +719,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 [get response](#action-get-response) - Get the response to a previously asked question  
 [on poll](#action-on-poll) - Start SlackBot and make health checks to it  
 [stop bot](#action-stop-bot) - Stop SlackBot  
+[get history](#action-get-history) - Get message history of specific channel or thread
 
 ## action: 'test connectivity'
 Tests authorization with Slack
@@ -1658,3 +1659,37 @@ action_result.summary | string |  |
 action_result.message | string |  |   SlackBot isn't running, not going to stop it. Ingestion has been disabled. 
 summary.total_objects | numeric |  |   1 
 summary.total_objects_successful | numeric |  |   1 
+
+## action: 'get history'
+Get message history of specific channel or thread
+
+Type: **investigate**
+Read only: **True**
+
+#### Action Parameters
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**channel_id** | required | Unique ID of channel to fetch messages from | string | `channel id`
+**message_ts** | optional | TS parameter of a particular message to fetch its thread | string | `message ts`
+
+#### Action Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failed
+action_result.parameter.channel_id | string | `slack channel id` |
+action_result.parameter.message_ts | string | `slack message ts` |
+action_result.data.\*.ok | boolean | | True False
+action_result.data.\*.messages.\*.type | string | | message
+action_result.data.\*.messages.\*.user | string | | U123ABC456
+action_result.data.\*.messages.\*.text | string | | This is a test message.
+action_result.data.\*.messages.\*.ts | string | | 1512085950.000216
+action_result.data.\*.messages.\*.thread_ts | string | | 1512085950.000216
+action_result.data.\*.messages.\*.client_msg_id | string | | aa73fcc6-e1d4-480e-a466-3edad41bf011
+action_result.data.\*.messages.\*.parent_user_id | string | | U123ABC456
+action_result.data.\*.messages.\*.reply_count | numeric | | 2
+action_result.data.\*.messages.\*.reply_users_count | string | | 1
+action_result.data.\*.messages.\*.latest_reply | string | | 1512085950.000216
+action_result.summary.num_messages | numeric | | 28
+action_result.message | string | | Conversation history data successfully retrieved
+summary.total_objects | numeric | | 1
+summary.total_objects_successful | numeric | | 1
