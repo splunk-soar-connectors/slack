@@ -669,7 +669,7 @@ class SlackConnector(phantom.BaseConnector):
             searchbyid = True
 
         if not (searchbyname or searchbyid):
-            return action_result.set_status(phantom.APP_ERROR)
+            return action_result.set_status(phantom.APP_ERROR, "Must search by one of IDs or names")
 
         channel_types = ",".join(channel_types)
 
