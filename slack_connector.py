@@ -668,7 +668,7 @@ class SlackConnector(phantom.BaseConnector):
             endpoint = "conversations.info"
             searchbyid = True
 
-        if (searchbyname == False) and (searchbyid == False):
+        if not (searchbyname or searchbyid):
             return action_result.set_status(phantom.APP_ERROR)
 
         channel_types = ",".join(channel_types)
