@@ -144,7 +144,8 @@ SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_CHANNEL = (
     "Questions can only be sent as direct messages to users using this action. To send message in channel, use the ask question channel action.")
 SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_USER = (
     "Questions can only be sent in channel using this action. To send message to a user, use the ask question action.")
-
+SLACK_ERROR_ARCHIVE_CHANNEL = "Failed to archive channel"
+SLACK_ERROR_RETRIEVE_CHANNEL = "Failed to retrive channel listing from Slack"
 SLACK_ERROR_UNABLE_TO_PARSE_RESPONSE = "Error occurred while parsing the response"
 SLACK_ERROR_QUESTION_RESPONSE_NOT_AVAILABLE = "Response to question not available"
 SLACK_ERROR_NO_RESPONSE_FROM_SERVER = "Got no response from the Slack server"

@@ -681,7 +681,12 @@ class SlackConnector(phantom.BaseConnector):
             ret_val, resp_json = self._paginator(action_result, SLACK_LIST_CHANNEL, "channels", limit=limit)
 
             if not ret_val:
-                return action_result.get_status()
+                message = action_result.get_message()
+                if message:
+                    error_message = "{}: {}".format(SLACK_ERROR_RETRIEVE_CHANNEL, message)
+                else:
+                    error_message = SLACK_ERROR_RETRIEVE_CHANNEL
+                return action_result.set_status(phantom.APP_ERROR, error_message)
 
             for channel in resp_json.get("channels", []):
                 if channel.get("name") == param.get("name"):
@@ -705,7 +710,12 @@ class SlackConnector(phantom.BaseConnector):
         )
 
         if not ret_val:
-            return ret_val
+            message = action_result.get_message()
+            if message:
+                error_message = "{}: {}".format(SLACK_ERROR_ARCHIVE_CHANNEL, message)
+            else:
+                error_message = SLACK_ERROR_ARCHIVE_CHANNEL
+            return action_result.set_status(phantom.APP_ERROR, error_message)
 
         action_result.add_data(response.data)
 
