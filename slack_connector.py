@@ -1165,8 +1165,7 @@ class SlackConnector(phantom.BaseConnector):
                         self.save_progress("pid passed in as container count, stopping bot")
                         return action_result.set_status(phantom.APP_SUCCESS, "bot has been stopped")
                     else:
-                        self.save_progress(
-                            "HINT: Set Maximum Containers to 1234 to restart slackbot, or set to PID to stop slackbot")
+                        self.save_progress("HINT: Set Maximum Containers to 1234 to restart slackbot, or set to PID to stop slackbot")
 
                 if "slack_bot.py" in sh.ps("ww", pid):  # pylint: disable=E1101
                     self.save_progress("Detected SlackBot running with pid {0}".format(pid))
@@ -1182,8 +1181,7 @@ class SlackConnector(phantom.BaseConnector):
             ps_out = sh.grep(sh.ps("ww", "aux"), "slack_bot.py")  # pylint: disable=E1101
             old_pid = shlex.split(str(ps_out))[1]
             if app_version not in ps_out:
-                self.save_progress(
-                    "Found an old version of slackbot running with pid {}, going to kill it".format(old_pid))
+                self.save_progress("Found an old version of slackbot running with pid {}, going to kill it".format(old_pid))
                 sh.kill(old_pid)  # pylint: disable=E1101
             elif asset_id in ps_out:  # pylint: disable=E1101
                 self._state["pid"] = int(old_pid)
