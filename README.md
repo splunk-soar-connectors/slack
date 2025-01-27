@@ -2,16 +2,16 @@
 # Slack
 
 Publisher: Splunk  
-Connector Version: 2.7.1  
+Connector Version: 2.8.0  
 Product Vendor: Slack Technologies  
 Product Name: Slack  
 Product Version Supported (regex): ".\*"  
-Minimum Product Version: 6.2.1  
+Minimum Product Version: 6.3.0  
 
 Integrate with Slack to post messages and attachments to channels
 
 [comment]: # " File: README.md"
-[comment]: # "  Copyright (c) 2016-2023 Splunk Inc."
+[comment]: # "  Copyright (c) 2016-2025 Splunk Inc."
 [comment]: # ""
 [comment]: # "  Licensed under Apache 2.0 (https://www.apache.org/licenses/LICENSE-2.0.txt)"
 [comment]: # ""
@@ -686,8 +686,8 @@ Running a **list** command will result in SlackBot sending a list of either acti
 Slack.  
 
 
-### Configuration Variables
-The below configuration variables are required for this Connector to operate.  These variables are specified when configuring a Slack asset in SOAR.
+### Configuration variables
+This table lists the configuration variables required to operate Slack. These variables are specified when configuring a Slack asset in Splunk SOAR.
 
 VARIABLE | REQUIRED | TYPE | DESCRIPTION
 -------- | -------- | ---- | -----------
