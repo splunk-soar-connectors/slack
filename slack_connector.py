@@ -675,9 +675,7 @@ class SlackConnector(phantom.BaseConnector):
                     action_result.add_data({"ok": resp_json.get("ok"), "channel": channel})
                     return action_result.set_status(phantom.APP_SUCCESS)
         elif searchbyid:
-            ret_val, resp_json = self._make_slack_rest_call(
-                action_result, endpoint, {'channel': param.get("id")}
-            )
+            ret_val, resp_json = self._make_slack_rest_call(action_result, endpoint, {'channel': param.get("id")})
             action_result.add_data({"ok": resp_json.get("ok"), "channel": resp_json.get("channel")})
             return action_result.set_status(phantom.APP_SUCCESS)
 
@@ -687,9 +685,7 @@ class SlackConnector(phantom.BaseConnector):
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
         endpoint = "conversations.archive"
 
-        ret_val, response = self._make_slack_rest_call(
-            action_result, endpoint, {'channel': param['channel']}
-        )
+        ret_val, response = self._make_slack_rest_call(action_result, endpoint, {'channel': param['channel']})
 
         if not ret_val:
             message = action_result.get_message()
