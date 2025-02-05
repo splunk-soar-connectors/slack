@@ -12,6 +12,7 @@
 # the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
+import json
 import os
 import shlex
 import subprocess
@@ -26,7 +27,6 @@ import phantom.app as phantom
 import phantom.rules as ph_rules
 import requests
 import sh
-import simplejson as json
 from bs4 import BeautifulSoup, UnicodeDammit
 from django.http import HttpResponse
 from phantom.base_connector import APPS_STATE_PATH
