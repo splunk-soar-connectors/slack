@@ -903,13 +903,7 @@ class SlackConnector(phantom.BaseConnector):
         self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
-        caption = param.get("caption", "")
-
-        if caption:
-            caption += " -- "
-
-        caption += "Uploaded from Phantom"
-
+        caption = param.get("caption", "Uploaded from Splunk SOAR")
         kwargs = {}
         params = {"channels": param["destination"], "initial_comment": caption}
 
