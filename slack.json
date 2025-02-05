@@ -15,7 +15,7 @@
     "type": "information",
     "license": "Copyright (c) 2016-2025 Splunk Inc.",
     "main_module": "slack_connector.py",
-    "app_version": "2.8.0",
+    "app_version": "2.8.1",
     "utctime_updated": "2022-02-04T18:14:51.000000Z",
     "product_vendor": "Slack Technologies",
     "product_name": "Slack",
@@ -4919,19 +4919,15 @@
             "versions": "EQ(*)"
         }
     ],
-    "pip39_dependencies": {
+    "pip_dependencies": {
         "wheel": [
-            {
-                "module": "simplejson",
-                "input_file": "wheels/py39/simplejson-3.17.5-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
-            },
             {
                 "module": "slack_bolt",
                 "input_file": "wheels/shared/slack_bolt-1.14.0-py2.py3-none-any.whl"
             },
             {
                 "module": "slack_sdk",
-                "input_file": "wheels/shared/slack_sdk-3.33.5-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/slack_sdk-3.34.0-py2.py3-none-any.whl"
             },
             {
                 "module": "websocket_client",
