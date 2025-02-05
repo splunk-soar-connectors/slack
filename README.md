@@ -1,7 +1,7 @@
 # Slack
 
 Publisher: Splunk \
-Connector Version: 2.8.0 \
+Connector Version: 2.8.1 \
 Product Vendor: Slack Technologies \
 Product Name: Slack \
 Minimum Product Version: 6.3.0
