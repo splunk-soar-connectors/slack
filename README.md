@@ -1,7 +1,7 @@
 # Slack
 
 Publisher: Splunk \
-Connector Version: 2.8.1 \
+Connector Version: 2.8.2 \
 Product Vendor: Slack Technologies \
 Product Name: Slack \
 Minimum Product Version: 6.3.0
@@ -673,6 +673,8 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 [create channel](#action-create-channel) - Create a new Slack channel \
 [list channels](#action-list-channels) - List public channels of a Slack team \
 [list users](#action-list-users) - List users of a Slack team \
+[archive channel](#action-archive-channel) - archive a Slack channel \
+[get channel](#action-get-channel) - Search Slack channels, and return the channel ID and info, can search by name or ID \
 [get user](#action-get-user) - Get information about a user of a Slack team \
 [invite users](#action-invite-users) - Invite user(s) to a Slack channel \
 [send message](#action-send-message) - Send a message to Slack \
@@ -905,6 +907,92 @@ action_result.summary.num_users | numeric | | 28 |
 action_result.message | string | | Num users: 28 |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
+
+## action: 'archive channel'
+
+archive a Slack channel
+
+Type: **investigate** \
+Read only: **False**
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**channel** | required | id of channel to archive | string | `slack channel id` |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | |
+action_result.message | string | | |
+action_result.parameter.channel_id | string | `slack channel id` | |
+summary.total_objects | numeric | | |
+summary.total_objects_successful | numeric | | |
+action_result.data.\*.ok | boolean | | |
+action_result.data.\*.error | string | | |
+
+## action: 'get channel'
+
+Search Slack channels, and return the channel ID and info, can search by name or ID
+
+Type: **investigate** \
+Read only: **True**
+
+The output of this action is details for a public and/or private channel. The channels will be listed with the channel ID.
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**name** | optional | search by name (name or id is required but not both) | string | |
+**id** | optional | search by id (name or id is required but not both) | string | |
+**public_channels** | optional | include public channels | boolean | |
+**private_channels** | optional | include private channels | boolean | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | |
+action_result.message | string | | |
+action_result.parameter.public_channels | boolean | | |
+action_result.parameter.private_channels | boolean | | |
+action_result.parameter.name | string | | |
+action_result.parameter.id | string | | |
+summary.total_objects | numeric | | |
+summary.total_objects_successful | numeric | | |
+action_result.data.\*.ok | boolean | | |
+action_result.data.\*.channel.id | string | `slack channel id` | |
+action_result.data.\*.channel.name | string | | |
+action_result.data.\*.channel.is_channel | boolean | | |
+action_result.data.\*.channel.is_group | boolean | | |
+action_result.data.\*.channel.is_im | boolean | | |
+action_result.data.\*.channel.created | numeric | | |
+action_result.data.\*.channel.creator | string | `slack user id` | |
+action_result.data.\*.channel.is_archived | boolean | | |
+action_result.data.\*.channel.is_general | boolean | | |
+action_result.data.\*.channel.unlinked | numeric | | |
+action_result.data.\*.channel.name_normalized | string | | |
+action_result.data.\*.channel.is_read_only | boolean | | |
+action_result.data.\*.channel.is_shared | boolean | | |
+action_result.data.\*.channel.parent_conversation | string | | |
+action_result.data.\*.channel.is_ext_shared | boolean | | |
+action_result.data.\*.channel.is_org_shared | boolean | | |
+action_result.data.\*.channel.is_pending_ext_shared | boolean | | |
+action_result.data.\*.channel.is_member | boolean | | |
+action_result.data.\*.channel.is_private | boolean | | |
+action_result.data.\*.channel.is_mpim | boolean | | |
+action_result.data.\*.channel.last_read | string | | |
+action_result.data.\*.channel.topic.value | string | | |
+action_result.data.\*.channel.topic.creator | string | | |
+action_result.data.\*.channel.topic.last_set | numeric | | |
+action_result.data.\*.channel.purpose.value | string | | |
+action_result.data.\*.channel.purpose.creator | string | | |
+action_result.data.\*.channel.purpose.last_set | numeric | | |
+action_result.data.\*.channel.previous_names | string | | |
+action_result.data.\*.channel.locale | string | | |
 
 ## action: 'get user'
 
