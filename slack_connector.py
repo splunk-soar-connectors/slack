@@ -284,6 +284,7 @@ class SlackConnector(phantom.BaseConnector):
 
         self._verification_token = self._state.get("token")
         self._interval = self._validate_integers(self, config.get("response_poll_interval", 30), SLACK_RESP_POLL_INTERVAL_KEY)
+
         if self._interval is None:
             return self.get_status()
 
@@ -631,6 +632,72 @@ class SlackConnector(phantom.BaseConnector):
         action_result.add_data(resp_json)
 
         return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_CHANNEL_CREATED)
+
+    def _get_channel(self, param):
+        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
+        searchbyname = False
+        searchbyid = False
+
+        channel_types = []
+        if param.get("private_channels"):
+            channel_types.append("private_channel")
+        if param.get("public_channels"):
+            channel_types.append("public_channel")
+        if param.get("name"):
+            endpoint = "conversations.list"
+            searchbyname = True
+        if param.get("id"):
+            endpoint = "conversations.info"
+            searchbyid = True
+
+        if not (searchbyname or searchbyid):
+            return action_result.set_status(phantom.APP_ERROR, "Must search by one of IDs or names")
+
+        channel_types = ",".join(channel_types)
+
+        if searchbyname:
+            limit = self._validate_integers(action_result, param.get("limit", SLACK_DEFAULT_LIMIT), SLACK_LIMIT_KEY)
+            if limit is None:
+                return action_result.get_status()
+
+            ret_val, resp_json = self._paginator(action_result, SLACK_LIST_CHANNEL, "channels", limit=limit)
+
+            if not ret_val:
+                message = action_result.get_message()
+                if message:
+                    error_message = "{}: {}".format(SLACK_ERROR_RETRIEVE_CHANNEL, message)
+                else:
+                    error_message = SLACK_ERROR_RETRIEVE_CHANNEL
+                return action_result.set_status(phantom.APP_ERROR, error_message)
+
+            for channel in resp_json.get("channels", []):
+                if channel.get("name") == param.get("name"):
+                    action_result.add_data({"ok": resp_json.get("ok"), "channel": channel})
+                    return action_result.set_status(phantom.APP_SUCCESS)
+        elif searchbyid:
+            ret_val, resp_json = self._make_slack_rest_call(action_result, endpoint, {"channel": param.get("id")})
+            action_result.add_data({"ok": resp_json.get("ok"), "channel": resp_json.get("channel")})
+            return action_result.set_status(phantom.APP_SUCCESS)
+
+        return action_result.set_status(phantom.APP_ERROR)
+
+    def _archive_channel(self, param):
+        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
+        endpoint = "conversations.archive"
+
+        ret_val, response = self._make_slack_rest_call(action_result, endpoint, {"channel": param["channel"]})
+
+        if not ret_val:
+            message = action_result.get_message()
+            if message:
+                error_message = "{}: {}".format(SLACK_ERROR_ARCHIVE_CHANNEL, message)
+            else:
+                error_message = SLACK_ERROR_ARCHIVE_CHANNEL
+            return action_result.set_status(phantom.APP_ERROR, error_message)
+
+        action_result.add_data(response.data)
+
+        return action_result.set_status(phantom.APP_SUCCESS)
 
     def _list_channels(self, param):
 
@@ -1356,6 +1423,10 @@ class SlackConnector(phantom.BaseConnector):
             ret_val = self._create_channel(param)
         elif action_id == ACTION_ID_INVITE_USERS:
             ret_val = self._invite_users(param)
+        elif action_id == ACTION_ID_ARCHIVE_CHANNEL:
+            ret_val = self._archive_channel(param)
+        elif action_id == ACTION_ID_GET_CHANNEL:
+            ret_val = self._get_channel(param)
 
         return ret_val
 
