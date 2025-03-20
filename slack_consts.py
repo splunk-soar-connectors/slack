@@ -101,7 +101,7 @@ SLACK_ERROR_REST_CALL_FAILED = "REST call failed"
 SLACK_ERROR_TEST_CONNECTIVITY_FAILED = "Test Connectivity Failed"
 SLACK_SUCCESSFULLY_TEST_CONNECTIVITY_PASSED = "Test Connectivity Passed"
 SLACK_ERROR_USER_TOKEN_NOT_PROVIDED = (
-    "'OAuth Access Token' is required for this action. " "Navigate to the asset's configuration and add a token now and try again."
+    "'OAuth Access Token' is required for this action. Navigate to the asset's configuration and add a token now and try again."
 )
 SLACK_ERROR_CREATING_CHANNEL = "Error creating channel"
 SLACK_SUCCESSFULLY_CHANNEL_CREATED = "Channel created successfully"
@@ -135,7 +135,7 @@ SLACK_ERROR_COULD_NOT_GET_BOT_ID = "Could not get bot ID from Slack"
 SLACK_SUCCESSFULLY_SLACKBOT_RUNNING = "SlackBot already running"
 SLACK_ERROR_AUTH_TOKEN_NOT_PROVIDED = "The 'ph_auth_token' asset configuration parameter is required to run the on_poll action"
 SLACK_ERROR_SLACKBOT_RUNNING_WITH_SAME_BOT_TOKEN = (
-    "Detected an instance of SlackBot running with the same bot token. " "Not going to start new instance."
+    "Detected an instance of SlackBot running with the same bot token. Not going to start new instance."
 )
 SLACK_SUCCESSFULLY_SLACKBOT_STARTED = "SlackBot started"
 SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_CHANNEL = (
@@ -150,7 +150,7 @@ SLACK_ERROR_QUESTION_RESPONSE_NOT_AVAILABLE = "Response to question not availabl
 SLACK_ERROR_NO_RESPONSE_FROM_SERVER = "Got no response from the Slack server"
 SLACK_ERROR_INVALID_CHANNEL_TYPE = "Please provide a valid value in the 'channel_type' action parameter"
 SLACK_ERROR_LENGTH_LIMIT_EXCEEDED = (
-    "Based on your asset_id length ({asset_length}), " "valid length for the 'confirmation' parameter is {valid_length}"
+    "Based on your asset_id length ({asset_length}), valid length for the 'confirmation' parameter is {valid_length}"
 )
 
 SLACK_ERROR_BLOCKS_OR_MESSAGE_REQD = "You must provide at least one of 'blocks' or 'message'"
