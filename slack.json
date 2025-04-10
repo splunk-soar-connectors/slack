@@ -4919,7 +4919,7 @@
             "versions": "EQ(*)"
         }
     ],
-    "pip_dependencies": {
+    "pip39_dependencies": {
         "wheel": [
             {
                 "module": "slack_bolt",
@@ -4927,7 +4927,7 @@
             },
             {
                 "module": "slack_sdk",
-                "input_file": "wheels/shared/slack_sdk-3.34.0-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/slack_sdk-3.35.0-py2.py3-none-any.whl"
             },
             {
                 "module": "websocket_client",
