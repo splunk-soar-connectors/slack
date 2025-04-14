@@ -29,6 +29,8 @@ ACTION_ID_STOP_BOT = "stop_bot"
 ACTION_ID_ON_POLL = "on_poll"
 ACTION_ID_CREATE_CHANNEL = "create_channel"
 ACTION_ID_INVITE_USERS = "invite_users"
+ACTION_ID_ARCHIVE_CHANNEL = "archive_channel"
+ACTION_ID_GET_CHANNEL = "get_channel"
 
 SLACK_BASE_URL = "https://slack.com/api/"
 SLACK_MESSAGE_LIMIT = 40000
@@ -144,6 +146,8 @@ SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_CHANNEL = (
 SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_USER = (
     "Questions can only be sent in channel using this action. To send message to a user, use the ask question action."
 )
+SLACK_ERROR_ARCHIVE_CHANNEL = "Failed to archive channel"
+SLACK_ERROR_RETRIEVE_CHANNEL = "Failed to retrieve channel listing from Slack"
 
 SLACK_ERROR_UNABLE_TO_PARSE_RESPONSE = "Error occurred while parsing the response"
 SLACK_ERROR_QUESTION_RESPONSE_NOT_AVAILABLE = "Response to question not available"
