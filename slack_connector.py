@@ -1282,6 +1282,169 @@ class SlackConnector(phantom.BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
+    def _handle_ask_question_with_block(self, action_result, param, user):
+
+        config = self.get_config()
+        local_data_state_dir = self.get_state_dir().rstrip('/')
+        self._state['local_data_path'] = local_data_state_dir
+        # Need to make sure the configured verification token is in the app state so the request_handler can use it to verify POST requests
+        if 'token' not in self._state:
+            self._verification_token = config[SLACK_JSON_VERIFICATION_TOKEN]
+        elif self._state['token'] != config[SLACK_JSON_VERIFICATION_TOKEN]:
+            self._verification_token = config[SLACK_JSON_VERIFICATION_TOKEN]
+
+        try:
+            if self._verification_token:
+                self._state['token'] = self.encrypt_state(self._verification_token, "verification")
+        except Exception as e:
+            self.debug_print("{}: {}".format(SLACK_ENCRYPTION_ERROR, self._get_error_message_from_exception(e)))
+            return self.set_status(phantom.APP_ERROR, SLACK_ENCRYPTION_ERROR)
+
+        self.save_state(self._state)
+        # The default permission of state file in Phantom v4.9 is 600. So when from rest handler method (handle_request) reads this state file,
+        # the action fails with "permission denied" error message
+        # Adding the data of state file to another temporary file to resolve this issue
+        _save_app_state(self._state, self.get_asset_id(), self)
+
+        block = param.get('block')
+        answer_feedback = param.get('answer_feedback', SLACK_USER_FEEDBACK)
+        show_user_answer = param.get('show_user_answer')
+
+        qid = uuid.uuid4().hex
+        answer_filename = '{0}.json'.format(qid)
+        answer_path = "{0}/{1}".format(local_data_state_dir, answer_filename)
+        confirmation = param.get('confirmation', ' ')
+        path_json = {'qid': qid,
+                    'asset_id': str(self.get_asset_id()),
+                    'confirmation': confirmation,
+                    'answer_feedback': answer_feedback,
+                    'show_user_answer': show_user_answer}
+
+        callback_id = json.dumps(path_json)
+
+        if len(callback_id) > 255:
+            path_json['confirmation'] = ''
+            valid_length = 255 - len(json.dumps(path_json))
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_LENGTH_LIMIT_EXCEEDED.format(
+                asset_length=len(self.get_asset_id()), valid_length=valid_length))
+
+        self.save_progress('Asking question with ID: {0}'.format(qid))
+        block_json = json.loads(block)
+        block_json[0]['block_id'] = callback_id
+        # Adding 'button:' at the begining of each button action_id to then capture the input
+        # Iterate through the blocks to find the actions block
+        for block in block_json:
+            if block['type'] == 'actions':
+                # Iterate through the elements of the actions block
+                for element in block['elements']:
+                    # Modify the action_id for each button element
+                    element['action_id'] = 'button:' + element['action_id']
+
+        block = json.dumps(block_json)
+        params = {'channel': user, 'blocks': block, 'as_user': True, 'text': 'This is example'}
+
+        ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_SEND_MESSAGE, params)
+        if not ret_val:
+            message = action_result.get_message()
+            if message:
+                error_message = "{}: {}".format(SLACK_ERROR_ASKING_QUESTION, message)
+            else:
+                error_message = SLACK_ERROR_ASKING_QUESTION
+            return action_result.set_status(phantom.APP_ERROR, error_message), None
+
+        channel_id = resp_json['channel']
+        timestamp = resp_json['message']['ts']
+        message = resp_json['message']
+
+        data = {
+            "qid": qid,
+            "answer_path": answer_path,
+            "channel_id": channel_id,
+            "timestamp": timestamp,
+            "message": message,
+            "confirmation": confirmation
+        }
+        return action_result.set_status(phantom.APP_SUCCESS), data
+
+    def _ask_question_with_block(self, param):
+
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
+        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
+
+        user = param.get('destination')
+        timeout = param.get('timeout', 1800)
+
+        ret_val, resp_json = self._handle_ask_question_with_block(action_result, param, user)
+
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+
+        answer_path = resp_json.get('answer_path')
+        qid = resp_json.get('qid')
+        channel_id = resp_json['channel_id']
+        timestamp = resp_json['timestamp']
+        failure_message = param.get('failure_message', SLACK_ANSWER_FAILURE)
+
+        loop_count = timeout / self._interval
+        count = 0
+
+        while True:
+            if count >= loop_count:
+                action_result.set_summary({'response_received': False, 'question_id': qid})
+                params = {
+                        "channel": channel_id,
+                        "ts": timestamp,
+                        "text": failure_message
+                    }
+                params_delete = {
+                        "channel": channel_id,
+                        "ts": timestamp,
+                    }
+                # Send message stating that user failed to answer on time
+                ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_SEND_MESSAGE, params)
+                # Delete original message
+                ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_DELETE_MESSAGE, params_delete)
+                return action_result.set_status(phantom.APP_SUCCESS)
+
+            try:
+                answer_file = open(answer_path, 'r')
+            except Exception:
+                count += 1
+                time.sleep(self._interval)
+                continue
+
+            try:
+                resp_json = json.loads(answer_file.read())
+                answer_file.close()
+            except Exception:
+                return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_PARSE_RESPONSE)
+
+            break
+
+        payload = resp_json
+
+        if len(json.loads(param.get('block'))) > 1:
+            try:
+                parsed_question = json.loads(param.get('block'))[0].get('elements')[0].get('text')
+                payload['asked_question'] = parsed_question
+            except Exception as e:
+                payload['asked_question'] = f"Failed to fetch question. Error: {e}"
+        else:
+            payload['asked_question'] = "Empty question"
+
+        action_result.add_data(payload)
+        action_result.set_summary(
+            {
+                'response_received': True,
+                'question_id': qid,
+                'response': payload.get("actions", [{}])[0].get("value")
+            }
+        )
+
+        os.remove(answer_path)
+
+        return action_result.set_status(phantom.APP_SUCCESS)
+
     def handle_action(self, param):
         ret_val = None
 
@@ -1318,6 +1481,8 @@ class SlackConnector(phantom.BaseConnector):
             ret_val = self._create_channel(param)
         elif action_id == ACTION_ID_INVITE_USERS:
             ret_val = self._invite_users(param)
+        elif action_id == ACTION_ID_ASK_QUESTION_WITH_BLOCK:
+            ret_val = self._ask_question_with_block(param)
 
         return ret_val
 
