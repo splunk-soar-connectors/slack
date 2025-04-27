@@ -29,6 +29,7 @@ ACTION_ID_STOP_BOT = "stop_bot"
 ACTION_ID_ON_POLL = "on_poll"
 ACTION_ID_CREATE_CHANNEL = "create_channel"
 ACTION_ID_INVITE_USERS = "invite_users"
+ACTION_ID_ASK_QUESTION_WITH_BLOCK = "ask_question_with_block"
 
 SLACK_BASE_URL = "https://slack.com/api/"
 SLACK_MESSAGE_LIMIT = 40000
@@ -59,6 +60,7 @@ SLACK_USER_INFO = "users.info"
 SLACK_USER_LOOKUP_BY_EMAIL = "users.lookupByEmail"
 SLACK_SEND_MESSAGE = "chat.postMessage"
 SLACK_UPLOAD_FILE = "files.upload"
+SLACK_DELETE_MESSAGE = "chat.delete"
 
 SLACK_TC_STATUS_SLEEP = 2
 SLACK_TC_FILE = "slack_auth_task.out"
@@ -179,3 +181,6 @@ SLACK_ENCRYPTION_ERROR = "Error occurred while encrypting the state file"
 SLACK_DECRYPTION_ERROR = "Error occurred while decrypting the state file"
 
 SLACK_ERROR_MESSAGE_UNAVAILABLE = "Error message unavailable. Please check the asset configuration and|or action parameters"
+
+SLACK_USER_FEEDBACK = "Your answer: "
+SLACK_ANSWER_FAILURE = "Question timed out"
