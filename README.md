@@ -88,6 +88,7 @@ oauth_config:
       - chat:write.public
       - app_mentions:read
       - channels:history
+      - groups:history
       - im:history
 settings:
   event_subscriptions:
@@ -306,6 +307,15 @@ The required scopes are given below, please add the particular scope to use that
 </ul></td>
 <td><ul>
 <li>chat:write</li>
+</ul></td>
+</tr>
+<tr class="even">
+<td>Get History</td>
+<td><ul>
+<li>channels:history</li>
+<li>groups:history</li>
+</ul></td>
+<td><ul>
 </ul></td>
 </tr>
 </tbody>
@@ -682,7 +692,8 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 [ask question channel](#action-ask-question-channel) - Ask a question in slack channel \
 [get response](#action-get-response) - Get the response to a previously asked question \
 [on poll](#action-on-poll) - Start SlackBot and make health checks to it \
-[stop bot](#action-stop-bot) - Stop SlackBot
+[stop bot](#action-stop-bot) - Stop SlackBot \
+[get history](#action-get-history) - Get conversation history from specific Slack channel
 
 ## action: 'test connectivity'
 
@@ -1639,6 +1650,48 @@ action_result.status | string | | success failed |
 action_result.data | string | | |
 action_result.summary | string | | |
 action_result.message | string | | SlackBot isn't running, not going to stop it. Ingestion has been disabled. |
+summary.total_objects | numeric | | 1 |
+summary.total_objects_successful | numeric | | 1 |
+
+## action: 'get history'
+
+Get conversation history from specific Slack channel
+
+Type: **investigate** \
+Read only: **True**
+
+To get conversation history from a specified Slack channel. It also supports `message_ts` filter to retrieve a specific message. If `message_ts` is not provided then it will retrieve the latest 100 messages.
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**channel_id** | required | Unique ID of a Slack channel | string | `slack channel id` |
+**message_ts** | optional | Message timestamp (e.g. 1234567890.123456) | string | `slack message timestamp` |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failed |
+action_result.parameter.channel_id | string | `slack channel id` | C123ABC456 |
+action_result.parameter.message_ts | string | `slack message timestamp` | 1234567890.123456 |
+action_result.data.\*.ok | boolean | | True False |
+action_result.data.\*.messages.\*.type | string | | message |
+action_result.data.\*.messages.\*.user | string | | U123ABC456 |
+action_result.data.\*.messages.\*.team | string | | T06LF49SKJM |
+action_result.data.\*.messages.\*.is_locked | boolean | | True False |
+action_result.data.\*.messages.\*.subscribed | boolean | | True False |
+action_result.data.\*.messages.\*.text | string | | Hello, this is a test message |
+action_result.data.\*.messages.\*.ts | string | | 1512085950.000216 |
+action_result.data.\*.messages.\*.thread_ts | string | | 1512085950.000216 |
+action_result.data.\*.messages.\*.client_msg_id | string | | aa73fcc6-e1d4-480e-a466-3edad41bf011 |
+action_result.data.\*.messages.\*.parent_user_id | string | | U123ABC456 |
+action_result.data.\*.messages.\*.reply_count | numeric | | 1 |
+action_result.data.\*.messages.\*.reply_users_count | numeric | | 1 |
+action_result.data.\*.messages.\*.latest_reply | string | | 1704970971.951549 |
+action_result.summary.num_users | numeric | | 28 |
+action_result.message | string | | Num users: 28 |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 
