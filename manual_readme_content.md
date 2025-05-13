@@ -78,6 +78,7 @@ oauth_config:
       - chat:write.public
       - app_mentions:read
       - channels:history
+      - groups:history
       - im:history
 settings:
   event_subscriptions:
@@ -296,6 +297,15 @@ The required scopes are given below, please add the particular scope to use that
 </ul></td>
 <td><ul>
 <li>chat:write</li>
+</ul></td>
+</tr>
+<tr class="even">
+<td>Get History</td>
+<td><ul>
+<li>channels:history</li>
+<li>groups:history</li>
+</ul></td>
+<td><ul>
 </ul></td>
 </tr>
 </tbody>
