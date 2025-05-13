@@ -1283,12 +1283,11 @@ class SlackConnector(phantom.BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def _get_history(self, param):
-
-        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
-        channel_id = param.get('channel_id')
-        message_ts = param.get('message_ts')
+        channel_id = param.get("channel_id")
+        message_ts = param.get("message_ts")
 
         self.debug_print(f"Executing Get History action for channel {channel_id}")
         # If user did not specify Channel ID
@@ -1297,53 +1296,53 @@ class SlackConnector(phantom.BaseConnector):
         # If user did not specify Message ts parameter
         elif not message_ts:
             # Check if Channel ID is in correct format
-            if not channel_id.startswith('C'):
+            if not channel_id.startswith("C"):
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_NOT_A_CHANNEL_ID)
 
             self.save_progress(f"Fetching messages from channel {channel_id}...")
-            ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_CONVERSATIONS_HISTORY, {'channel': channel_id})
+            ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_CONVERSATIONS_HISTORY, {"channel": channel_id})
 
             if not ret_val:
                 message = action_result.get_message()
                 if message:
-                    error_message = "{}: {}".format(SLACK_ERROR_FETCHING_CONVERSATION_HISTORY, message)
+                    error_message = f"{SLACK_ERROR_FETCHING_CONVERSATION_HISTORY}: {message}"
                 else:
                     error_message = SLACK_ERROR_FETCHING_CONVERSATION_HISTORY
                 return action_result.set_status(phantom.APP_ERROR, error_message)
 
             # Add threads for each received timestamp
-            message_list = resp_json['messages']
-            message_timestamps = [message['ts'] for message in message_list]
-            final_resp = {'messages': []}
+            message_list = resp_json["messages"]
+            message_timestamps = [message["ts"] for message in message_list]
+            final_resp = {"messages": []}
             self.debug_print(message_timestamps)
             for timestamp in message_timestamps:
                 self.save_progress(f"Fetching message history for {timestamp}...")
-                ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_THREADS_HISTORY, {'channel': channel_id, 'ts': timestamp})
+                ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_THREADS_HISTORY, {"channel": channel_id, "ts": timestamp})
 
                 if not ret_val:
                     message = action_result.get_message()
                     if message:
-                        error_message = "{}: {}".format(SLACK_ERROR_FETCHING_CONVERSATION_HISTORY, message)
+                        error_message = f"{SLACK_ERROR_FETCHING_CONVERSATION_HISTORY}: {message}"
                     else:
                         error_message = SLACK_ERROR_FETCHING_CONVERSATION_HISTORY
                     return action_result.set_status(phantom.APP_ERROR, error_message)
 
-                final_resp['messages'] += resp_json['messages']
+                final_resp["messages"] += resp_json["messages"]
 
             action_result.add_data(final_resp)
-            action_result.set_summary({"num_messages": len(final_resp['messages'])})
+            action_result.set_summary({"num_messages": len(final_resp["messages"])})
 
         # If user specified bot Channel ID and Message ts (getting messages from specific thread)
         else:
             self.save_progress(f"Fetching message history for {message_ts}...")
-            ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_THREADS_HISTORY, {'channel': channel_id, 'ts': message_ts})
+            ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_THREADS_HISTORY, {"channel": channel_id, "ts": message_ts})
 
             if not resp_json:
                 error_message = SLACK_ERROR_THREAD_NOT_FOUND
                 return action_result.set_status(phantom.APP_ERROR, error_message)
 
             action_result.add_data(resp_json)
-            action_result.set_summary({"num_messages": len(resp_json['messages'])})
+            action_result.set_summary({"num_messages": len(resp_json["messages"])})
 
         return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_CONVERSATION_HISTORY_DATA_RETRIEVED)
 
