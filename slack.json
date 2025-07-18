@@ -4917,6 +4917,207 @@
                 "height": 5
             },
             "versions": "EQ(*)"
+        },
+        {
+            "action": "get history",
+            "description": "Get conversation history from specific Slack channel",
+            "verbose": "To get conversation history from a specified Slack channel. It also supports `message_ts` filter to retrieve a specific message. If `message_ts` is not provided then it will retrieve the latest 100 messages.",
+            "type": "investigate",
+            "identifier": "get_history",
+            "read_only": true,
+            "parameters": {
+                "channel_id": {
+                    "description": "Unique ID of a Slack channel",
+                    "data_type": "string",
+                    "primary": true,
+                    "order": 0,
+                    "contains": [
+                        "slack channel id"
+                    ],
+                    "required": true
+                },
+                "message_ts": {
+                    "description": "Message timestamp (e.g. 1234567890.123456)",
+                    "data_type": "string",
+                    "primary": true,
+                    "order": 1,
+                    "contains": [
+                        "slack message timestamp"
+                    ]
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.channel_id",
+                    "data_type": "string",
+                    "contains": [
+                        "slack channel id"
+                    ],
+                    "example_values": [
+                        "C123ABC456"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.message_ts",
+                    "data_type": "string",
+                    "contains": [
+                        "slack message timestamp"
+                    ],
+                    "example_values": [
+                        "1234567890.123456"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.ok",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "message"
+                    ],
+                    "column_name": "Type",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.user",
+                    "data_type": "string",
+                    "example_values": [
+                        "U123ABC456"
+                    ],
+                    "column_name": "User",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.team",
+                    "data_type": "string",
+                    "example_values": [
+                        "T06LF49SKJM"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.is_locked",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.subscribed",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.text",
+                    "data_type": "string",
+                    "example_values": [
+                        "Hello, this is a test message"
+                    ],
+                    "column_name": "Message",
+                    "column_order": 2
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.ts",
+                    "data_type": "string",
+                    "example_values": [
+                        "1512085950.000216"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.thread_ts",
+                    "data_type": "string",
+                    "example_values": [
+                        "1512085950.000216"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.client_msg_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "aa73fcc6-e1d4-480e-a466-3edad41bf011"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.parent_user_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "U123ABC456"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.reply_count",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.reply_users_count",
+                    "data_type": "numeric",
+                    "example_values": [
+                        "1"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.messages.*.latest_reply",
+                    "data_type": "string",
+                    "example_values": [
+                        "1704970971.951549"
+                    ]
+                },
+                {
+                    "data_path": "action_result.summary.num_users",
+                    "data_type": "numeric",
+                    "example_values": [
+                        28
+                    ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        "Num users: 28"
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                }
+            ],
+            "render": {
+                "width": 12,
+                "title": "Get History",
+                "type": "table",
+                "height": 5
+            },
+            "versions": "EQ(*)"
         }
     ],
     "pip_dependencies": {
@@ -4928,6 +5129,38 @@
             {
                 "module": "slack_sdk",
                 "input_file": "wheels/shared/slack_sdk-3.34.0-py2.py3-none-any.whl"
+            },
+            {
+                "module": "websocket_client",
+                "input_file": "wheels/shared/websocket_client-1.2.1-py2.py3-none-any.whl"
+            }
+        ]
+    },
+    "pip39_dependencies": {
+        "wheel": [
+            {
+                "module": "slack_bolt",
+                "input_file": "wheels/shared/slack_bolt-1.14.0-py2.py3-none-any.whl"
+            },
+            {
+                "module": "slack_sdk",
+                "input_file": "wheels/shared/slack_sdk-3.36.0-py2.py3-none-any.whl"
+            },
+            {
+                "module": "websocket_client",
+                "input_file": "wheels/shared/websocket_client-1.2.1-py2.py3-none-any.whl"
+            }
+        ]
+    },
+    "pip313_dependencies": {
+        "wheel": [
+            {
+                "module": "slack_bolt",
+                "input_file": "wheels/shared/slack_bolt-1.14.0-py2.py3-none-any.whl"
+            },
+            {
+                "module": "slack_sdk",
+                "input_file": "wheels/shared/slack_sdk-3.36.0-py2.py3-none-any.whl"
             },
             {
                 "module": "websocket_client",

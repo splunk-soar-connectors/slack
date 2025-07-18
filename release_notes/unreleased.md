@@ -1,3 +1,2 @@
 **Unreleased**
-
-* chore(ci): update pre-commit config
+* Added new action to get conversation history from a specific Slack private/public channel
