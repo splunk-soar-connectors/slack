@@ -1,2 +1,1 @@
 **Unreleased**
-* Added new action to get conversation history from a specific Slack private/public channel
