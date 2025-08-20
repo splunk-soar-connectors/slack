@@ -711,6 +711,10 @@ class SlackBot:
         request_body = {}
         request_body["targets"] = []
 
+        # Initialize for static analysis safety
+        asset_object = None
+        action_object = None
+
         asset = parsed_args.asset
         action = parsed_args.action
         params = parsed_args.parameters
@@ -740,7 +744,7 @@ class SlackBot:
                 if not action_object.assets:
                     continue
 
-                if asset and asset_object.asset_id not in action_object.assets:
+                if asset and asset_object and asset_object.asset_id not in action_object.assets:
                     continue
 
                 try:
@@ -779,7 +783,7 @@ class SlackBot:
         request_body["container_id"] = container
 
         # If an asset was passed as an argument, we only want to run one action
-        if asset:
+        if asset and asset_object:
             target = {}
             target["app_id"] = asset_object.apps[0]
             target["assets"] = [asset_object.asset_id]
@@ -1273,131 +1277,133 @@ def set_up_logging():
     return logger
 
 
-if __name__ == "__main__":
+def main():
+    """Entry point for running the Slack bot as a script without mutating module globals."""
     set_up_logging()
-
     logging.info("**Spawning slack_bot.py...")
+
     if not os.path.exists("./bot_config.py"):
         if len(sys.argv) != 4:
             print("Please create a bot_config.py file, and place it in this directory")
-            sys.exit(1)
+            return 1
 
-        asset_id = sys.argv[1]
-        app_id = sys.argv[3]
-        state = _load_app_state(asset_id)
-        bot_id = state.get("bot_id")
-        ph_base_url = state.get("ph_base_url")
-        bot_token = state.get(SLACK_JSON_BOT_TOKEN)
-        socket_token = state.get(SLACK_JSON_SOCKET_TOKEN)
-        ph_auth_token = state.get(SLACK_JSON_PH_AUTH_TOKEN)
-        permit_act = state.get(SLACK_JSON_PERMIT_BOT_ACT)
-        permit_playbook = state.get(SLACK_JSON_PERMIT_BOT_PLAYBOOK)
-        permit_container = state.get(SLACK_JSON_PERMIT_BOT_CONTAINER)
-        permit_list = state.get(SLACK_JSON_PERMIT_BOT_LIST)
-        permitted_users = state.get(SLACK_JSON_PERMITTED_USERS)
-
-        try:
-            if bot_token:
-                bot_token = decrypt_state(asset_id, bot_token, "bot")
-        except Exception:
-            print(SLACK_DECRYPTION_ERROR)
-            sys.exit(1)
+        asset_id_arg = sys.argv[1]
+        app_id_arg = sys.argv[3]
+        state_local = _load_app_state(asset_id_arg)
+        bot_id_local = state_local.get("bot_id")
+        ph_base_url_local = state_local.get("ph_base_url")
+        bot_token_enc = state_local.get(SLACK_JSON_BOT_TOKEN)
+        socket_token_enc = state_local.get(SLACK_JSON_SOCKET_TOKEN)
+        ph_auth_token_enc = state_local.get(SLACK_JSON_PH_AUTH_TOKEN)
+        permit_act_local = state_local.get(SLACK_JSON_PERMIT_BOT_ACT)
+        permit_playbook_local = state_local.get(SLACK_JSON_PERMIT_BOT_PLAYBOOK)
+        permit_container_local = state_local.get(SLACK_JSON_PERMIT_BOT_CONTAINER)
+        permit_list_local = state_local.get(SLACK_JSON_PERMIT_BOT_LIST)
+        permitted_users_local = state_local.get(SLACK_JSON_PERMITTED_USERS)
 
         try:
-            if socket_token:
-                socket_token = decrypt_state(asset_id, socket_token, "socket")
+            if bot_token_enc:
+                bot_token_dec = decrypt_state(asset_id_arg, bot_token_enc, "bot")
+            else:
+                bot_token_dec = None
         except Exception:
             print(SLACK_DECRYPTION_ERROR)
-            sys.exit(1)
+            return 1
 
         try:
-            if ph_auth_token:
-                ph_auth_token = decrypt_state(asset_id, ph_auth_token, "ph_auth")
+            if socket_token_enc:
+                socket_token_dec = decrypt_state(asset_id_arg, socket_token_enc, "socket")
+            else:
+                socket_token_dec = None
         except Exception:
             print(SLACK_DECRYPTION_ERROR)
-            sys.exit(1)
+            return 1
+
+        try:
+            if ph_auth_token_enc:
+                ph_auth_token_dec = decrypt_state(asset_id_arg, ph_auth_token_enc, "ph_auth")
+            else:
+                ph_auth_token_dec = None
+        except Exception:
+            print(SLACK_DECRYPTION_ERROR)
+            return 1
 
         sb = SlackBot(
-            bot_token=bot_token,
-            socket_token=socket_token,
-            bot_id=bot_id,
-            base_url=ph_base_url,
-            auth_token=ph_auth_token,
-            permit_act=permit_act,
-            permit_playbook=permit_playbook,
-            permit_container=permit_container,
-            permit_list=permit_list,
-            permitted_users=permitted_users,
-            app_id=app_id,
+            bot_token=bot_token_dec,
+            socket_token=socket_token_dec,
+            bot_id=bot_id_local,
+            base_url=ph_base_url_local,
+            auth_token=ph_auth_token_dec,
+            permit_act=permit_act_local,
+            permit_playbook=permit_playbook_local,
+            permit_container=permit_container_local,
+            permit_list=permit_list_local,
+            permitted_users=permitted_users_local,
+            app_id=app_id_arg,
         )
         sb._from_on_poll()
-        sys.exit(0)
+        return 0
 
-    import bot_config
+    # Local, standalone bot mode using bot_config
+    try:
+        import bot_config  # type: ignore # pylint: disable=import-error
+    except Exception:
+        print("Could not import bot_config.py")
+        return 1
 
-    fail = False
+    fail_local = False
 
     try:
-        app_id = bot_config.APP_ID
-        if not isinstance(app_id, str):
+        app_id_local = bot_config.APP_ID
+        if not isinstance(app_id_local, str):
             print("The APP_ID entry in the bot_config file appears to not be a string")
-            fail = True
-    except:
+            fail_local = True
+    except Exception:
         print("Could not find an APP_ID entry in bot_config file")
-        fail = True
+        fail_local = True
 
     try:
         bt = bot_config.BOT_TOKEN
-
         if not isinstance(bt, str):
             print("The BOT_TOKEN entry in the bot_config file appears to not be a string")
-            fail = True
-
+            fail_local = True
     except Exception:
         print("Could not find a BOT_TOKEN entry in bot_config file")
-        fail = True
+        fail_local = True
 
     try:
         sat = bot_config.SOCKET_TOKEN
         if not isinstance(sat, str):
             print("The SOCKET_TOKEN entry in the bot_config file appears to not be a string")
-            fail = True
-
+            fail_local = True
     except Exception:
         print("Could not find a SOCKET_TOKEN entry in bot_config file")
-        fail = True
+        fail_local = True
 
     try:
         pu = bot_config.PHANTOM_URL
-
         if not isinstance(pu, str):
             print("The PHANTOM_URL entry in the bot_config file appears to not be a string")
-            fail = True
-
+            fail_local = True
     except Exception:
         print("Could not find a PHANTOM_URL entry in bot_config file")
-        fail = True
+        fail_local = True
 
     try:
         vc = bot_config.VERIFY_CERT
-
         if not isinstance(vc, bool):
             print("The VERIFY_CERT entry in the bot_config file appears to not be a boolean")
-            fail = True
-
+            fail_local = True
     except Exception:
         print("Could not find a VERIFY_CERT entry in bot_config file")
-        fail = True
+        fail_local = True
 
     try:
         pt = bot_config.PHANTOM_TOKEN
-
         has_token = True
-
         if not isinstance(pt, str):
             print("The PHANTOM_TOKEN entry in the bot_config file appears to not be a string")
-            fail = True
-
+            fail_local = True
     except Exception:
         pt = ""
         has_token = False
@@ -1405,48 +1411,44 @@ if __name__ == "__main__":
     try:
         pn = bot_config.PHANTOM_USERNAME
         pp = bot_config.PHANTOM_PASSWORD
-
         auth = (pn, pp)
         has_basic = True
-
         if not isinstance(pn, str):
             print("The PHANTOM_USERNAME entry in the bot_config file appears to not be a string")
-            fail = True
+            fail_local = True
         if not isinstance(pp, str):
             print("The PHANTOM_PASSWORD entry in the bot_config file appears to not be a string")
-            fail = True
-
+            fail_local = True
     except Exception:
         auth = ()
         has_basic = False
 
     if not (has_token or has_basic):
         print(
-            "Please specify a form of authorization. "
-            "Either PHANTOM_TOKEN or PHANTOM_USERNAME and PHANTOM_PASSWORD need to be included in the bot_config file."
+            "Please specify a form of authorization. Either PHANTOM_TOKEN or PHANTOM_USERNAME and PHANTOM_PASSWORD need to be included in the bot_config file."
         )
-        fail = True
+        fail_local = True
 
     try:
         resp = requests.post("https://slack.com/api/auth.test", data={"token": bot_config.BOT_TOKEN}, timeout=SLACK_DEFAULT_TIMEOUT)
         resp_json = resp.json()
     except Exception:
         print("Could not connect to Slack REST endpoint for auth check")
-        sys.exit(1)
+        return 1
 
     if not resp_json.get("ok", False):
         print("Given BOT_TOKEN failed authentication with Slack")
-        fail = True
+        fail_local = True
 
     bot_username = resp_json.get("user_id")
 
     if not bot_username:
         print("Could not get bot username from Slack")
-        fail = True
+        fail_local = True
 
-    if fail:
+    if fail_local:
         print("Config file failed verification, exiting")
-        sys.exit(1)
+        return 1
 
     sb = SlackBot(
         bot_token=bot_config.BOT_TOKEN,
@@ -1456,6 +1458,11 @@ if __name__ == "__main__":
         verify=bot_config.VERIFY_CERT,
         auth_token=pt,
         auth_basic=auth,
-        app_id=app_id,
+        app_id=app_id_local,
     )
     sb._from_on_poll()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -724,6 +724,9 @@ class SlackConnector(phantom.BaseConnector):
         email_address = param.get("email_address")
         if not user_id and not email_address:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_NO_USERID_OR_EMAIL)
+        # Initialize variables to satisfy static analyzers
+        ret_val = None
+        resp_json = None
         if user_id:
             if not user_id.startswith("U") and not user_id.startswith("W"):
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_NOT_A_USER_ID)
@@ -1000,7 +1003,7 @@ class SlackConnector(phantom.BaseConnector):
         if pid:
             self._state.pop("pid")
             try:
-                if "slack_bot.py" in sh.ps("ww", pid):  # pylint: disable=E1101
+                if "slack_bot.py" in sh.ps("ww", pid):  # pylint: disable=E1101  # type: ignore[attr-defined]
                     try:
                         sh.kill(pid)  # pylint: disable=E1101
                         return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_SLACKBOT_STOPPED)
@@ -1010,7 +1013,7 @@ class SlackConnector(phantom.BaseConnector):
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_SLACKBOT_NOT_RUNNING)
         else:
             try:
-                ps_out = sh.grep(sh.ps("ww", "aux"), "slack_bot.py")
+                ps_out = sh.grep(sh.ps("ww", "aux"), "slack_bot.py")  # pylint: disable=E1101  # type: ignore[attr-defined]
                 pid = shlex.split(str(ps_out))[1]
                 try:
                     sh.kill(pid)  # pylint: disable=E1101
@@ -1057,7 +1060,7 @@ class SlackConnector(phantom.BaseConnector):
                     else:
                         self.save_progress("HINT: Set Maximum Containers to 1234 to restart slackbot, or set to PID to stop slackbot")
 
-                if "slack_bot.py" in sh.ps("ww", pid):  # pylint: disable=E1101
+                if "slack_bot.py" in sh.ps("ww", pid):  # pylint: disable=E1101  # type: ignore[attr-defined]
                     self.save_progress(f"Detected SlackBot running with pid {pid}")
                     return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_SLACKBOT_RUNNING)
             except Exception:
@@ -1068,7 +1071,7 @@ class SlackConnector(phantom.BaseConnector):
         app_id = self.get_app_id()
 
         try:
-            ps_out = sh.grep(sh.ps("ww", "aux"), "slack_bot.py")  # pylint: disable=E1101
+            ps_out = sh.grep(sh.ps("ww", "aux"), "slack_bot.py")  # pylint: disable=E1101  # type: ignore[attr-defined]
             old_pid = shlex.split(str(ps_out))[1]
             if app_version not in ps_out:
                 self.save_progress(f"Found an old version of slackbot running with pid {old_pid}, going to kill it")
