@@ -1,9 +1,9 @@
 # Slack
 
-Publisher: Splunk \
-Connector Version: 2.9.0 \
-Product Vendor: Slack Technologies \
-Product Name: Slack \
+Publisher: Splunk <br>
+Connector Version: 2.9.0 <br>
+Product Vendor: Slack Technologies <br>
+Product Name: Slack <br>
 Minimum Product Version: 6.3.0
 
 Integrate with Slack to post messages and attachments to channels
@@ -679,27 +679,27 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 
 ### Supported Actions
 
-[test connectivity](#action-test-connectivity) - Tests authorization with Slack \
-[create channel](#action-create-channel) - Create a new Slack channel \
-[list channels](#action-list-channels) - List public channels of a Slack team \
-[list users](#action-list-users) - List users of a Slack team \
-[get user](#action-get-user) - Get information about a user of a Slack team \
-[invite users](#action-invite-users) - Invite user(s) to a Slack channel \
-[send message](#action-send-message) - Send a message to Slack \
-[add reaction](#action-add-reaction) - React to a message in Slack \
-[upload file](#action-upload-file) - Upload file to Slack \
-[ask question](#action-ask-question) - Ask a question to a Slack user \
-[ask question channel](#action-ask-question-channel) - Ask a question in slack channel \
-[get response](#action-get-response) - Get the response to a previously asked question \
-[on poll](#action-on-poll) - Start SlackBot and make health checks to it \
-[stop bot](#action-stop-bot) - Stop SlackBot \
+[test connectivity](#action-test-connectivity) - Tests authorization with Slack <br>
+[create channel](#action-create-channel) - Create a new Slack channel <br>
+[list channels](#action-list-channels) - List public channels of a Slack team <br>
+[list users](#action-list-users) - List users of a Slack team <br>
+[get user](#action-get-user) - Get information about a user of a Slack team <br>
+[invite users](#action-invite-users) - Invite user(s) to a Slack channel <br>
+[send message](#action-send-message) - Send a message to Slack <br>
+[add reaction](#action-add-reaction) - React to a message in Slack <br>
+[upload file](#action-upload-file) - Upload file to Slack <br>
+[ask question](#action-ask-question) - Ask a question to a Slack user <br>
+[ask question channel](#action-ask-question-channel) - Ask a question in slack channel <br>
+[get response](#action-get-response) - Get the response to a previously asked question <br>
+[on poll](#action-on-poll) - Start SlackBot and make health checks to it <br>
+[stop bot](#action-stop-bot) - Stop SlackBot <br>
 [get history](#action-get-history) - Get conversation history from specific Slack channel
 
 ## action: 'test connectivity'
 
 Tests authorization with Slack
 
-Type: **test** \
+Type: **test** <br>
 Read only: **True**
 
 Checks that the provided bot token is valid and grabs information about the configured bot user.
@@ -716,7 +716,7 @@ No Output
 
 Create a new Slack channel
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 To create a private channel, use the 'channel_type' selection parameter. This action requires a User OAuth Token defined in the asset. For naming conventions, see https://api.slack.com/methods/conversations.create.
@@ -779,7 +779,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 List public channels of a Slack team
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 The output of this action is a list of all public channels in the configured Slack team. The channels will be listed with their corresponding channel IDs.
@@ -838,7 +838,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 List users of a Slack team
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -921,7 +921,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Get information about a user of a Slack team
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 This action will ignore email_address parameter when user_id parameter is provided.
@@ -1002,7 +1002,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Invite user(s) to a Slack channel
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 Up to 1000 users may be added at one time. This action requires a User OAuth Token defined in the asset. For permissions, see: https://api.slack.com/methods/conversations.invite.
@@ -1064,7 +1064,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Send a message to Slack
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 The <b>destination</b> parameter can be a channel ID (e.g. C1A1A1AAA), a channel name (e.g. #general). When sending a message to a channel, the configured bot user must have been added to the channel. Slack recommends limiting messages to 4000 characters but the enforced limit is 40000 characters. Passing a "username" as a channel value is deprecated, along with the whole concept of usernames on Slack. Please always use channel-like IDs instead to make sure your message gets to where it's going.
@@ -1191,7 +1191,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 React to a message in Slack
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 This method adds a reaction (emoji) to a message.
@@ -1222,7 +1222,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Upload file to Slack
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 The <b>destination</b> parameter can be a channel ID (e.g. C1A1A1AAA), a channel name (e.g. #general). When uploading to a channel, the configured bot user must have been added to the channel. The <b>file</b> parameter takes the vault ID of a file that will be uploaded to Slack. Only files in the vault can be uploaded to Slack.
@@ -1364,7 +1364,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Ask a question to a Slack user
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 This action will send a Slack user a direct message containing a question with a series of buttons which represent possible responses. Slack recommends limiting questions to 4000 characters but the enforced limit is 40000 characters. Once the user clicks on one of the responses, Slack will send the response back to Splunk SOAR. The action will succeed and output this response in the action result. If the user fails to respond within the timeout configured in the asset, the action will succeed, and output the <b>question ID</b> in the action result. The question ID can be used as input to the <b>get response</b> action.<br><br>If the <b>responses</b> parameter is not filled out, the response options will be <b>yes</b> and <b>no</b>.<br><br>The <b>confirmation</b> parameter takes a string that will be sent to the user after the user clicks a response. <b>Note:</b> It is recommended to use user ID instead of username since the latter usage has been deprecated by Slack.
@@ -1468,7 +1468,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Ask a question in slack channel
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 This action will send message containing a question with a series of buttons which represent possible responses in a channel. Once the user clicks on one of the responses, Slack will send the response back to Splunk SOAR. The question ID can be used as input to the <b>get response</b> action.<br><br>If the <b>responses</b> parameter is not filled out, the response options will be <b>yes</b> and <b>no</b>.<br><br>The <b>confirmation</b> parameter takes a string that will be sent to the user after the user clicks a response. <b>Note:</b> To use the bot in a private channel you need to invite the bot first iin the private channel, else it would give channel not found error.
@@ -1551,7 +1551,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Get the response to a previously asked question
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 The purpose of the 'get response' action is to get the response of a question, asked using the 'ask question' action, that timed out before it could get the response.<br>The action will check to see if a question has been answered.<br><ul><li>If the user has answered the question, the question id generated in the 'ask question' action can be used to get the response.</li><li>If no response is yet available, the action will fail.</li></ul>
@@ -1610,7 +1610,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Start SlackBot and make health checks to it
 
-Type: **ingest** \
+Type: **ingest** <br>
 Read only: **True**
 
 Enabling ingestion causes the on poll action to be called every polling interval (configured in ingestion settings). The on poll action will check if SlackBot is running; if it is not, the action will start it. No new containers or artifacts will be created by this action.
@@ -1633,7 +1633,7 @@ No Output
 
 Stop SlackBot
 
-Type: **correct** \
+Type: **correct** <br>
 Read only: **False**
 
 This action will stop SlackBot if it is running. It will also disable ingestion if it is enabled.
@@ -1657,7 +1657,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Get conversation history from specific Slack channel
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 To get conversation history from a specified Slack channel. It also supports `message_ts` filter to retrieve a specific message. If `message_ts` is not provided then it will retrieve the latest 100 messages.
