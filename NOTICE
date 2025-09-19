@@ -4,7 +4,7 @@ Third Party Software Attributions:
 
 @@@@============================================================================
 
-Library: slack-bolt - 1.14.0
+Library: slack_bolt - 1.23.0
 Homepage: https://github.com/slackapi/bolt-python
 License: MIT License
 License Text:

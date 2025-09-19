@@ -5140,7 +5140,7 @@
         "wheel": [
             {
                 "module": "slack_bolt",
-                "input_file": "wheels/shared/slack_bolt-1.14.0-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/slack_bolt-1.23.0-py2.py3-none-any.whl"
             },
             {
                 "module": "slack_sdk",
@@ -5156,7 +5156,7 @@
         "wheel": [
             {
                 "module": "slack_bolt",
-                "input_file": "wheels/shared/slack_bolt-1.14.0-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/slack_bolt-1.23.0-py2.py3-none-any.whl"
             },
             {
                 "module": "slack_sdk",

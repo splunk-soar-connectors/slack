@@ -1,2 +1,2 @@
-slack-bolt==1.14.0
+slack-bolt==1.23.0
 websocket-client==1.8.0
