@@ -5140,7 +5140,7 @@
         "wheel": [
             {
                 "module": "slack_bolt",
-                "input_file": "wheels/shared/slack_bolt-1.14.0-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/slack_bolt-1.23.0-py2.py3-none-any.whl"
             },
             {
                 "module": "slack_sdk",
@@ -5148,7 +5148,7 @@
             },
             {
                 "module": "websocket_client",
-                "input_file": "wheels/shared/websocket_client-1.2.1-py2.py3-none-any.whl"
+                "input_file": "wheels/py3/websocket_client-1.8.0-py3-none-any.whl"
             }
         ]
     },
@@ -5156,7 +5156,7 @@
         "wheel": [
             {
                 "module": "slack_bolt",
-                "input_file": "wheels/shared/slack_bolt-1.14.0-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/slack_bolt-1.23.0-py2.py3-none-any.whl"
             },
             {
                 "module": "slack_sdk",
@@ -5164,7 +5164,7 @@
             },
             {
                 "module": "websocket_client",
-                "input_file": "wheels/shared/websocket_client-1.2.1-py2.py3-none-any.whl"
+                "input_file": "wheels/py3/websocket_client-1.8.0-py3-none-any.whl"
             }
         ]
     }
