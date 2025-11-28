@@ -14,7 +14,6 @@
 # and limitations under the License.
 import json
 import os
-import re
 import shlex
 import subprocess
 import sys
@@ -518,23 +517,19 @@ class SlackConnector(phantom.BaseConnector):
     def _upload_to_external_url(self, action_result, upload_url, file_content):
         """Upload file bytes to the Slack-provided external upload URL."""
         headers = {"Content-Type": "application/octet-stream"}
-        try:    #TODO: review filesize limit /  check if it works for large files / possible retries / timeout / etc.
+        try:  # TODO: review filesize limit /  check if it works for large files / possible retries / timeout / etc.
             response = requests.post(upload_url, data=file_content, headers=headers, timeout=SLACK_DEFAULT_TIMEOUT)
         except Exception as e:
             return RetVal(
-                action_result.set_status(
-                    phantom.APP_ERROR, f"Failed to upload file: {self._get_error_message_from_exception(e)}"
-                ),
+                action_result.set_status(phantom.APP_ERROR, f"Failed to upload file: {self._get_error_message_from_exception(e)}"),
                 None,
             )
 
-        if 200 <= response.status_code < 300:   # response.ok?
+        if 200 <= response.status_code < 300:  # response.ok?
             return RetVal(phantom.APP_SUCCESS, response.text)
 
         return RetVal(
-            action_result.set_status(
-                phantom.APP_ERROR, f"File upload failed with status {response.status_code}: {response.text}"
-            ),
+            action_result.set_status(phantom.APP_ERROR, f"File upload failed with status {response.status_code}: {response.text}"),
             None,
         )
 
@@ -905,7 +900,7 @@ class SlackConnector(phantom.BaseConnector):
         destination = param["destination"]
         caption = param.get("caption", "Uploaded from Splunk SOAR")
         file_name = param.get("filename")
-        filetype = param.get("filetype") #TODO: remove this if not needed.
+        filetype = param.get("filetype")  # TODO: remove this if not needed.
         parent_ts = param.get("parent_message_ts")
 
         file_bytes = None
@@ -944,7 +939,7 @@ class SlackConnector(phantom.BaseConnector):
                 return action_result.set_status(phantom.APP_ERROR, f"Unable to read vault file: {err}")
 
             try:
-                file_length = os.path.getsize(file_path)        #TODO: len(file_bytes)?
+                file_length = os.path.getsize(file_path)  # TODO: len(file_bytes)?
             except Exception as e:
                 err = self._get_error_message_from_exception(e)
                 return action_result.set_status(phantom.APP_ERROR, f"Unable to determine vault file size: {err}")
@@ -953,7 +948,7 @@ class SlackConnector(phantom.BaseConnector):
             content = param.get("content", "")
             file_bytes = content.encode("utf-8")
             file_length = len(file_bytes)
-            if not file_name:   #TODO: check if this is needed.
+            if not file_name:  # TODO: check if this is needed.
                 file_name = "soarupload.txt"
         else:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_FILE_OR_CONTENT_NOT_PROVIDED)
@@ -973,9 +968,7 @@ class SlackConnector(phantom.BaseConnector):
         file_id = upload_url_resp.get("file_id")
 
         if not upload_url or not file_id:
-            return action_result.set_status(
-                phantom.APP_ERROR, "Slack response did not include upload_url or file_id required for file upload"
-            )
+            return action_result.set_status(phantom.APP_ERROR, "Slack response did not include upload_url or file_id required for file upload")
 
         # Step 2: Upload content to the presigned URL
         self.debug_print("Uploading file content to Slack-provided upload URL")
@@ -1245,7 +1238,7 @@ class SlackConnector(phantom.BaseConnector):
         ]
         params = {"channel": user, "attachments": json.dumps(answer_json), "as_user": True}
 
-        ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_SEND_MESSAGE, params)
+        ret_val, _resp_json = self._make_slack_rest_call(action_result, SLACK_SEND_MESSAGE, params)
         if not ret_val:
             message = action_result.get_message()
             if message:
