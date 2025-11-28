@@ -14,6 +14,7 @@
 # and limitations under the License.
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -514,6 +515,29 @@ class SlackConnector(phantom.BaseConnector):
 
         return self._process_response(response, action_result)
 
+    def _upload_to_external_url(self, action_result, upload_url, file_content):
+        """Upload file bytes to the Slack-provided external upload URL."""
+        headers = {"Content-Type": "application/octet-stream"}
+        try:    #TODO: review filesize limit /  check if it works for large files / possible retries / timeout / etc.
+            response = requests.post(upload_url, data=file_content, headers=headers, timeout=SLACK_DEFAULT_TIMEOUT)
+        except Exception as e:
+            return RetVal(
+                action_result.set_status(
+                    phantom.APP_ERROR, f"Failed to upload file: {self._get_error_message_from_exception(e)}"
+                ),
+                None,
+            )
+
+        if 200 <= response.status_code < 300:   # response.ok?
+            return RetVal(phantom.APP_SUCCESS, response.text)
+
+        return RetVal(
+            action_result.set_status(
+                phantom.APP_ERROR, f"File upload failed with status {response.status_code}: {response.text}"
+            ),
+            None,
+        )
+
     def _validate_integers(self, action_result, parameter, key, allow_zero=False):
         """Validate the provided input parameter value is a non-zero positive integer and returns the integer value of the parameter itself.
 
@@ -878,19 +902,14 @@ class SlackConnector(phantom.BaseConnector):
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
+        destination = param["destination"]
         caption = param.get("caption", "Uploaded from Splunk SOAR")
-        kwargs = {}
-        params = {"channels": param["destination"], "initial_comment": caption}
+        file_name = param.get("filename")
+        filetype = param.get("filetype") #TODO: remove this if not needed.
+        parent_ts = param.get("parent_message_ts")
 
-        if "filetype" in param:
-            params["filetype"] = param.get("filetype")
-
-        if "filename" in param:
-            params["filename"] = param.get("filename")
-
-        if "parent_message_ts" in param:
-            # Support for replying in thread
-            params["thread_ts"] = param.get("parent_message_ts")
+        file_bytes = None
+        file_length = None
 
         if "file" in param:
             vault_id = param.get("file")
@@ -913,23 +932,73 @@ class SlackConnector(phantom.BaseConnector):
             if not file_path:
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_FETCH_FILE.format(key="path"))
 
-            # phantom vault file name
             file_name = vault_meta_info[0].get("name")
             if not file_name:
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_FETCH_FILE.format(key="name"))
 
-            upfile = open(file_path, "rb")
-            params["filename"] = file_name
-            kwargs["files"] = {"file": upfile}
+            try:
+                with open(file_path, "rb") as file_handle:
+                    file_bytes = file_handle.read()
+            except Exception as e:
+                err = self._get_error_message_from_exception(e)
+                return action_result.set_status(phantom.APP_ERROR, f"Unable to read vault file: {err}")
+
+            try:
+                file_length = os.path.getsize(file_path)        #TODO: len(file_bytes)?
+            except Exception as e:
+                err = self._get_error_message_from_exception(e)
+                return action_result.set_status(phantom.APP_ERROR, f"Unable to determine vault file size: {err}")
+
         elif "content" in param:
-            params["content"] = param.get("content")
+            content = param.get("content", "")
+            file_bytes = content.encode("utf-8")
+            file_length = len(file_bytes)
+            if not file_name:   #TODO: check if this is needed.
+                file_name = "soarupload.txt"
         else:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_FILE_OR_CONTENT_NOT_PROVIDED)
 
-        self.debug_print("Making rest call to upload file")
-        ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_UPLOAD_FILE, params, **kwargs)
-        if "files" in kwargs:
-            upfile.close()
+        if file_length is None or file_length <= 0:
+            return action_result.set_status(phantom.APP_ERROR, "File size must be greater than zero")
+
+        # Step 1: Request an external upload URL
+        upload_request_body = {"filename": file_name, "length": file_length}
+
+        self.debug_print("Requesting external upload URL from Slack")
+        ret_val, upload_url_resp = self._make_slack_rest_call(action_result, SLACK_GET_UPLOAD_URL, upload_request_body)
+        if not ret_val:
+            return action_result.get_status()
+
+        upload_url = upload_url_resp.get("upload_url")
+        file_id = upload_url_resp.get("file_id")
+
+        if not upload_url or not file_id:
+            return action_result.set_status(
+                phantom.APP_ERROR, "Slack response did not include upload_url or file_id required for file upload"
+            )
+
+        # Step 2: Upload content to the presigned URL
+        self.debug_print("Uploading file content to Slack-provided upload URL")
+        ret_val, _ = self._upload_to_external_url(action_result, upload_url, file_bytes)
+        if not ret_val:
+            return action_result.get_status()
+
+        # Step 3: Complete the upload and share the file
+        # Note: files array should only contain 'id' and optionally 'title'
+        # filename and mime_type are not valid fields for files.completeUploadExternal
+        files_entry = [{"id": file_id, "title": file_name}]
+
+        complete_payload = {
+            "files": json.dumps(files_entry),
+            "channel_id": destination,
+            "initial_comment": caption,
+        }
+
+        if parent_ts:
+            complete_payload["thread_ts"] = parent_ts
+
+        self.debug_print("Completing external file upload")
+        ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_COMPLETE_UPLOAD, complete_payload)
 
         if not ret_val:
             message = action_result.get_message()
@@ -939,7 +1008,8 @@ class SlackConnector(phantom.BaseConnector):
                 error_message = SLACK_ERROR_UPLOADING_FILE
             return action_result.set_status(phantom.APP_ERROR, error_message)
 
-        file_json = resp_json.get("file", {})
+        file_list = resp_json.get("files", [])
+        file_json = file_list[0] if file_list else resp_json.get("file", {})
 
         thumbnail_dict = {}
         pop_list = []
@@ -960,10 +1030,10 @@ class SlackConnector(phantom.BaseConnector):
                 if len(name_arr) == 2:
                     thumb_dict["img_url"] = value
 
-                elif name_arr[2] == "w":
+                elif len(name_arr) > 2 and name_arr[2] == "w":
                     thumb_dict["width"] = value
 
-                elif name_arr[2] == "h":
+                elif len(name_arr) > 2 and name_arr[2] == "h":
                     thumb_dict["height"] = value
 
             elif key == "initial_comment":
@@ -986,9 +1056,10 @@ class SlackConnector(phantom.BaseConnector):
                 pop_list.append(key)
 
         for poppee in pop_list:
-            file_json.pop(poppee)
+            file_json.pop(poppee, None)
 
         resp_json["thumbnails"] = thumbnail_dict
+        resp_json["file"] = file_json
 
         action_result.add_data(resp_json)
 
