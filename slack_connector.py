@@ -517,7 +517,7 @@ class SlackConnector(phantom.BaseConnector):
     def _upload_to_external_url(self, action_result, upload_url, file_content):
         """Upload file bytes to the Slack-provided external upload URL."""
         headers = {"Content-Type": "application/octet-stream"}
-        try:  # TODO: review filesize limit /  check if it works for large files / possible retries / timeout / etc.
+        try:
             response = requests.post(upload_url, data=file_content, headers=headers, timeout=SLACK_DEFAULT_TIMEOUT)
         except Exception as e:
             return RetVal(
@@ -525,7 +525,7 @@ class SlackConnector(phantom.BaseConnector):
                 None,
             )
 
-        if 200 <= response.status_code < 300:  # response.ok?
+        if 200 <= response.status_code < 300:  # only accept 2xx status codes
             return RetVal(phantom.APP_SUCCESS, response.text)
 
         return RetVal(
@@ -721,7 +721,6 @@ class SlackConnector(phantom.BaseConnector):
         if destination.startswith(("@", "#")):
             return False
 
-        # Check if it's a valid ID format
         first_char = destination[:1]
 
         # Channel IDs: C (public), G (private/group), D (direct message)
@@ -779,8 +778,7 @@ class SlackConnector(phantom.BaseConnector):
 
             for user in users:
                 # Check both 'name' and 'real_name' fields for matches
-                user_name_field = user.get("name", "").lower()
-                if user_name_field == name_to_find:
+                if user.get("name", "").lower() == name_to_find:
                     return user.get("id")
 
             next_cursor = resp_json.get("response_metadata", {}).get("next_cursor", "")
@@ -1012,12 +1010,11 @@ class SlackConnector(phantom.BaseConnector):
 
         destination = param["destination"].strip()
 
-        if "," in destination:
+        if "," in destination:  # multiple channels are no longer supported
             return action_result.set_status(
                 phantom.APP_ERROR, "Multiple channels are not supported. Please use separate 'upload file' actions for each channel."
             )
 
-        # Determine destination type and resolve to channel ID if needed
         if self._is_channel_id(destination):
             # It's already an ID - check if it's a user ID that needs DM channel conversion
             if destination.startswith(("U", "W")):
@@ -1026,11 +1023,9 @@ class SlackConnector(phantom.BaseConnector):
                 if not dm_channel_id:
                     return action_result.get_status()
                 destination = dm_channel_id
-            # else: It's a channel ID (C, G, D) - use directly
         else:
-            # It's a name - determine if it's a user or channel name
+            # name provided. check if it is a user or channel name.
             if destination.startswith("@"):
-                # User name - resolve to user ID, then to DM channel ID
                 self.debug_print(f"User name '{destination}' provided, resolving to user ID")
                 user_id = self._get_user_id_from_name(action_result, destination)
                 if not user_id:
@@ -1087,18 +1082,15 @@ class SlackConnector(phantom.BaseConnector):
             except Exception as e:
                 err = self._get_error_message_from_exception(e)
                 return action_result.set_status(phantom.APP_ERROR, f"Unable to read vault file: {err}")
-
-            try:
-                file_length = os.path.getsize(file_path)  # TODO: len(file_bytes)?
-            except Exception as e:
-                err = self._get_error_message_from_exception(e)
-                return action_result.set_status(phantom.APP_ERROR, f"Unable to determine vault file size: {err}")
+            file_length = len(file_bytes)
 
         elif "content" in param:
             content = param.get("content", "")
             file_bytes = content.encode("utf-8")
             file_length = len(file_bytes)
-            if not file_name:  # TODO: check if this is needed.
+            if (
+                not file_name
+            ):  # TODO: check if this is needed. check if filename is required in upload_request_body. If not may be we can remove this.
                 file_name = "soarupload.txt"
         else:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_FILE_OR_CONTENT_NOT_PROVIDED)
@@ -1106,7 +1098,7 @@ class SlackConnector(phantom.BaseConnector):
         if file_length is None or file_length <= 0:
             return action_result.set_status(phantom.APP_ERROR, "File size must be greater than zero")
 
-        # Step 1: Request an external upload URL
+        # request an external upload URL
         upload_request_body = {"filename": file_name, "length": file_length}
 
         self.debug_print("Requesting external upload URL from Slack")
@@ -1120,15 +1112,13 @@ class SlackConnector(phantom.BaseConnector):
         if not upload_url or not file_id:
             return action_result.set_status(phantom.APP_ERROR, "Slack response did not include upload_url or file_id required for file upload")
 
-        # Step 2: Upload content to the presigned URL
+        # upload content to the presigned URL
         self.debug_print("Uploading file content to Slack-provided upload URL")
         ret_val, _ = self._upload_to_external_url(action_result, upload_url, file_bytes)
         if not ret_val:
             return action_result.get_status()
 
-        # Step 3: Complete the upload and share the file
-        # Note: files array should only contain 'id' and optionally 'title'
-        # filename and mime_type are not valid fields for files.completeUploadExternal
+        # complete the upload and share the file
         files_entry = [{"id": file_id, "title": file_name}]
 
         complete_payload = {
