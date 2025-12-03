@@ -708,6 +708,119 @@ class SlackConnector(phantom.BaseConnector):
 
         return phantom.APP_SUCCESS, results
 
+    def _is_channel_id(self, destination):
+        """Determine if the provided destination already represents a channel/user ID.
+
+        Returns True if destination is an actual ID (C..., G..., D..., U..., W...).
+        Returns False if destination is a name (#channel, @user, or plain text).
+        """
+        if not destination:
+            return False
+
+        # If it starts with @ or #, it's a name, not an ID
+        if destination.startswith(("@", "#")):
+            return False
+
+        # Check if it's a valid ID format
+        first_char = destination[:1]
+
+        # Channel IDs: C (public), G (private/group), D (direct message)
+        # User IDs: U, W
+        if first_char in {"C", "G", "D", "U", "W"}:
+            return True
+
+        return False
+
+    def _get_channel_id_from_name(self, action_result, channel_name):
+        """Resolve a Slack channel name to its ID using the conversations.list API."""
+        if not channel_name:
+            return None
+
+        name_to_find = channel_name.lstrip("#").lower()
+        request_body = {"limit": 200, "types": "public_channel,private_channel"}
+
+        while True:
+            ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_LIST_CHANNEL, request_body)
+
+            if not ret_val:
+                return None
+
+            channels = resp_json.get("channels", [])
+
+            for channel in channels:
+                if channel.get("name", "").lower() == name_to_find:
+                    return channel.get("id")
+
+            next_cursor = resp_json.get("response_metadata", {}).get("next_cursor", "")
+
+            if not next_cursor:
+                break
+
+            request_body["cursor"] = next_cursor
+
+        action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_CHANNEL_NOT_FOUND.format(name=channel_name))
+        return None
+
+    def _get_user_id_from_name(self, action_result, user_name):
+        """Resolve a Slack user name to its ID using the users.list API."""
+        if not user_name:
+            return None
+
+        name_to_find = user_name.lstrip("@").lower()
+        request_body = {"limit": 200}
+
+        while True:
+            ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_USER_LIST, request_body)
+
+            if not ret_val:
+                return None
+
+            users = resp_json.get("members", [])
+
+            for user in users:
+                # Check both 'name' and 'real_name' fields for matches
+                user_name_field = user.get("name", "").lower()
+                if user_name_field == name_to_find:
+                    return user.get("id")
+
+            next_cursor = resp_json.get("response_metadata", {}).get("next_cursor", "")
+
+            if not next_cursor:
+                break
+
+            request_body["cursor"] = next_cursor
+
+        action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_USER_NOT_FOUND.format(name=user_name))
+        return None
+
+    def _get_dm_channel_id(self, action_result, user_id):
+        """Open a direct message channel with a user and return the channel ID."""
+        if not user_id:
+            return None
+
+        request_body = {"users": user_id}
+
+        self.debug_print(f"Opening DM channel with user {user_id}")
+        ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_CONVERSATIONS_OPEN, request_body)
+
+        if not ret_val:
+            message = action_result.get_message()
+            if message:
+                error_message = f"{SLACK_ERROR_OPENING_DM_CHANNEL}: {message}"
+            else:
+                error_message = SLACK_ERROR_OPENING_DM_CHANNEL
+            action_result.set_status(phantom.APP_ERROR, error_message)
+            return None
+
+        channel = resp_json.get("channel", {})
+        channel_id = channel.get("id")
+
+        if not channel_id:
+            action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_OPENING_DM_CHANNEL)
+            return None
+
+        return channel_id
+
     def _list_users(self, param):
         self.debug_print("param", param)
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
@@ -897,10 +1010,47 @@ class SlackConnector(phantom.BaseConnector):
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
-        destination = param["destination"]
+        destination = param["destination"].strip()
+
+        if "," in destination:
+            return action_result.set_status(
+                phantom.APP_ERROR, "Multiple channels are not supported. Please use separate 'upload file' actions for each channel."
+            )
+
+        # Determine destination type and resolve to channel ID if needed
+        if self._is_channel_id(destination):
+            # It's already an ID - check if it's a user ID that needs DM channel conversion
+            if destination.startswith(("U", "W")):
+                self.debug_print(f"User ID '{destination}' provided, opening DM channel")
+                dm_channel_id = self._get_dm_channel_id(action_result, destination)
+                if not dm_channel_id:
+                    return action_result.get_status()
+                destination = dm_channel_id
+            # else: It's a channel ID (C, G, D) - use directly
+        else:
+            # It's a name - determine if it's a user or channel name
+            if destination.startswith("@"):
+                # User name - resolve to user ID, then to DM channel ID
+                self.debug_print(f"User name '{destination}' provided, resolving to user ID")
+                user_id = self._get_user_id_from_name(action_result, destination)
+                if not user_id:
+                    return action_result.get_status()
+
+                self.debug_print(f"User ID '{user_id}' resolved, opening DM channel")
+                dm_channel_id = self._get_dm_channel_id(action_result, user_id)
+                if not dm_channel_id:
+                    return action_result.get_status()
+                destination = dm_channel_id
+            else:
+                # Channel name - resolve to channel ID
+                self.debug_print(f"Channel name '{destination}' provided, resolving to channel ID")
+                channel_id = self._get_channel_id_from_name(action_result, destination)
+                if not channel_id:
+                    return action_result.get_status()
+                destination = channel_id
+
         caption = param.get("caption", "Uploaded from Splunk SOAR")
         file_name = param.get("filename")
-        filetype = param.get("filetype")  # TODO: remove this if not needed.
         parent_ts = param.get("parent_message_ts")
 
         file_bytes = None

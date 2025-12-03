@@ -64,6 +64,7 @@ SLACK_COMPLETE_UPLOAD = "files.completeUploadExternal"
 SLACK_UPLOAD_FILE = "files.upload"
 SLACK_CONVERSATIONS_HISTORY = "conversations.history"
 SLACK_THREADS_HISTORY = "conversations.replies"
+SLACK_CONVERSATIONS_OPEN = "conversations.open"
 
 SLACK_TC_STATUS_SLEEP = 2
 SLACK_TC_FILE = "slack_auth_task.out"
@@ -136,6 +137,9 @@ SLACK_ERROR_COUDNT_STOP_SLACKBOT = "Something went wrong, wasn't able to stop th
 SLACK_FAILED_TO_DISABLE_INGESTION = "{message} Failed to disable ingestion, please check that ingest settings are correct."
 SLACK_INGESTION_NOT_ENABLED = "{message} Ingestion isn't enabled, not going to disable it."
 SLACK_INGESTION_DISABLED = "{message} Ingestion has been disabled."
+SLACK_ERROR_CHANNEL_NOT_FOUND = "Channel '{name}' not found in workspace"
+SLACK_ERROR_USER_NOT_FOUND = "User '{name}' not found in workspace"
+SLACK_ERROR_OPENING_DM_CHANNEL = "Error opening direct message channel with user"
 SLACK_ERROR_COULD_NOT_GET_BOT_ID = "Could not get bot ID from Slack"
 SLACK_SUCCESSFULLY_SLACKBOT_RUNNING = "SlackBot already running"
 SLACK_ERROR_AUTH_TOKEN_NOT_PROVIDED = "The 'ph_auth_token' asset configuration parameter is required to run the on_poll action"
