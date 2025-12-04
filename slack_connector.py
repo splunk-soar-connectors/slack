@@ -12,6 +12,7 @@
 # the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
+import datetime
 import json
 import os
 import shlex
@@ -777,7 +778,6 @@ class SlackConnector(phantom.BaseConnector):
             users = resp_json.get("members", [])
 
             for user in users:
-                # Check both 'name' and 'real_name' fields for matches
                 if user.get("name", "").lower() == name_to_find:
                     return user.get("id")
 
@@ -1024,8 +1024,9 @@ class SlackConnector(phantom.BaseConnector):
                     return action_result.get_status()
                 destination = dm_channel_id
         else:
-            # name provided. check if it is a user or channel name.
+            # name provided.
             if destination.startswith("@"):
+                # user name - resolve to user ID, then to DM channel ID
                 self.debug_print(f"User name '{destination}' provided, resolving to user ID")
                 user_id = self._get_user_id_from_name(action_result, destination)
                 if not user_id:
@@ -1072,10 +1073,12 @@ class SlackConnector(phantom.BaseConnector):
             if not file_path:
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_FETCH_FILE.format(key="path"))
 
-            file_name = vault_meta_info[0].get("name")
-            if not file_name:
+            vault_file_name = vault_meta_info[0].get("name")
+            if not vault_file_name:
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_FETCH_FILE.format(key="name"))
 
+            if not file_name:
+                file_name = vault_file_name
             try:
                 with open(file_path, "rb") as file_handle:
                     file_bytes = file_handle.read()
@@ -1088,10 +1091,9 @@ class SlackConnector(phantom.BaseConnector):
             content = param.get("content", "")
             file_bytes = content.encode("utf-8")
             file_length = len(file_bytes)
-            if (
-                not file_name
-            ):  # TODO: check if this is needed. check if filename is required in upload_request_body. If not may be we can remove this.
-                file_name = "soarupload.txt"
+            if not file_name:
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                file_name = f"soar_upload_{timestamp}.txt"
         else:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_FILE_OR_CONTENT_NOT_PROVIDED)
 
