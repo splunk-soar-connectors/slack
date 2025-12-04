@@ -802,12 +802,6 @@ class SlackConnector(phantom.BaseConnector):
         ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_CONVERSATIONS_OPEN, request_body)
 
         if not ret_val:
-            message = action_result.get_message()
-            if message:
-                error_message = f"{SLACK_ERROR_OPENING_DM_CHANNEL}: {message}"
-            else:
-                error_message = SLACK_ERROR_OPENING_DM_CHANNEL
-            action_result.set_status(phantom.APP_ERROR, error_message)
             return None
 
         channel = resp_json.get("channel", {})
