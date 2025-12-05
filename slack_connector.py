@@ -227,6 +227,8 @@ def handle_request(request, path):
 
 # Define the App Class
 class SlackConnector(phantom.BaseConnector):
+    debug_logging = False
+
     def __init__(self):
         # Call the BaseConnectors init first
         super().__init__()
@@ -243,6 +245,26 @@ class SlackConnector(phantom.BaseConnector):
         self._permit_container = None
         self._permit_list = None
         self._permitted_users = None
+
+    def _debug_log(self, message, force=False):
+        """Custom logging method that respects debug_logging configuration.
+
+        :param message: Message to log
+        :param force: If True, always log regardless of debug_logging setting
+        """
+        try:
+            message_str = str(message)
+        except:
+            message_str = "Failed to cast message to string"
+
+        if self.debug_logging:
+            # When debug_logging is True: ALWAYS print to debug log AND save progress
+            self.debug_print("Slack", message_str)
+            self.save_progress(message_str)
+        elif force:
+            # When forced: print to debug log AND save progress
+            self.debug_print("Slack", message_str)
+            self.save_progress(message_str)
 
     def encrypt_state(self, encrypt_var, token_name):
         """Handle encryption of token.
@@ -311,6 +333,11 @@ class SlackConnector(phantom.BaseConnector):
             except Exception as e:
                 self.debug_print(f"{SLACK_DECRYPTION_ERROR}: {self._get_error_message_from_exception(e)}")
                 return self.set_status(phantom.APP_ERROR, SLACK_DECRYPTION_ERROR)
+
+        try:
+            self.debug_logging = config.get("debug_logging", False)
+        except:
+            pass
 
         return phantom.APP_SUCCESS
 
@@ -874,28 +901,188 @@ class SlackConnector(phantom.BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_REACTION_ADDED)
 
-    def _upload_file(self, param):
+    def _get_file_size(self, file_path=None, content=None):
+        """Calculate file size for either vault file or text content.
+
+        Args:
+            file_path: Path to file on disk
+            content: Text content string
+
+        Returns:
+            File size in bytes
+        """
+        if file_path:
+            return os.path.getsize(file_path)
+        elif content:
+            return len(content.encode("utf-8"))
+        return 0
+
+    def _upload_file(self, param):  # noqa: C901
+        """Upload file to Slack using the new 3-step upload process.
+
+        This method implements the new Slack file upload API:
+        1. Get upload URL from files.getUploadURLExternal
+        2. Upload file content to the provided URL
+        3. Complete upload with files.completeUploadExternal
+        """
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
+        # Extract and validate parameters
+        destination = param["destination"]
         caption = param.get("caption", "Uploaded from Splunk SOAR")
-        kwargs = {}
-        params = {"channels": param["destination"], "initial_comment": caption}
+        parent_message_ts = param.get("parent_message_ts")
+        user_filename = param.get("filename")
+        filetype = param.get("filetype")
 
-        if "filetype" in param:
-            params["filetype"] = param.get("filetype")
+        # Handle destination format conversions
+        if destination.startswith("@"):
+            # For @username, convert to user ID and open DM channel
+            username = destination[1:]
+            self._debug_log(f"Converting username {username} to user ID")
 
-        if "filename" in param:
-            params["filename"] = param.get("filename")
+            # Use users.list to find the user ID (with pagination support)
+            list_params = {}
 
-        if "parent_message_ts" in param:
-            # Support for replying in thread
-            params["thread_ts"] = param.get("parent_message_ts")
+            found = False
+            cursor = None
 
+            # Paginate through all users
+            while not found:
+                if cursor:
+                    list_params["cursor"] = cursor
+
+                ret_val, users_resp = self._make_slack_rest_call(action_result, SLACK_USER_LIST, list_params)
+                if not ret_val:
+                    return action_result.set_status(phantom.APP_ERROR, "Failed to look up user for username conversion")
+
+                members = users_resp.get("members", [])
+
+                for member in members:
+                    if member.get("name") == username:
+                        destination = member.get("id")
+                        self._debug_log(f"Found user ID: {destination}")
+                        found = True
+                        break
+
+                # Check if there are more pages
+                response_metadata = users_resp.get("response_metadata", {})
+                cursor = response_metadata.get("next_cursor")
+
+                if not cursor:
+                    # No more pages
+                    break
+
+            if not found:
+                return action_result.set_status(phantom.APP_ERROR, f"Could not find user with username: {username}")
+
+            # For DMs, we need to open a conversation to get a channel ID
+            self._debug_log(f"Opening DM conversation with user: {destination}")
+            open_params = {"users": destination}
+            ret_val, open_resp = self._make_slack_rest_call(action_result, SLACK_OPEN_CONVERSATION, open_params)
+            if ret_val:
+                channel = open_resp.get("channel", {})
+                destination = channel.get("id")
+                if not destination:
+                    error_msg = open_resp.get("error", "No channel ID returned")
+                    return action_result.set_status(phantom.APP_ERROR, f"Failed to get DM channel ID: {error_msg}")
+                self._debug_log(f"Opened DM channel: {destination}")
+            else:
+                # Get the actual error from action_result
+                error_msg = action_result.get_message() or "Unknown error"
+                return action_result.set_status(phantom.APP_ERROR, f"Failed to open DM conversation with user: {error_msg}")
+
+        elif destination.startswith("#"):
+            # For #channel-name, convert to channel ID (required by files.completeUploadExternal)
+            channel_name = destination[1:]
+            self._debug_log(f"Converting channel name '{channel_name}' to channel ID")
+            self._debug_log("Note: For faster uploads in large workspaces, use channel ID directly (e.g., C1234567890)")
+
+            # Get team_id to potentially speed up conversations.list
+            team_id = getattr(self, "_team_id", None)
+            if not team_id:
+                ret_val, auth_resp = self._make_slack_rest_call(action_result, SLACK_AUTH_TEST, {})
+                if ret_val and auth_resp:
+                    team_id = auth_resp.get("team_id")
+                    self._team_id = team_id  # Cache for future use
+                    self._debug_log(f"Got team_id: {team_id}")
+
+            # Use conversations.list with recommended limit per Slack docs
+            list_params = {"types": "public_channel,private_channel", "exclude_archived": "true", "limit": 1000}
+
+            # Add team_id if we have it (for org-level tokens)
+            if team_id:
+                list_params["team_id"] = team_id
+
+            found = False
+            cursor = None
+
+            # Paginate through channels
+            try:
+                while not found:
+                    if cursor:
+                        list_params["cursor"] = cursor
+
+                    ret_val, channels_resp = self._make_slack_rest_call(action_result, SLACK_LIST_CHANNEL, list_params)
+                    if not ret_val:
+                        error_msg = action_result.get_message()
+                        if "timeout" in str(error_msg).lower() or "timed out" in str(error_msg).lower():
+                            return action_result.set_status(
+                                phantom.APP_ERROR,
+                                "Timeout while looking up channel. Your workspace has many channels. "
+                                "Please use the channel ID directly instead of #channel-name. "
+                                "To find channel ID: Right-click channel > View channel details > Copy channel ID",
+                            )
+                        return action_result.set_status(
+                            phantom.APP_ERROR, f"Failed to look up channel: {error_msg}. Try using channel ID directly (e.g., C1234567890)"
+                        )
+
+                    channels = channels_resp.get("channels", [])
+
+                for channel in channels:
+                    if channel.get("name") == channel_name:
+                        destination = channel.get("id")
+                        self._debug_log(f"Found channel ID: {destination}")
+                        found = True
+                        break
+
+                    # Check if there are more pages
+                    response_metadata = channels_resp.get("response_metadata", {})
+                    cursor = response_metadata.get("next_cursor")
+
+                    if not cursor:
+                        # No more pages
+                        break
+
+            except Exception as e:
+                error_msg = str(e)
+                if "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+                    return action_result.set_status(
+                        phantom.APP_ERROR,
+                        f"Timeout while looking up channel '{channel_name}'. Your workspace has many channels. "
+                        f"Please use the channel ID directly instead of #channel-name. "
+                        f"To find channel ID: Right-click channel > View channel details > Copy channel ID",
+                    )
+                return action_result.set_status(phantom.APP_ERROR, f"Error looking up channel: {error_msg}")
+
+            if not found:
+                return action_result.set_status(
+                    phantom.APP_ERROR,
+                    f"Could not find channel '{channel_name}'. Make sure the bot is a member of the channel, "
+                    f"or use the channel ID directly (e.g., C1234567890)",
+                )
+
+        file_content = None
+        file_path = None
+        file_name = None
+        file_size = 0
+        use_filetype = False  # Only use filetype for text content, not vault files
+
+        # Determine upload mode: vault file or content string
         if "file" in param:
             vault_id = param.get("file")
 
-            # check the vault for a file with the supplied ID
+            # Retrieve file from vault
             try:
                 success, message, vault_meta_info = ph_rules.vault_info(vault_id=vault_id)
                 vault_meta_info = list(vault_meta_info)
@@ -908,85 +1095,197 @@ class SlackConnector(phantom.BaseConnector):
                 err = self._get_error_message_from_exception(e)
                 return action_result.set_status(phantom.APP_ERROR, "{}. {}".format(SLACK_ERROR_UNABLE_TO_FETCH_FILE.format(key="info"), err))
 
-            # phantom vault file path
+            # Get vault file path
             file_path = vault_meta_info[0].get("path")
             if not file_path:
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_FETCH_FILE.format(key="path"))
 
-            # phantom vault file name
+            # Get vault file name
             file_name = vault_meta_info[0].get("name")
             if not file_name:
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_FETCH_FILE.format(key="name"))
 
-            upfile = open(file_path, "rb")
-            params["filename"] = file_name
-            kwargs["files"] = {"file": upfile}
+            # Allow user to override filename
+            if user_filename:
+                file_name = user_filename
+
+            # Calculate file size
+            file_size = self._get_file_size(file_path=file_path)
+
+            # Don't use filetype for actual files - let Slack detect it
+
         elif "content" in param:
-            params["content"] = param.get("content")
+            # Upload text content as file
+            file_content = param.get("content")
+
+            # Default filetype to "text" if not provided
+            if not filetype:
+                filetype = "text"
+
+            # Use user-provided filename, or default to "{filetype} snippet"
+            file_name = user_filename if user_filename else f"{filetype} snippet"
+            file_size = self._get_file_size(content=file_content)
+
+            # Enable filetype for text content
+            use_filetype = True
+
         else:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_FILE_OR_CONTENT_NOT_PROVIDED)
 
-        self.debug_print("Making rest call to upload file")
-        ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_UPLOAD_FILE, params, **kwargs)
-        if "files" in kwargs:
-            upfile.close()
+        # STEP 1: Get upload URL from Slack
+        self._debug_log(f"Step 1: Getting upload URL for file '{file_name}' (size: {file_size} bytes)")
+        get_url_params = {"filename": file_name, "length": file_size}
 
+        # Add filetype only for text content (not for vault files)
+        if use_filetype and filetype:
+            get_url_params["snippet_type"] = filetype
+            self._debug_log(f"Using filetype: {filetype}")
+
+        ret_val, url_resp = self._make_slack_rest_call(action_result, SLACK_GET_UPLOAD_URL, get_url_params)
         if not ret_val:
             message = action_result.get_message()
             if message:
-                error_message = f"{SLACK_ERROR_UPLOADING_FILE}: {message}"
+                error_message = f"{SLACK_ERROR_GETTING_UPLOAD_URL}: {message}"
             else:
-                error_message = SLACK_ERROR_UPLOADING_FILE
+                error_message = SLACK_ERROR_GETTING_UPLOAD_URL
             return action_result.set_status(phantom.APP_ERROR, error_message)
 
-        file_json = resp_json.get("file", {})
+        upload_url = url_resp.get("upload_url")
+        file_id = url_resp.get("file_id")
 
+        if not upload_url or not file_id:
+            return action_result.set_status(phantom.APP_ERROR, f"{SLACK_ERROR_GETTING_UPLOAD_URL}: Missing upload_url or file_id in response")
+
+        self._debug_log(f"Step 1 complete: Received upload URL and file_id: {file_id}")
+
+        # STEP 2: Upload file content to the provided URL
+        self._debug_log("Step 2: Uploading file content to external URL")
+        self._debug_log(f"Upload URL: {upload_url}")
+        try:
+            if file_path:
+                # Upload binary file from vault
+                with open(file_path, "rb") as f:
+                    file_data = f.read()
+                    self._debug_log(f"Read {len(file_data)} bytes from file: {file_path}")
+                    self._debug_log(f"Filename for upload: {file_name}")
+
+                    # Upload using POST with multipart form data
+                    # Form field MUST be named "filename" per Slack API docs
+                    self._debug_log("Uploading via multipart form with field 'filename'")
+                    upload_response = requests.post(upload_url, files={"filename": (file_name, file_data)}, timeout=SLACK_DEFAULT_TIMEOUT)
+            else:
+                # Upload text content
+                file_data = file_content.encode("utf-8")
+                self._debug_log(f"Encoded {len(file_data)} bytes of text content: '{file_content}'")
+                self._debug_log(f"Filename for upload: {file_name}")
+
+                # Upload using POST with multipart form data
+                # Form field MUST be named "filename" per Slack API docs
+                self._debug_log("Uploading via multipart form with field 'filename'")
+                upload_response = requests.post(upload_url, files={"filename": (file_name, file_data)}, timeout=SLACK_DEFAULT_TIMEOUT)
+
+            self._debug_log(f"Upload response status: {upload_response.status_code}")
+            self._debug_log(f"Upload response headers: {dict(upload_response.headers)}")
+            self._debug_log(f"Upload response body: {upload_response.text[:500]}")
+
+            if upload_response.status_code not in [200, 201]:
+                error_msg = f"{SLACK_ERROR_UPLOADING_TO_URL}: HTTP {upload_response.status_code}"
+                if upload_response.text:
+                    error_msg += f", Response: {upload_response.text[:200]}"
+                self._debug_log(error_msg)
+                return action_result.set_status(phantom.APP_ERROR, error_msg)
+
+        except Exception as e:
+            error_msg = f"{SLACK_ERROR_UPLOADING_TO_URL}: {self._get_error_message_from_exception(e)}"
+            self._debug_log(error_msg)
+            return action_result.set_status(phantom.APP_ERROR, error_msg)
+
+        self._debug_log("Step 2 complete: File content uploaded successfully")
+
+        # STEP 3: Complete the upload and share to destination
+        self._debug_log("Step 3: Completing upload and sharing")
+        self._debug_log(f"Step 3: Using file_id: {file_id}")
+        self._debug_log(f"Step 3: Sharing to destination: {destination}")
+
+        # Build files array with title inside - must be JSON-encoded string
+        files_array = [{"id": file_id, "title": file_name}]
+
+        complete_params = {"files": json.dumps(files_array)}
+
+        # Add sharing parameters per files.completeUploadExternal documentation
+        if destination:
+            complete_params["channel_id"] = destination
+
+        # Add initial_comment (caption) if provided
+        if caption:
+            complete_params["initial_comment"] = caption
+
+        # Add thread_ts if replying to a thread
+        if parent_message_ts:
+            complete_params["thread_ts"] = parent_message_ts
+
+        self._debug_log(f"Step 3 params: files array has {len(files_array)} item(s)")
+        self._debug_log(f"Step 3 params JSON: {complete_params}")
+
+        ret_val, complete_resp = self._make_slack_rest_call(action_result, SLACK_COMPLETE_UPLOAD, complete_params)
+        if not ret_val:
+            message = action_result.get_message()
+            # Get full error details from action_result
+            action_data = action_result.get_data()
+            error_details = ""
+            if action_data:
+                error_details = f" Full response: {json.dumps(action_data, indent=2)}"
+            self._debug_log(f"Step 3 failed: {message}{error_details}")
+            if message:
+                error_message = f"{SLACK_ERROR_COMPLETING_UPLOAD}: {message}{error_details}"
+            else:
+                error_message = f"{SLACK_ERROR_COMPLETING_UPLOAD}{error_details}"
+            return action_result.set_status(phantom.APP_ERROR, error_message)
+
+        self._debug_log("Step 3 complete: Upload finalized and shared")
+        self._debug_log(f"Step 3 response: {json.dumps(complete_resp, indent=2)}")
+
+        # Get the completed file info
+        files_list = complete_resp.get("files", [])
+        if not files_list:
+            return action_result.set_status(phantom.APP_ERROR, "No file information returned after upload completion")
+
+        completed_file = files_list[0]
+        file_json = completed_file
+
+        # Build response compatible with existing output data paths
+        resp_json = {"file": file_json}
+
+        # Add caption if provided
+        if caption:
+            resp_json["caption"] = caption
+
+        # Add destination information
+        if destination:
+            resp_json["destinations"] = [destination]
+
+        # Add sender (bot user) if available
+        if "user_id" in complete_resp:
+            resp_json["sender"] = complete_resp["user_id"]
+
+        # Process thumbnails if present
         thumbnail_dict = {}
-        pop_list = []
+        if file_json:
+            for key, value in list(file_json.items()):
+                if key.startswith("thumb"):
+                    name_arr = key.split("_")
+                    if len(name_arr) >= 2:
+                        thumb_name = f"{name_arr[0]}_{name_arr[1]}"
+                        if thumb_name not in thumbnail_dict:
+                            thumbnail_dict[thumb_name] = {}
+                        thumb_dict = thumbnail_dict[thumb_name]
 
-        for key, value in list(file_json.items()):
-            if key.startswith("thumb"):
-                pop_list.append(key)
-
-                name_arr = key.split("_")
-
-                thumb_name = f"{name_arr[0]}_{name_arr[1]}"
-
-                if thumb_name not in thumbnail_dict:
-                    thumbnail_dict[thumb_name] = {}
-
-                thumb_dict = thumbnail_dict[thumb_name]
-
-                if len(name_arr) == 2:
-                    thumb_dict["img_url"] = value
-
-                elif name_arr[2] == "w":
-                    thumb_dict["width"] = value
-
-                elif name_arr[2] == "h":
-                    thumb_dict["height"] = value
-
-            elif key == "initial_comment":
-                resp_json["caption"] = value
-                pop_list.append(key)
-
-            elif key in ["channels", "ims", "groups"]:
-                if "destinations" not in resp_json:
-                    resp_json["destinations"] = []
-
-                resp_json["destinations"] += value
-
-                pop_list.append(key)
-
-            elif key == "username":
-                pop_list.append(key)
-
-            elif key == "user":
-                resp_json["sender"] = value
-                pop_list.append(key)
-
-        for poppee in pop_list:
-            file_json.pop(poppee)
+                        if len(name_arr) == 2:
+                            thumb_dict["img_url"] = value
+                        elif len(name_arr) > 2 and name_arr[2] == "w":
+                            thumb_dict["width"] = value
+                        elif len(name_arr) > 2 and name_arr[2] == "h":
+                            thumb_dict["height"] = value
 
         resp_json["thumbnails"] = thumbnail_dict
 
@@ -1174,6 +1473,10 @@ class SlackConnector(phantom.BaseConnector):
         ]
         params = {"channel": user, "attachments": json.dumps(answer_json), "as_user": True}
 
+        # Support for replying in thread (similar to send_message)
+        if "parent_message_ts" in param:
+            params["thread_ts"] = param.get("parent_message_ts")
+
         ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_SEND_MESSAGE, params)
         if not ret_val:
             message = action_result.get_message()
@@ -1186,37 +1489,20 @@ class SlackConnector(phantom.BaseConnector):
         data = {"qid": qid, "answer_path": answer_path}
         return action_result.set_status(phantom.APP_SUCCESS), data
 
-    def _ask_question_channel(self, param):
-        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
-        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
+    def _poll_for_question_response(self, action_result, resp_json):
+        """Helper method to poll for and process question responses.
 
-        user = param["destination"]
-        if user.startswith("@") or user.startswith("U"):
-            # Don't want to send question to channels because then we would not know who was answering
-            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_USER)
+        This method handles the common polling logic for both _ask_question and
+        _ask_question_channel actions. It waits for a response file to appear,
+        reads it, parses it, and cleans up the file.
 
-        ret_val, resp_json = self._handle_ask_question(action_result, param, user)
+        Args:
+            action_result: The ActionResult object to populate
+            resp_json: Response from _handle_ask_question containing answer_path and qid
 
-        if phantom.is_fail(ret_val):
-            return action_result.get_status()
-
-        action_result.add_data(resp_json)
-        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_ASKED_QUESTION)
-
-    def _ask_question(self, param):
-        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
-        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
-
-        user = param["destination"]
-        if user.startswith("#") or user.startswith("C"):
-            # Don't want to send question to channels because then we would not know who was answering
-            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_CHANNEL)
-
-        ret_val, resp_json = self._handle_ask_question(action_result, param, user)
-
-        if phantom.is_fail(ret_val):
-            return action_result.get_status()
-
+        Returns:
+            Result of action_result.set_status() (SUCCESS or ERROR)
+        """
         self.debug_print(f"resp json : {resp_json}")
         answer_path = resp_json.get("answer_path")
         qid = resp_json.get("qid")
@@ -1224,7 +1510,7 @@ class SlackConnector(phantom.BaseConnector):
         timeout_in_seconds = self._timeout * 60
 
         if self._interval > timeout_in_seconds:
-            self.debug_print("uestion timeout is greater than the polling interval")
+            self.debug_print("Question timeout is greater than the polling interval")
             self._interval = timeout_in_seconds
             loop_count = 1
         else:
@@ -1259,6 +1545,38 @@ class SlackConnector(phantom.BaseConnector):
         os.remove(answer_path)
 
         return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _ask_question_channel(self, param):
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
+        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
+
+        user = param["destination"]
+        if user.startswith("@") or user.startswith("U"):
+            # Don't want to send question to channels because then we would not know who was answering
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_USER)
+
+        ret_val, resp_json = self._handle_ask_question(action_result, param, user)
+
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+
+        return self._poll_for_question_response(action_result, resp_json)
+
+    def _ask_question(self, param):
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
+        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
+
+        user = param["destination"]
+        if user.startswith("#") or user.startswith("C"):
+            # Don't want to send question to channels because then we would not know who was answering
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_CHANNEL)
+
+        ret_val, resp_json = self._handle_ask_question(action_result, param, user)
+
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+
+        return self._poll_for_question_response(action_result, resp_json)
 
     def _get_response(self, param):
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))

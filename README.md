@@ -1,7 +1,7 @@
 # Slack
 
 Publisher: Splunk <br>
-Connector Version: 2.9.1 <br>
+Connector Version: 2.9.2 <br>
 Product Vendor: Slack Technologies <br>
 Product Name: Slack <br>
 Minimum Product Version: 6.3.0
@@ -676,6 +676,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 **permit_bot_container** | optional | boolean | Permit 'get_container' commands on Bot (I.E. @SOARbot get_container \<container_id>) |
 **permit_bot_list** | optional | boolean | Permit 'list' commands on Bot (I.E. @SOARbot list [actions|containers]) |
 **permitted_bot_users** | optional | string | Users permitted to use Bot Actions. Comma seperated list of Member IDs. Leave blank to allow all users (Default Setting) |
+**debug_logging** | optional | boolean | Toggle verbose logging in debug log and spawn log |
 
 ### Supported Actions
 
@@ -1236,7 +1237,9 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **file** | optional | Vault ID of file to upload | string | `vault id` `sha1` |
 **content** | optional | Contents of the file | string | |
 **caption** | optional | Caption to add to the file | string | |
-**filetype** | optional | A file type identifier (https://api.slack.com/types/file#file_types) | string | |
+**filetype** | optional | Syntax type of the snippet being uploaded (e.g., python, javascript, text).
+Only applicable when file is null and content is not.
+See full list here: https://docs.slack.dev/reference/objects/file-object | string | |
 **filename** | optional | Name of the file | string | `file name` |
 
 #### Action Output
@@ -1377,6 +1380,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **question** | required | Question to ask | string | |
 **responses** | optional | Comma separated string values for responses. (Maximum responses allowed are 5) | string | |
 **confirmation** | optional | Message to user after response | string | |
+**parent_message_ts** | optional | Parent message timestamp to reply in thread | string | `slack message ts` |
 
 #### Action Output
 
@@ -1387,6 +1391,7 @@ action_result.parameter.confirmation | string | | |
 action_result.parameter.destination | string | `slack user name` `slack user id` | |
 action_result.parameter.question | string | | |
 action_result.parameter.responses | string | | |
+action_result.parameter.parent_message_ts | string | `slack message ts` | |
 action_result.data.\*.action_ts | string | | |
 action_result.data.\*.actions.\*.name | string | | |
 action_result.data.\*.actions.\*.type | string | | |
@@ -1480,15 +1485,19 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **destination** | required | Channel (e.g. #channel-name or C1A1A1AAA) to ask question to | string | `slack user name` `slack user id` |
 **question** | required | Question to ask | string | |
 **responses** | optional | Comma separated string values for responses. (Maximum responses allowed are 5) | string | |
+**confirmation** | optional | Message to user after response | string | |
+**parent_message_ts** | optional | Parent message timestamp to reply in thread | string | `slack message ts` |
 
 #### Action Output
 
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
 action_result.status | string | | success failed |
+action_result.parameter.confirmation | string | | |
 action_result.parameter.destination | string | `slack user name` `slack user id` | |
 action_result.parameter.question | string | | |
 action_result.parameter.responses | string | | |
+action_result.parameter.parent_message_ts | string | `slack message ts` | |
 action_result.data.\*.action_ts | string | | |
 action_result.data.\*.actions.\*.name | string | | |
 action_result.data.\*.actions.\*.type | string | | |
