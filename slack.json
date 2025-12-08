@@ -3008,11 +3008,16 @@
                     "data_type": "string",
                     "order": 4
                 },
+                "filetype": {
+                    "description": "A file type identifier (https://api.slack.com/types/file#file_types)",
+                    "data_type": "string",
+                    "order": 5
+                },
                 "filename": {
                     "description": "Name of the file",
                     "data_type": "string",
                     "primary": true,
-                    "order": 5,
+                    "order": 6,
                     "contains": [
                         "file name"
                     ]
@@ -3069,6 +3074,12 @@
                     "contains": [
                         "file name"
                     ]
+                },
+                {
+                    "data_path": "action_result.parameter.filetype",
+                    "data_type": "string",
+                    "column_name": "File Type",
+                    "column_order": 5
                 },
                 {
                     "data_path": "action_result.parameter.parent_message_ts",

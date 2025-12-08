@@ -1236,6 +1236,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **file** | optional | Vault ID of file to upload | string | `vault id` `sha1` |
 **content** | optional | Contents of the file | string | |
 **caption** | optional | Caption to add to the file | string | |
+**filetype** | optional | A file type identifier (https://api.slack.com/types/file#file_types) | string | |
 **filename** | optional | Name of the file | string | `file name` |
 
 #### Action Output
@@ -1248,6 +1249,7 @@ action_result.parameter.content | string | | |
 action_result.parameter.destination | string | `slack channel name` `slack channel id` `slack user name` `slack user id` | |
 action_result.parameter.file | string | `vault id` `sha1` | |
 action_result.parameter.filename | string | `file name` | |
+action_result.parameter.filetype | string | | |
 action_result.parameter.parent_message_ts | string | `slack message ts` | 1612429747.000100 |
 action_result.data.\*.caption.channel | string | | |
 action_result.data.\*.caption.comment | string | | |

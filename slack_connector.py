@@ -1002,42 +1002,44 @@ class SlackConnector(phantom.BaseConnector):
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
-        destination = param["destination"].strip()
+        filetype = param.get("filetype")
+        destination = param["destination"].split(",")
+        destinations = [value.strip() for value in destination if value.strip()]
 
-        if "," in destination:  # multiple channels are no longer supported
-            return action_result.set_status(
-                phantom.APP_ERROR, "Multiple channels are not supported. Please use separate 'upload file' actions for each channel."
-            )
+        conversation_ids = []
 
-        if self._is_channel_id(destination):
-            # It's already an ID - check if it's a user ID that needs DM channel conversion
-            if destination.startswith(("U", "W")):
-                self.debug_print(f"User ID '{destination}' provided, opening DM channel")
-                dm_channel_id = self._get_dm_channel_id(action_result, destination)
-                if not dm_channel_id:
-                    return action_result.get_status()
-                destination = dm_channel_id
-        else:
-            # name provided.
-            if destination.startswith("@"):
-                # user name - resolve to user ID, then to DM channel ID
-                self.debug_print(f"User name '{destination}' provided, resolving to user ID")
-                user_id = self._get_user_id_from_name(action_result, destination)
-                if not user_id:
-                    return action_result.get_status()
-
-                self.debug_print(f"User ID '{user_id}' resolved, opening DM channel")
-                dm_channel_id = self._get_dm_channel_id(action_result, user_id)
-                if not dm_channel_id:
-                    return action_result.get_status()
-                destination = dm_channel_id
+        for destination in destinations:
+            if self._is_channel_id(destination):
+                # It's already an ID - check if it's a user ID that needs DM channel conversion
+                if destination.startswith(("U", "W")):
+                    self.debug_print(f"User ID '{destination}' provided, opening DM channel")
+                    dm_channel_id = self._get_dm_channel_id(action_result, destination)
+                    if not dm_channel_id:
+                        return action_result.get_status()
+                    conversation_ids.append(dm_channel_id)
+                else:
+                    conversation_ids.append(destination)
             else:
-                # Channel name - resolve to channel ID
-                self.debug_print(f"Channel name '{destination}' provided, resolving to channel ID")
-                channel_id = self._get_channel_id_from_name(action_result, destination)
-                if not channel_id:
-                    return action_result.get_status()
-                destination = channel_id
+                # name provided.
+                if destination.startswith("@"):
+                    # user name - resolve to user ID, then to DM channel ID
+                    self.debug_print(f"User name '{destination}' provided, resolving to user ID")
+                    user_id = self._get_user_id_from_name(action_result, destination)
+                    if not user_id:
+                        return action_result.get_status()
+
+                    self.debug_print(f"User ID '{user_id}' resolved, opening DM channel")
+                    dm_channel_id = self._get_dm_channel_id(action_result, user_id)
+                    if not dm_channel_id:
+                        return action_result.get_status()
+                    conversation_ids.append(dm_channel_id)
+                else:
+                    # Channel name - resolve to channel ID
+                    self.debug_print(f"Channel name '{destination}' provided, resolving to channel ID")
+                    channel_id = self._get_channel_id_from_name(action_result, destination)
+                    if not channel_id:
+                        return action_result.get_status()
+                    conversation_ids.append(channel_id)
 
         caption = param.get("caption", "Uploaded from Splunk SOAR")
         file_name = param.get("filename")
@@ -1085,9 +1087,11 @@ class SlackConnector(phantom.BaseConnector):
             content = param.get("content", "")
             file_bytes = content.encode("utf-8")
             file_length = len(file_bytes)
+            if not filetype:
+                filetype = "text"
             if not file_name:
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                file_name = f"soar_upload_{timestamp}.txt"
+                file_name = f"{filetype} snippet"
         else:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_FILE_OR_CONTENT_NOT_PROVIDED)
 
@@ -1096,6 +1100,8 @@ class SlackConnector(phantom.BaseConnector):
 
         # request an external upload URL
         upload_request_body = {"filename": file_name, "length": file_length}
+        if filetype:
+            upload_request_body["snippet_type"] = filetype
 
         self.debug_print("Requesting external upload URL from Slack")
         ret_val, upload_url_resp = self._make_slack_rest_call(action_result, SLACK_GET_UPLOAD_URL, upload_request_body)
@@ -1119,7 +1125,7 @@ class SlackConnector(phantom.BaseConnector):
 
         complete_payload = {
             "files": json.dumps(files_entry),
-            "channel_id": destination,
+            "channels": ",".join(conversation_ids),
             "initial_comment": caption,
         }
 
