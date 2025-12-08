@@ -3009,7 +3009,7 @@
                     "order": 4
                 },
                 "filetype": {
-                    "description": "A file type identifier (https://api.slack.com/types/file#file_types)",
+                    "description": "A file type identifier (https://docs.slack.dev/reference/objects/file-object/#types)",
                     "data_type": "string",
                     "order": 5
                 },
