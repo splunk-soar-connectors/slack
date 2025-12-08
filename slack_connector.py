@@ -12,7 +12,6 @@
 # the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
-import datetime
 import json
 import os
 import shlex
@@ -1090,7 +1089,6 @@ class SlackConnector(phantom.BaseConnector):
             if not filetype:
                 filetype = "text"
             if not file_name:
-                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 file_name = f"{filetype} snippet"
         else:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_FILE_OR_CONTENT_NOT_PROVIDED)
