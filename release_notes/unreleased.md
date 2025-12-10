@@ -1,2 +1,1 @@
 **Unreleased**
-* Updated file upload action to use Slack's recommended external upload API (replaces deprecated `files.upload` method)
