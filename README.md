@@ -1236,7 +1236,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **file** | optional | Vault ID of file to upload | string | `vault id` `sha1` |
 **content** | optional | Contents of the file | string | |
 **caption** | optional | Caption to add to the file | string | |
-**filetype** | optional | A file type identifier (https://api.slack.com/types/file#file_types) | string | |
+**filetype** | optional | A file type identifier (https://docs.slack.dev/reference/objects/file-object/#types) | string | |
 **filename** | optional | Name of the file | string | `file name` |
 
 #### Action Output
