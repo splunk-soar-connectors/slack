@@ -515,7 +515,7 @@ class SlackConnector(phantom.BaseConnector):
 
         return self._process_response(response, action_result)
 
-    def _upload_to_external_url(self, action_result, upload_url, file_path=None, file_content=None):
+    def _upload_to_external_url(self, action_result, upload_url, file_path=None, file_content=None, content_length=None):
         """Upload file to Slack's presigned URL using httpx."""
 
         def _chunk_file(file_handle, chunk_size=65536):
@@ -526,17 +526,12 @@ class SlackConnector(phantom.BaseConnector):
                     break
                 yield chunk
 
-        content_length = None
-        headers = {"Content-Type": "application/octet-stream"}
+        headers = {"Content-Type": "application/octet-stream", "Content-Length": str(content_length)}
         try:
             if file_path:
-                content_length = os.path.getsize(file_path)
-                headers["Content-Length"] = str(content_length)
                 with open(file_path, "rb") as file_handle:
                     response = httpx.post(upload_url, content=_chunk_file(file_handle), headers=headers, timeout=SLACK_DEFAULT_TIMEOUT)
             elif file_content:
-                content_length = len(file_content)
-                headers["Content-Length"] = str(content_length)
                 response = httpx.post(upload_url, content=file_content, headers=headers, timeout=SLACK_DEFAULT_TIMEOUT)
             else:
                 return RetVal(action_result.set_status(phantom.APP_ERROR, "No file path or content provided"), None)
@@ -1066,7 +1061,7 @@ class SlackConnector(phantom.BaseConnector):
 
         file_path = None
         file_bytes = None
-        file_length = None
+        content_length = None
 
         if "file" in param:
             vault_id = param.get("file")
@@ -1095,12 +1090,12 @@ class SlackConnector(phantom.BaseConnector):
 
             if not file_name:
                 file_name = vault_file_name
-            file_length = os.path.getsize(file_path)
+            content_length = os.path.getsize(file_path)
 
         elif "content" in param:
             content = param.get("content", "")
             file_bytes = content.encode("utf-8")
-            file_length = len(file_bytes)
+            content_length = len(file_bytes)
             if not filetype:
                 filetype = "text"
             if not file_name:
@@ -1108,11 +1103,11 @@ class SlackConnector(phantom.BaseConnector):
         else:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_FILE_OR_CONTENT_NOT_PROVIDED)
 
-        if file_length is None or file_length <= 0:
+        if content_length is None or content_length <= 0:
             return action_result.set_status(phantom.APP_ERROR, "File size must be greater than zero")
 
         # request an external upload URL
-        upload_request_body = {"filename": file_name, "length": file_length}
+        upload_request_body = {"filename": file_name, "length": content_length}
         if filetype:
             upload_request_body["snippet_type"] = filetype
 
@@ -1129,7 +1124,9 @@ class SlackConnector(phantom.BaseConnector):
 
         # upload content to the presigned URL
         self.debug_print("Uploading file content to Slack-provided upload URL")
-        ret_val, _ = self._upload_to_external_url(action_result, upload_url, file_path=file_path, file_content=file_bytes)
+        ret_val, _ = self._upload_to_external_url(
+            action_result, upload_url, file_path=file_path, file_content=file_bytes, content_length=content_length
+        )
         if not ret_val:
             return action_result.get_status()
 

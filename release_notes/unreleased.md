@@ -1,2 +1,2 @@
 **Unreleased**
-* Improved upload file reliability by streaming in fixed chunks. 
+* * Improved file upload memory efficiency by streaming data in fixed chunks instead of loading entire file into memory.
