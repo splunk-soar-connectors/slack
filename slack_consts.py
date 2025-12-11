@@ -172,6 +172,7 @@ SLACK_TOTAL_RESP_KEY = "'Total number of responses to keep' configuration"
 SLACK_LIMIT_KEY = "'limit' action"
 
 SLACK_DEFAULT_TIMEOUT = 30
+SLACK_UPLOAD_TIMEOUT = 60
 
 SLACK_STATE_FILE_CORRUPT_ERROR = (
     "Error occurred while loading the state file due to it's unexpected format. Resetting "

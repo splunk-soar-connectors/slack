@@ -518,21 +518,13 @@ class SlackConnector(phantom.BaseConnector):
     def _upload_to_external_url(self, action_result, upload_url, file_path=None, file_content=None, content_length=None):
         """Upload file to Slack's presigned URL using httpx."""
 
-        def _chunk_file(file_handle, chunk_size=65536):
-            """Generator that yields fixed-size chunks from a file."""
-            while True:
-                chunk = file_handle.read(chunk_size)  # Read exactly chunk_size bytes
-                if not chunk:
-                    break
-                yield chunk
-
         headers = {"Content-Type": "application/octet-stream", "Content-Length": str(content_length)}
         try:
             if file_path:
                 with open(file_path, "rb") as file_handle:
-                    response = httpx.post(upload_url, content=_chunk_file(file_handle), headers=headers, timeout=SLACK_DEFAULT_TIMEOUT)
+                    response = httpx.post(upload_url, content=file_handle, headers=headers, timeout=SLACK_UPLOAD_TIMEOUT)
             elif file_content:
-                response = httpx.post(upload_url, content=file_content, headers=headers, timeout=SLACK_DEFAULT_TIMEOUT)
+                response = httpx.post(upload_url, content=file_content, headers=headers, timeout=SLACK_UPLOAD_TIMEOUT)
             else:
                 return RetVal(action_result.set_status(phantom.APP_ERROR, "No file path or content provided"), None)
         except Exception as e:
