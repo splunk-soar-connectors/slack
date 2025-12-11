@@ -5139,12 +5139,36 @@
     "pip39_dependencies": {
         "wheel": [
             {
+                "module": "anyio",
+                "input_file": "wheels/py3/anyio-4.12.0-py3-none-any.whl"
+            },
+            {
+                "module": "exceptiongroup",
+                "input_file": "wheels/py3/exceptiongroup-1.3.1-py3-none-any.whl"
+            },
+            {
+                "module": "h11",
+                "input_file": "wheels/py3/h11-0.16.0-py3-none-any.whl"
+            },
+            {
+                "module": "httpcore",
+                "input_file": "wheels/py3/httpcore-1.0.9-py3-none-any.whl"
+            },
+            {
+                "module": "httpx",
+                "input_file": "wheels/py3/httpx-0.28.1-py3-none-any.whl"
+            },
+            {
                 "module": "slack_bolt",
                 "input_file": "wheels/shared/slack_bolt-1.23.0-py2.py3-none-any.whl"
             },
             {
                 "module": "slack_sdk",
                 "input_file": "wheels/shared/slack_sdk-3.36.0-py2.py3-none-any.whl"
+            },
+            {
+                "module": "typing_extensions",
+                "input_file": "wheels/py3/typing_extensions-4.15.0-py3-none-any.whl"
             },
             {
                 "module": "websocket_client",
@@ -5154,6 +5178,22 @@
     },
     "pip313_dependencies": {
         "wheel": [
+            {
+                "module": "anyio",
+                "input_file": "wheels/py3/anyio-4.12.0-py3-none-any.whl"
+            },
+            {
+                "module": "h11",
+                "input_file": "wheels/py3/h11-0.16.0-py3-none-any.whl"
+            },
+            {
+                "module": "httpcore",
+                "input_file": "wheels/py3/httpcore-1.0.9-py3-none-any.whl"
+            },
+            {
+                "module": "httpx",
+                "input_file": "wheels/py3/httpx-0.28.1-py3-none-any.whl"
+            },
             {
                 "module": "slack_bolt",
                 "input_file": "wheels/shared/slack_bolt-1.23.0-py2.py3-none-any.whl"

@@ -23,6 +23,7 @@ from os.path import exists
 from urllib.parse import unquote
 
 import encryption_helper
+import httpx
 import phantom.app as phantom
 import phantom.rules as ph_rules
 import requests
@@ -514,15 +515,21 @@ class SlackConnector(phantom.BaseConnector):
 
         return self._process_response(response, action_result)
 
-    def _upload_to_external_url(self, action_result, upload_url, file_content):
-        """Upload file bytes to the Slack-provided external upload URL."""
-        headers = {"Content-Type": "application/octet-stream"}
+    def _upload_to_external_url(self, action_result, upload_url, file_path=None, file_content=None, content_length=None):
+        """Upload file to Slack's presigned URL using httpx."""
+
+        headers = {"Content-Type": "application/octet-stream", "Content-Length": str(content_length)}
         try:
-            response = requests.post(upload_url, data=file_content, headers=headers, timeout=SLACK_DEFAULT_TIMEOUT)
+            if file_path:
+                with open(file_path, "rb") as file_handle:
+                    response = httpx.post(upload_url, content=file_handle, headers=headers, timeout=SLACK_UPLOAD_TIMEOUT)
+            elif file_content:
+                response = httpx.post(upload_url, content=file_content, headers=headers, timeout=SLACK_UPLOAD_TIMEOUT)
+            else:
+                return RetVal(action_result.set_status(phantom.APP_ERROR, "No file path or content provided"), None)
         except Exception as e:
             return RetVal(
-                action_result.set_status(phantom.APP_ERROR, f"Failed to upload file: {self._get_error_message_from_exception(e)}"),
-                None,
+                action_result.set_status(phantom.APP_ERROR, f"Failed to upload file: {self._get_error_message_from_exception(e)}"), None
             )
 
         if 200 <= response.status_code < 300:  # only accept 2xx status codes
@@ -1044,8 +1051,9 @@ class SlackConnector(phantom.BaseConnector):
         file_name = param.get("filename")
         parent_ts = param.get("parent_message_ts")
 
+        file_path = None
         file_bytes = None
-        file_length = None
+        content_length = None
 
         if "file" in param:
             vault_id = param.get("file")
@@ -1074,18 +1082,12 @@ class SlackConnector(phantom.BaseConnector):
 
             if not file_name:
                 file_name = vault_file_name
-            try:
-                with open(file_path, "rb") as file_handle:
-                    file_bytes = file_handle.read()
-            except Exception as e:
-                err = self._get_error_message_from_exception(e)
-                return action_result.set_status(phantom.APP_ERROR, f"Unable to read vault file: {err}")
-            file_length = len(file_bytes)
+            content_length = os.path.getsize(file_path)
 
         elif "content" in param:
             content = param.get("content", "")
             file_bytes = content.encode("utf-8")
-            file_length = len(file_bytes)
+            content_length = len(file_bytes)
             if not filetype:
                 filetype = "text"
             if not file_name:
@@ -1093,11 +1095,11 @@ class SlackConnector(phantom.BaseConnector):
         else:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_FILE_OR_CONTENT_NOT_PROVIDED)
 
-        if file_length is None or file_length <= 0:
+        if content_length is None or content_length <= 0:
             return action_result.set_status(phantom.APP_ERROR, "File size must be greater than zero")
 
         # request an external upload URL
-        upload_request_body = {"filename": file_name, "length": file_length}
+        upload_request_body = {"filename": file_name, "length": content_length}
         if filetype:
             upload_request_body["snippet_type"] = filetype
 
@@ -1114,7 +1116,9 @@ class SlackConnector(phantom.BaseConnector):
 
         # upload content to the presigned URL
         self.debug_print("Uploading file content to Slack-provided upload URL")
-        ret_val, _ = self._upload_to_external_url(action_result, upload_url, file_bytes)
+        ret_val, _ = self._upload_to_external_url(
+            action_result, upload_url, file_path=file_path, file_content=file_bytes, content_length=content_length
+        )
         if not ret_val:
             return action_result.get_status()
 
