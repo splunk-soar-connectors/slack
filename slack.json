@@ -13,7 +13,7 @@
     ],
     "package_name": "phantom_slack",
     "type": "information",
-    "license": "Copyright (c) 2016-2025 Splunk Inc.",
+    "license": "Copyright (c) 2016-2026 Splunk Inc.",
     "main_module": "slack_connector.py",
     "app_version": "2.10.0",
     "utctime_updated": "2025-12-10T10:07:47.036106Z",

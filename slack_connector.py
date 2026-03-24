@@ -1,6 +1,6 @@
 # File: slack_connector.py
 #
-# Copyright (c) 2016-2025 Splunk Inc.
+# Copyright (c) 2016-2026 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 import json
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 import time
@@ -1299,9 +1300,29 @@ class SlackConnector(phantom.BaseConnector):
             return action_result.set_status(phantom.APP_ERROR, SLACK_SOCKET_TOKEN_ERROR)
 
         self.save_progress("Starting SlackBot")
-        proc = subprocess.Popen(["phenv", "python3", slack_bot_filename, asset_id, app_version, app_id])
-        self._state["pid"] = proc.pid
-        self.save_progress(f"Started SlackBot with pid: {proc.pid}")
+
+        phenv_path = shutil.which("phenv")
+
+        if phenv_path:
+            cmd = [phenv_path, "python3", slack_bot_filename, asset_id, app_version, app_id]
+            self.save_progress("Using phenv wrapper")
+        else:
+            # Isolated automation broker: use direct Python path from environment variable
+            python313_location = os.environ.get("PYTHON313_LOCATION", "/opt/phantom/usr/python313")
+            py3 = os.path.join(python313_location, "bin", "python3")
+
+            if not os.path.isfile(py3):
+                return action_result.set_status(phantom.APP_ERROR, f"Python executable not found at: {py3}")
+
+            cmd = [py3, slack_bot_filename, asset_id, app_version, app_id]
+            self.save_progress(f"phenv not available, using direct Python path: {py3}")
+
+        try:
+            proc = subprocess.Popen(cmd)
+            self._state["pid"] = proc.pid
+            self.save_progress(f"Started SlackBot with pid: {proc.pid}")
+        except Exception as e:
+            return action_result.set_status(phantom.APP_ERROR, f"Failed to start SlackBot: {self._get_error_message_from_exception(e)}")
 
         return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_SLACKBOT_STARTED)
 
