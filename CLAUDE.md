@@ -88,3 +88,13 @@ Dependencies are vendored in `wheels/` for SOAR deployment. When adding or upgra
 
 ## Release and CI
 Merging to `main` automatically triggers the GitHub Actions workflow (`.github/workflows/call-publish.yml`) which publishes to SplunkBase. Release notes for each version must exist in `release_notes/` (validated by pre-commit) before merging.
+
+## Contributing via Pull Request
+
+See [`SPLUNK_SOAR_CONTRIBUTING.md`](./SPLUNK_SOAR_CONTRIBUTING.md) for the full process. Key points specific to this repo:
+
+- Always branch off `upstream/main` (`git remote add upstream https://github.com/splunk-soar-connectors/slack.git`), not your fork's main
+- Check `"app_version"` in `slack.json` on upstream to determine the correct next version before starting
+- `pre-commit run --all-files` must pass before opening the PR — this validates linting, release notes, Python 3.13 compat, and more
+- The PR must check **"Allow edits and access to secrets by maintainers"** — Splunk requires this explicitly
+- One issue per PR; do not bundle unrelated fixes
