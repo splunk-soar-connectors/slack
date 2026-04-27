@@ -228,8 +228,6 @@ def handle_request(request, path):
 
 # Define the App Class
 class SlackConnector(phantom.BaseConnector):
-    debug_logging = False
-
     def __init__(self):
         # Call the BaseConnectors init first
         super().__init__()
@@ -246,26 +244,6 @@ class SlackConnector(phantom.BaseConnector):
         self._permit_container = None
         self._permit_list = None
         self._permitted_users = None
-
-    def _debug_log(self, message, force=False):
-        """Custom logging method that respects debug_logging configuration.
-
-        :param message: Message to log
-        :param force: If True, always log regardless of debug_logging setting
-        """
-        try:
-            message_str = str(message)
-        except:
-            message_str = "Failed to cast message to string"
-
-        if self.debug_logging:
-            # When debug_logging is True: ALWAYS print to debug log AND save progress
-            self.debug_print("Slack", message_str)
-            self.save_progress(message_str)
-        elif force:
-            # When forced: print to debug log AND save progress
-            self.debug_print("Slack", message_str)
-            self.save_progress(message_str)
 
     def encrypt_state(self, encrypt_var, token_name):
         """Handle encryption of token.
@@ -334,11 +312,6 @@ class SlackConnector(phantom.BaseConnector):
             except Exception as e:
                 self.debug_print(f"{SLACK_DECRYPTION_ERROR}: {self._get_error_message_from_exception(e)}")
                 return self.set_status(phantom.APP_ERROR, SLACK_DECRYPTION_ERROR)
-
-        try:
-            self.debug_logging = config.get("debug_logging", False)
-        except:
-            pass
 
         return phantom.APP_SUCCESS
 

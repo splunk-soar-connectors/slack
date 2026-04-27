@@ -3,7 +3,6 @@
 CLAUDE.md
 SPLUNK_SOAR_CONTRIBUTING.md
 
-# Local audit tooling — not part of the connector
-slack_app_audit.py
 slack_tokens.txt
 slack_app_audit.csv
+slack_app_html/

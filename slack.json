@@ -94,11 +94,6 @@
             "description": "Users permitted to use Bot Actions. Comma seperated list of Member IDs. Leave blank to allow all users (Default Setting)",
             "data_type": "string",
             "order": 11
-        },
-        "debug_logging": {
-            "description": "Toggle verbose logging in debug log and spawn log",
-            "data_type": "boolean",
-            "order": 12
         }
     },
     "actions": [
