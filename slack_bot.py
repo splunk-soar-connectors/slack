@@ -665,12 +665,12 @@ class SlackBot:
             pipe_index = string.find("|")
 
             if pipe_index > left_index and pipe_index < right_index:
-                url = string[pipe_index + 1 : right_index]
+                url = string[pipe_index + 1:right_index]  # fmt: skip
 
             else:
-                url = string[left_index + 1 : right_index]
+                url = string[left_index + 1:right_index]  # fmt: skip
 
-            string = string.replace(string[left_index : right_index + 1], url, 1)
+            string = string.replace(string[left_index:right_index + 1], url, 1)  # fmt: skip
 
         return string
 
@@ -698,7 +698,7 @@ class SlackBot:
 
             requests.post(url, data=body, timeout=SLACK_DEFAULT_TIMEOUT)
 
-            self._post_message(msg[last_newline + 1 :], channel, code_block=code_block)
+            self._post_message(msg[last_newline + 1:], channel, code_block=code_block)  # fmt: skip
 
     def _parse_action(self, command):
         try:
@@ -1143,7 +1143,7 @@ class SlackBot:
                         )
 
                     channel = body.get("event", {}).get("channel", "#general")
-                    command = out_text[len(self.cmd_start) :].strip()
+                    command = out_text[len(self.cmd_start):].strip()  # fmt: skip
 
                     if command and channel:
                         command = self._sanitize(command)
@@ -1277,7 +1277,7 @@ def set_up_logging():
     return logger
 
 
-def main():
+def main():  # noqa: C901
     """Entry point for running the Slack bot as a script without mutating module globals."""
     set_up_logging()
     logging.info("**Spawning slack_bot.py...")

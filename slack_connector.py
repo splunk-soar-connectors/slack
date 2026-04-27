@@ -228,6 +228,8 @@ def handle_request(request, path):
 
 # Define the App Class
 class SlackConnector(phantom.BaseConnector):
+    debug_logging = False
+
     def __init__(self):
         # Call the BaseConnectors init first
         super().__init__()
@@ -244,6 +246,26 @@ class SlackConnector(phantom.BaseConnector):
         self._permit_container = None
         self._permit_list = None
         self._permitted_users = None
+
+    def _debug_log(self, message, force=False):
+        """Custom logging method that respects debug_logging configuration.
+
+        :param message: Message to log
+        :param force: If True, always log regardless of debug_logging setting
+        """
+        try:
+            message_str = str(message)
+        except:
+            message_str = "Failed to cast message to string"
+
+        if self.debug_logging:
+            # When debug_logging is True: ALWAYS print to debug log AND save progress
+            self.debug_print("Slack", message_str)
+            self.save_progress(message_str)
+        elif force:
+            # When forced: print to debug log AND save progress
+            self.debug_print("Slack", message_str)
+            self.save_progress(message_str)
 
     def encrypt_state(self, encrypt_var, token_name):
         """Handle encryption of token.
@@ -312,6 +334,11 @@ class SlackConnector(phantom.BaseConnector):
             except Exception as e:
                 self.debug_print(f"{SLACK_DECRYPTION_ERROR}: {self._get_error_message_from_exception(e)}")
                 return self.set_status(phantom.APP_ERROR, SLACK_DECRYPTION_ERROR)
+
+        try:
+            self.debug_logging = config.get("debug_logging", False)
+        except:
+            pass
 
         return phantom.APP_SUCCESS
 
@@ -1399,6 +1426,10 @@ class SlackConnector(phantom.BaseConnector):
         ]
         params = {"channel": user, "attachments": json.dumps(answer_json), "as_user": True}
 
+        # Support for replying in thread (similar to send_message)
+        if "parent_message_ts" in param:
+            params["thread_ts"] = param.get("parent_message_ts")
+
         ret_val, _resp_json = self._make_slack_rest_call(action_result, SLACK_SEND_MESSAGE, params)
         if not ret_val:
             message = action_result.get_message()
@@ -1411,37 +1442,19 @@ class SlackConnector(phantom.BaseConnector):
         data = {"qid": qid, "answer_path": answer_path}
         return action_result.set_status(phantom.APP_SUCCESS), data
 
-    def _ask_question_channel(self, param):
-        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
-        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
+    def _poll_for_question_response(self, action_result, resp_json):
+        """Helper method to poll for and process question responses.
 
-        user = param["destination"]
-        if user.startswith("@") or user.startswith("U"):
-            # Don't want to send question to channels because then we would not know who was answering
-            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_USER)
+        Handles the common polling logic for both _ask_question and _ask_question_channel.
+        Waits for a response file to appear, reads it, parses it, and cleans up the file.
 
-        ret_val, resp_json = self._handle_ask_question(action_result, param, user)
+        Args:
+            action_result: The ActionResult object to populate
+            resp_json: Response from _handle_ask_question containing answer_path and qid
 
-        if phantom.is_fail(ret_val):
-            return action_result.get_status()
-
-        action_result.add_data(resp_json)
-        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_ASKED_QUESTION)
-
-    def _ask_question(self, param):
-        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
-        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
-
-        user = param["destination"]
-        if user.startswith("#") or user.startswith("C"):
-            # Don't want to send question to channels because then we would not know who was answering
-            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_CHANNEL)
-
-        ret_val, resp_json = self._handle_ask_question(action_result, param, user)
-
-        if phantom.is_fail(ret_val):
-            return action_result.get_status()
-
+        Returns:
+            Result of action_result.set_status() (SUCCESS or ERROR)
+        """
         self.debug_print(f"resp json : {resp_json}")
         answer_path = resp_json.get("answer_path")
         qid = resp_json.get("qid")
@@ -1449,7 +1462,7 @@ class SlackConnector(phantom.BaseConnector):
         timeout_in_seconds = self._timeout * 60
 
         if self._interval > timeout_in_seconds:
-            self.debug_print("uestion timeout is greater than the polling interval")
+            self.debug_print("Question timeout is greater than the polling interval")
             self._interval = timeout_in_seconds
             loop_count = 1
         else:
@@ -1484,6 +1497,38 @@ class SlackConnector(phantom.BaseConnector):
         os.remove(answer_path)
 
         return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _ask_question_channel(self, param):
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
+        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
+
+        user = param["destination"]
+        if user.startswith("@") or user.startswith("U"):
+            # Don't want to send question to channels because then we would not know who was answering
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_USER)
+
+        ret_val, resp_json = self._handle_ask_question(action_result, param, user)
+
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+
+        return self._poll_for_question_response(action_result, resp_json)
+
+    def _ask_question(self, param):
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
+        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
+
+        user = param["destination"]
+        if user.startswith("#") or user.startswith("C"):
+            # Don't want to send question to channels because then we would not know who was answering
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_CHANNEL)
+
+        ret_val, resp_json = self._handle_ask_question(action_result, param, user)
+
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+
+        return self._poll_for_question_response(action_result, resp_json)
 
     def _get_response(self, param):
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
