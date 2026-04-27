@@ -13,8 +13,12 @@ select = [ # Auto-fixable rules only
 
 ignore = [
     "RUF012", # Not auto-fixable (remove eventually)
-    "RUF001" # Not auto-fixable (remove eventually)
+    "RUF001", # Not auto-fixable (remove eventually)
+    "C901"    # Complexity - we use flake8 for this during compilation
 ]
+
+# Keep noqa comments for external linters (like flake8 during compilation)
+external = ["C901"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "UP035"]  # __init__.py file exceptions
