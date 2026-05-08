@@ -15,7 +15,7 @@
     "type": "information",
     "license": "Copyright (c) 2016-2026 Splunk Inc.",
     "main_module": "slack_connector.py",
-    "app_version": "2.10.1",
+    "app_version": "2.10.2",
     "utctime_updated": "2026-03-24T11:57:47.590886Z",
     "product_vendor": "Slack Technologies",
     "product_name": "Slack",
@@ -3812,6 +3812,14 @@
                     "description": "Message to user after response",
                     "data_type": "string",
                     "order": 3
+                },
+                "parent_message_ts": {
+                    "description": "Parent message timestamp to reply in thread",
+                    "data_type": "string",
+                    "order": 4,
+                    "contains": [
+                        "slack message ts"
+                    ]
                 }
             },
             "output": [
@@ -3844,6 +3852,13 @@
                 {
                     "data_path": "action_result.parameter.responses",
                     "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.parent_message_ts",
+                    "data_type": "string",
+                    "contains": [
+                        "slack message ts"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.action_ts",
@@ -4289,6 +4304,19 @@
                     "description": "Comma separated string values for responses. (Maximum responses allowed are 5)",
                     "data_type": "string",
                     "order": 2
+                },
+                "confirmation": {
+                    "description": "Message to user after response",
+                    "data_type": "string",
+                    "order": 3
+                },
+                "parent_message_ts": {
+                    "description": "Parent message timestamp to reply in thread",
+                    "data_type": "string",
+                    "order": 4,
+                    "contains": [
+                        "slack message ts"
+                    ]
                 }
             },
             "output": [
@@ -4299,6 +4327,10 @@
                         "success",
                         "failed"
                     ]
+                },
+                {
+                    "data_path": "action_result.parameter.confirmation",
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.parameter.destination",
@@ -4317,6 +4349,13 @@
                 {
                     "data_path": "action_result.parameter.responses",
                     "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.parent_message_ts",
+                    "data_type": "string",
+                    "contains": [
+                        "slack message ts"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.action_ts",
@@ -5144,7 +5183,7 @@
             },
             {
                 "module": "slack_sdk",
-                "input_file": "wheels/shared/slack_sdk-3.36.0-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/slack_sdk-3.39.0-py2.py3-none-any.whl"
             },
             {
                 "module": "websocket_client",
@@ -5160,7 +5199,7 @@
             },
             {
                 "module": "slack_sdk",
-                "input_file": "wheels/shared/slack_sdk-3.36.0-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/slack_sdk-3.39.0-py2.py3-none-any.whl"
             },
             {
                 "module": "websocket_client",
