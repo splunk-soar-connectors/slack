@@ -1,3 +1,3 @@
 **Unreleased**
 
-* - Temporarily record the pre-commit baseline update.
+* Reject get response question IDs that resolve outside the Slack app state directory.

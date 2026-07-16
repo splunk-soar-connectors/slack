@@ -1492,6 +1492,8 @@ class SlackConnector(phantom.BaseConnector):
         state_dir = self.get_state_dir()
         answer_path = f"{state_dir}/{qid}.json"
         self.debug_print(f"answer path : {answer_path}")
+        if not _is_safe_path(state_dir, answer_path):
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_INVALID_FILE_PATH)
         self.save_progress(f"Checking for response to question with ID: {qid}")
 
         try:
