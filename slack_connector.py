@@ -295,9 +295,14 @@ class SlackConnector(phantom.BaseConnector):
 
         # Storing Bot file required data in state file
         self._state["ph_base_url"] = ph_base_url
-        self._state[SLACK_JSON_PH_AUTH_TOKEN] = self._ph_auth_token
-        self._state[SLACK_JSON_BOT_TOKEN] = self._bot_token
-        self._state[SLACK_JSON_SOCKET_TOKEN] = self._socket_token
+        try:
+            self._state[SLACK_JSON_PH_AUTH_TOKEN] = self.encrypt_state(self._ph_auth_token, "ph_auth") if self._ph_auth_token else None
+            self._state[SLACK_JSON_BOT_TOKEN] = self.encrypt_state(self._bot_token, "bot") if self._bot_token else None
+            self._state[SLACK_JSON_SOCKET_TOKEN] = self.encrypt_state(self._socket_token, "socket") if self._socket_token else None
+        except Exception as e:
+            self.debug_print(f"{SLACK_ENCRYPTION_ERROR}: {self._get_error_message_from_exception(e)}")
+            return self.set_status(phantom.APP_ERROR, SLACK_ENCRYPTION_ERROR)
+        self._state[SLACK_STATE_IS_ENCRYPTED] = True
         self._state[SLACK_JSON_PERMIT_BOT_ACT] = self._permit_act
         self._state[SLACK_JSON_PERMIT_BOT_PLAYBOOK] = self._permit_playbook
         self._state[SLACK_JSON_PERMIT_BOT_CONTAINER] = self._permit_container
@@ -613,7 +618,7 @@ class SlackConnector(phantom.BaseConnector):
             params.update({"is_private": True})
 
         self.debug_print("Making rest call to create channel")
-        ret_val, resp_json = self._make_rest_call(action_result, endpoint, False, method=requests.post, headers=headers, body=params)
+        ret_val, resp_json = self._make_rest_call(action_result, endpoint, True, method=requests.post, headers=headers, body=params)
 
         if not ret_val:
             return ret_val
@@ -739,7 +744,8 @@ class SlackConnector(phantom.BaseConnector):
         name_to_find = channel_name.lstrip("#").lower()
         request_body = {"limit": 200, "types": "public_channel,private_channel"}
 
-        while True:
+        seen_cursors = set()
+        for _ in range(SLACK_MAX_PAGINATION_PAGES):
             ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_LIST_CHANNEL, request_body)
 
             if not ret_val:
@@ -756,7 +762,14 @@ class SlackConnector(phantom.BaseConnector):
             if not next_cursor:
                 break
 
+            if next_cursor in seen_cursors:
+                action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_PAGINATION_LIMIT.format(endpoint=SLACK_LIST_CHANNEL))
+                return None
+            seen_cursors.add(next_cursor)
             request_body["cursor"] = next_cursor
+        else:
+            action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_PAGINATION_LIMIT.format(endpoint=SLACK_LIST_CHANNEL))
+            return None
 
         action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_CHANNEL_NOT_FOUND.format(name=channel_name))
         return None
@@ -769,7 +782,8 @@ class SlackConnector(phantom.BaseConnector):
         name_to_find = user_name.lstrip("@").lower()
         request_body = {"limit": 200}
 
-        while True:
+        seen_cursors = set()
+        for _ in range(SLACK_MAX_PAGINATION_PAGES):
             ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_USER_LIST, request_body)
 
             if not ret_val:
@@ -786,7 +800,14 @@ class SlackConnector(phantom.BaseConnector):
             if not next_cursor:
                 break
 
+            if next_cursor in seen_cursors:
+                action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_PAGINATION_LIMIT.format(endpoint=SLACK_USER_LIST))
+                return None
+            seen_cursors.add(next_cursor)
             request_body["cursor"] = next_cursor
+        else:
+            action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_PAGINATION_LIMIT.format(endpoint=SLACK_USER_LIST))
+            return None
 
         action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_USER_NOT_FOUND.format(name=user_name))
         return None
@@ -868,7 +889,7 @@ class SlackConnector(phantom.BaseConnector):
 
             self.debug_print("Making rest call to lookup user")
 
-            ret_val, resp_json = self._make_rest_call(action_result, endpoint, False, method=requests.get, headers=headers)
+            ret_val, resp_json = self._make_rest_call(action_result, endpoint, True, method=requests.get, headers=headers)
 
         if not ret_val:
             message = action_result.get_message()
@@ -910,7 +931,7 @@ class SlackConnector(phantom.BaseConnector):
 
         endpoint = f"{SLACK_BASE_URL}{SLACK_INVITE_TO_CHANNEL}"
         self.debug_print("Making rest call to invite user")
-        ret_val, resp_json = self._make_rest_call(action_result, endpoint, False, method=requests.post, headers=headers, body=params)
+        ret_val, resp_json = self._make_rest_call(action_result, endpoint, True, method=requests.post, headers=headers, body=params)
 
         if not ret_val:
             return ret_val
@@ -1492,6 +1513,8 @@ class SlackConnector(phantom.BaseConnector):
         state_dir = self.get_state_dir()
         answer_path = f"{state_dir}/{qid}.json"
         self.debug_print(f"answer path : {answer_path}")
+        if not _is_safe_path(state_dir, answer_path):
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_INVALID_FILE_PATH)
         self.save_progress(f"Checking for response to question with ID: {qid}")
 
         try:
