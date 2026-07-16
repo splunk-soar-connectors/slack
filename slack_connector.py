@@ -613,7 +613,7 @@ class SlackConnector(phantom.BaseConnector):
             params.update({"is_private": True})
 
         self.debug_print("Making rest call to create channel")
-        ret_val, resp_json = self._make_rest_call(action_result, endpoint, False, method=requests.post, headers=headers, body=params)
+        ret_val, resp_json = self._make_rest_call(action_result, endpoint, True, method=requests.post, headers=headers, body=params)
 
         if not ret_val:
             return ret_val
@@ -868,7 +868,7 @@ class SlackConnector(phantom.BaseConnector):
 
             self.debug_print("Making rest call to lookup user")
 
-            ret_val, resp_json = self._make_rest_call(action_result, endpoint, False, method=requests.get, headers=headers)
+            ret_val, resp_json = self._make_rest_call(action_result, endpoint, True, method=requests.get, headers=headers)
 
         if not ret_val:
             message = action_result.get_message()
@@ -910,7 +910,7 @@ class SlackConnector(phantom.BaseConnector):
 
         endpoint = f"{SLACK_BASE_URL}{SLACK_INVITE_TO_CHANNEL}"
         self.debug_print("Making rest call to invite user")
-        ret_val, resp_json = self._make_rest_call(action_result, endpoint, False, method=requests.post, headers=headers, body=params)
+        ret_val, resp_json = self._make_rest_call(action_result, endpoint, True, method=requests.post, headers=headers, body=params)
 
         if not ret_val:
             return ret_val
