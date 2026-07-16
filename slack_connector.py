@@ -744,7 +744,8 @@ class SlackConnector(phantom.BaseConnector):
         name_to_find = channel_name.lstrip("#").lower()
         request_body = {"limit": 200, "types": "public_channel,private_channel"}
 
-        while True:
+        seen_cursors = set()
+        for _ in range(SLACK_MAX_PAGINATION_PAGES):
             ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_LIST_CHANNEL, request_body)
 
             if not ret_val:
@@ -761,7 +762,14 @@ class SlackConnector(phantom.BaseConnector):
             if not next_cursor:
                 break
 
+            if next_cursor in seen_cursors:
+                action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_PAGINATION_LIMIT.format(endpoint=SLACK_LIST_CHANNEL))
+                return None
+            seen_cursors.add(next_cursor)
             request_body["cursor"] = next_cursor
+        else:
+            action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_PAGINATION_LIMIT.format(endpoint=SLACK_LIST_CHANNEL))
+            return None
 
         action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_CHANNEL_NOT_FOUND.format(name=channel_name))
         return None
@@ -774,7 +782,8 @@ class SlackConnector(phantom.BaseConnector):
         name_to_find = user_name.lstrip("@").lower()
         request_body = {"limit": 200}
 
-        while True:
+        seen_cursors = set()
+        for _ in range(SLACK_MAX_PAGINATION_PAGES):
             ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_USER_LIST, request_body)
 
             if not ret_val:
@@ -791,7 +800,14 @@ class SlackConnector(phantom.BaseConnector):
             if not next_cursor:
                 break
 
+            if next_cursor in seen_cursors:
+                action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_PAGINATION_LIMIT.format(endpoint=SLACK_USER_LIST))
+                return None
+            seen_cursors.add(next_cursor)
             request_body["cursor"] = next_cursor
+        else:
+            action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_PAGINATION_LIMIT.format(endpoint=SLACK_USER_LIST))
+            return None
 
         action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_USER_NOT_FOUND.format(name=user_name))
         return None
