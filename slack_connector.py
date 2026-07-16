@@ -295,9 +295,14 @@ class SlackConnector(phantom.BaseConnector):
 
         # Storing Bot file required data in state file
         self._state["ph_base_url"] = ph_base_url
-        self._state[SLACK_JSON_PH_AUTH_TOKEN] = self._ph_auth_token
-        self._state[SLACK_JSON_BOT_TOKEN] = self._bot_token
-        self._state[SLACK_JSON_SOCKET_TOKEN] = self._socket_token
+        try:
+            self._state[SLACK_JSON_PH_AUTH_TOKEN] = self.encrypt_state(self._ph_auth_token, "ph_auth") if self._ph_auth_token else None
+            self._state[SLACK_JSON_BOT_TOKEN] = self.encrypt_state(self._bot_token, "bot") if self._bot_token else None
+            self._state[SLACK_JSON_SOCKET_TOKEN] = self.encrypt_state(self._socket_token, "socket") if self._socket_token else None
+        except Exception as e:
+            self.debug_print(f"{SLACK_ENCRYPTION_ERROR}: {self._get_error_message_from_exception(e)}")
+            return self.set_status(phantom.APP_ERROR, SLACK_ENCRYPTION_ERROR)
+        self._state[SLACK_STATE_IS_ENCRYPTED] = True
         self._state[SLACK_JSON_PERMIT_BOT_ACT] = self._permit_act
         self._state[SLACK_JSON_PERMIT_BOT_PLAYBOOK] = self._permit_playbook
         self._state[SLACK_JSON_PERMIT_BOT_CONTAINER] = self._permit_container
