@@ -1481,7 +1481,7 @@ class SlackConnector(phantom.BaseConnector):
         while True:
             if count >= loop_count:
                 action_result.set_summary({"response_received": False, "question_id": qid})
-                return action_result.set_status(phantom.APP_SUCCESS)
+                return action_result.set_status(phantom.APP_ERROR, "Question timed out with no response")
 
             try:
                 answer_file = open(answer_path)
