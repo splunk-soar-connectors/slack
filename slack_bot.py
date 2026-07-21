@@ -35,6 +35,7 @@ from slack_bolt.adapter.socket_mode import SocketModeHandler
 from slack_connector import process_payload
 from slack_consts import *
 from slack_consts import SLACK_DEFAULT_TIMEOUT
+from slack_security import sanitize_slack_markup
 
 
 urllib3.disable_warnings()
@@ -659,20 +660,7 @@ class SlackBot:
             .replace("\xe2\x80\x99", "'")
         )
 
-        while string.find("<") > -1 and string.find(">") > -1:
-            left_index = string.find("<")
-            right_index = string.find(">")
-            pipe_index = string.find("|")
-
-            if pipe_index > left_index and pipe_index < right_index:
-                url = string[pipe_index + 1 : right_index]
-
-            else:
-                url = string[left_index + 1 : right_index]
-
-            string = string.replace(string[left_index : right_index + 1], url, 1)
-
-        return string
+        return sanitize_slack_markup(string)
 
     def _post_message(self, msg, channel, code_block=True):
         url = SLACK_JSON_API_URL + "chat.postMessage"
