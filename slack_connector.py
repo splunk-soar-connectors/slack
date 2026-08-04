@@ -403,6 +403,9 @@ class SlackConnector(phantom.BaseConnector):
                 None,
             )
 
+        if not isinstance(resp_json, dict):
+            return RetVal(action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_DECODE_JSON_RESPONSE), None)
+
         # The 'ok' parameter in a response from slack says if the call passed or failed
         if resp_json.get("ok", "") is not False:
             return RetVal(phantom.APP_SUCCESS, resp_json)
@@ -487,6 +490,9 @@ class SlackConnector(phantom.BaseConnector):
         try:
             resp_json = r.json()
         except Exception:
+            return RetVal(action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_DECODE_JSON_RESPONSE), None)
+
+        if not isinstance(resp_json, dict):
             return RetVal(action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_DECODE_JSON_RESPONSE), None)
 
         if "failed" in resp_json:
