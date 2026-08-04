@@ -961,9 +961,6 @@ class SlackConnector(phantom.BaseConnector):
         if "message" in param:
             message = param["message"]
 
-            if "\\" in message:
-                message = bytes(message, "utf-8").decode("unicode_escape")
-
             if len(message) > SLACK_MESSAGE_LIMIT:
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_MESSAGE_TOO_LONG.format(limit=SLACK_MESSAGE_LIMIT))
 
