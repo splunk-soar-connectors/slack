@@ -8,3 +8,4 @@
 * Retrieve all cursor-paginated channel and thread messages in get history.
 * Return clean action errors when ask-question callback metadata exceeds Slack's limit.
 * Stop and restart only the Slack bot process belonging to the current asset.
+* Contain Socket Mode answer files within the Slack app-state directory.
