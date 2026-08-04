@@ -126,6 +126,28 @@ def _is_safe_path(basedir, path, follow_symlinks=True):
     return basedir == os.path.commonpath((basedir, matchpath))
 
 
+def _find_slack_bot_process(ps_output, asset_id, expected_pid=None):
+    """Return the PID and command line for this asset's Slack bot process."""
+    asset_id = str(asset_id)
+    expected_pid = str(expected_pid) if expected_pid is not None else None
+    for line in str(ps_output).splitlines():
+        try:
+            tokens = shlex.split(line)
+        except ValueError:
+            continue
+        if len(tokens) < 2 or asset_id not in tokens:
+            continue
+        if not any(os.path.basename(token) == "slack_bot.py" for token in tokens):
+            continue
+        if expected_pid is not None:
+            if expected_pid not in tokens[:2]:
+                continue
+            return expected_pid, line
+        if tokens[1].isdigit():
+            return tokens[1], line
+    return None, None
+
+
 def process_payload(payload, answer_path):
     if not exists(answer_path):
         final_payload = {"payloads": [payload], "replies_from": [payload.get("user").get("id")]}
@@ -1240,7 +1262,9 @@ class SlackConnector(phantom.BaseConnector):
         if pid:
             self._state.pop("pid")
             try:
-                if "slack_bot.py" in sh.ps("ww", pid):  # pylint: disable=E1101  # type: ignore[attr-defined]
+                ps_out = sh.ps("ww", pid)  # pylint: disable=E1101  # type: ignore[attr-defined]
+                matched_pid, _ = _find_slack_bot_process(ps_out, self.get_asset_id(), pid)
+                if matched_pid:
                     try:
                         sh.kill(pid)  # pylint: disable=E1101
                         return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_SLACKBOT_STOPPED)
@@ -1251,7 +1275,9 @@ class SlackConnector(phantom.BaseConnector):
         else:
             try:
                 ps_out = sh.grep(sh.ps("ww", "aux"), "slack_bot.py")  # pylint: disable=E1101  # type: ignore[attr-defined]
-                pid = shlex.split(str(ps_out))[1]
+                pid, _ = _find_slack_bot_process(ps_out, self.get_asset_id())
+                if not pid:
+                    return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_SLACKBOT_NOT_RUNNING)
                 try:
                     sh.kill(pid)  # pylint: disable=E1101
                     return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_SLACKBOT_STOPPED)
@@ -1281,9 +1307,14 @@ class SlackConnector(phantom.BaseConnector):
         # we are using container count to decide if we will restart the bot or not
         container_count = int(param.get("container_count"))
 
+        asset_id = self.get_asset_id()
         pid = self._state.get("pid")
         if pid:
             try:
+                ps_out = sh.ps("ww", pid)  # pylint: disable=E1101  # type: ignore[attr-defined]
+                matched_pid, _ = _find_slack_bot_process(ps_out, asset_id, pid)
+                if not matched_pid:
+                    raise RuntimeError("Recorded SlackBot PID does not belong to this asset")
                 # use manual on poll action to 'reload' state file into slack_bot.py
                 if self.is_poll_now():
                     self.save_progress(f"Container Count: {container_count}")
@@ -1297,23 +1328,21 @@ class SlackConnector(phantom.BaseConnector):
                     else:
                         self.save_progress("HINT: Set Maximum Containers to 1234 to restart slackbot, or set to PID to stop slackbot")
 
-                if "slack_bot.py" in sh.ps("ww", pid):  # pylint: disable=E1101  # type: ignore[attr-defined]
-                    self.save_progress(f"Detected SlackBot running with pid {pid}")
-                    return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_SLACKBOT_RUNNING)
+                self.save_progress(f"Detected SlackBot running with pid {pid}")
+                return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_SLACKBOT_RUNNING)
             except Exception:
                 pass
 
-        asset_id = self.get_asset_id()
         app_version = self.get_app_json().get("app_version", "")
         app_id = self.get_app_id()
 
         try:
             ps_out = sh.grep(sh.ps("ww", "aux"), "slack_bot.py")  # pylint: disable=E1101  # type: ignore[attr-defined]
-            old_pid = shlex.split(str(ps_out))[1]
-            if app_version not in ps_out:
+            old_pid, process_line = _find_slack_bot_process(ps_out, asset_id)
+            if old_pid and app_version not in process_line:
                 self.save_progress(f"Found an old version of slackbot running with pid {old_pid}, going to kill it")
                 sh.kill(old_pid)  # pylint: disable=E1101
-            elif asset_id in ps_out:  # pylint: disable=E1101
+            elif old_pid:
                 self._state["pid"] = int(old_pid)
                 return action_result.set_status(phantom.APP_SUCCESS, SLACK_ERROR_SLACKBOT_RUNNING_WITH_SAME_BOT_TOKEN)
         except Exception:
