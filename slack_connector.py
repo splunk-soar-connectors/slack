@@ -1373,7 +1373,7 @@ class SlackConnector(phantom.BaseConnector):
                 self._state["token"] = self.encrypt_state(self._verification_token, "verification")
         except Exception as e:
             self.debug_print(f"{SLACK_ENCRYPTION_ERROR}: {self._get_error_message_from_exception(e)}")
-            return self.set_status(phantom.APP_ERROR, SLACK_ENCRYPTION_ERROR)
+            return RetVal(action_result.set_status(phantom.APP_ERROR, SLACK_ENCRYPTION_ERROR))
 
         self.save_state(self._state)
         # The default permission of state file in Phantom v4.9 is 600. So when from rest handler method (handle_request) reads this state file,
@@ -1398,8 +1398,10 @@ class SlackConnector(phantom.BaseConnector):
         if len(callback_id) > 255:
             path_json["confirmation"] = ""
             valid_length = 255 - len(json.dumps(path_json))
-            return action_result.set_status(
-                phantom.APP_ERROR, SLACK_ERROR_LENGTH_LIMIT_EXCEEDED.format(asset_length=len(self.get_asset_id()), valid_length=valid_length)
+            return RetVal(
+                action_result.set_status(
+                    phantom.APP_ERROR, SLACK_ERROR_LENGTH_LIMIT_EXCEEDED.format(asset_length=len(self.get_asset_id()), valid_length=valid_length)
+                )
             )
 
         self.save_progress(f"Asking question with ID: {qid}")
