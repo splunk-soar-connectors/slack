@@ -670,23 +670,21 @@ class SlackBot:
         body["token"] = self.bot_token
         body["as_user"] = True
 
-        if msg:
+        while msg:
             if len(msg) <= SLACK_JSON_MESSAGE_LIMIT:
-                body["text"] = f"```{msg}```" if code_block else msg
-
-                requests.post(url, data=body, timeout=SLACK_DEFAULT_TIMEOUT)
-
-                return
-
-            last_newline = msg[: SLACK_JSON_MESSAGE_LIMIT - 1].rfind("\n")
-
-            to_send = msg[:last_newline]
+                to_send = msg
+                msg = ""
+            else:
+                split_at = msg[: SLACK_JSON_MESSAGE_LIMIT - 1].rfind("\n")
+                if split_at <= 0:
+                    split_at = SLACK_JSON_MESSAGE_LIMIT - 1
+                to_send = msg[:split_at]
+                msg = msg[split_at:]
+                if msg.startswith("\n"):
+                    msg = msg[1:]
 
             body["text"] = f"```{to_send}```" if code_block else to_send
-
             requests.post(url, data=body, timeout=SLACK_DEFAULT_TIMEOUT)
-
-            self._post_message(msg[last_newline + 1 :], channel, code_block=code_block)
 
     def _parse_action(self, command):
         try:
