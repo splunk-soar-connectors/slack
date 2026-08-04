@@ -406,8 +406,8 @@ class SlackConnector(phantom.BaseConnector):
         if not isinstance(resp_json, dict):
             return RetVal(action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_DECODE_JSON_RESPONSE), None)
 
-        # The 'ok' parameter in a response from slack says if the call passed or failed
-        if resp_json.get("ok", "") is not False:
+        # Slack Web API success requires both a successful HTTP status and ok=true.
+        if 200 <= r.status_code < 300 and resp_json.get("ok") is True:
             return RetVal(phantom.APP_SUCCESS, resp_json)
 
         action_result.add_data(resp_json)
@@ -418,7 +418,7 @@ class SlackConnector(phantom.BaseConnector):
         elif error == "not_in_channel":
             error = SLACK_ERROR_NOT_IN_CHANNEL
         elif not error:
-            error = SLACK_ERROR_FROM_SERVER
+            error = f"{SLACK_ERROR_FROM_SERVER} (HTTP status {r.status_code})"
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, error), None)
 
