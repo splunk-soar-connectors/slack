@@ -10,3 +10,4 @@
 * Stop and restart only the Slack bot process belonging to the current asset.
 * Contain Socket Mode answer files within the Slack app-state directory.
 * Split long Slack bot messages iteratively while guaranteeing forward progress.
+* Validate ask-question responses against the posted choices, conversation, and configured responder allowlist.

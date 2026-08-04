@@ -172,6 +172,47 @@ def process_payload(payload, answer_path):
         return old_payload
 
 
+def _validate_answer_payload(payload, question_path, permitted_users=None):
+    """Validate a Slack interaction against the pending question metadata."""
+    try:
+        with open(question_path) as question_file:  # nosemgrep
+            question = json.loads(question_file.read())
+    except Exception:
+        return False, "No pending question was found for this question ID"
+
+    if not isinstance(payload, dict) or not isinstance(question, dict):
+        return False, "The question response payload is invalid"
+
+    stored_choices = question.get("choices")
+    if not isinstance(stored_choices, list):
+        return False, "The pending question metadata is invalid"
+    choices = {choice for choice in stored_choices if isinstance(choice, str)}
+    actions = payload.get("actions")
+    if not isinstance(actions, list) or not actions:
+        return False, "The question response contains no answer"
+    if any(not isinstance(action, dict) or action.get("value") not in choices for action in actions):
+        return False, "The answer is not one of the offered choices"
+
+    channel = payload.get("channel")
+    channel_id = channel.get("id") if isinstance(channel, dict) else None
+    if question.get("channel") and channel_id != question["channel"]:
+        return False, "The response came from a different Slack conversation"
+
+    user = payload.get("user")
+    user_id = user.get("id") if isinstance(user, dict) else None
+    if not user_id:
+        return False, "The question response does not identify a Slack user"
+    if question.get("user") and user_id != question["user"]:
+        return False, "The response did not come from the intended Slack user"
+
+    if permitted_users:
+        allowed_users = {value.strip() for value in str(permitted_users).split(",") if value.strip()}
+        if user_id not in allowed_users:
+            return False, SLACK_ERROR_RESPONDER_NOT_PERMITTED
+
+    return True, None
+
+
 def handle_request(request, path):
     app_file_name = request.path.split("/")[3]
     app_id = app_file_name.split("_")[-1]
@@ -232,6 +273,14 @@ def handle_request(request, path):
         answer_path = f"{state_dir}/{answer_filename}"
         if not _is_safe_path(state_dir, answer_path):
             return HttpResponse(SLACK_ERROR_INVALID_FILE_PATH, content_type="text/plain", status=400)
+
+        question_path = f"{state_dir}/{qid}_question.json"
+        if not _is_safe_path(state_dir, question_path):
+            return HttpResponse(SLACK_ERROR_INVALID_FILE_PATH, content_type="text/plain", status=400)
+
+        is_valid, validation_error = _validate_answer_payload(payload, question_path, state.get(SLACK_JSON_PERMITTED_USERS))
+        if not is_valid:
+            return HttpResponse(validation_error, content_type="text/plain", status=400)
 
         final_payload = process_payload(payload, answer_path)
 
@@ -1387,7 +1436,19 @@ class SlackConnector(phantom.BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_SLACKBOT_STARTED)
 
-    def _handle_ask_question(self, action_result, param, user):
+    def _remove_question_metadata(self, state_dir, qid):
+        question_path = f"{state_dir}/{qid}_question.json"
+        if not _is_safe_path(state_dir, question_path):
+            self.debug_print(f"Refusing to remove invalid question metadata path: {question_path}")
+            return
+        try:
+            os.remove(question_path)
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            self.debug_print(f"Unable to remove question metadata: {self._get_error_message_from_exception(e)}")
+
+    def _handle_ask_question(self, action_result, param, user, expected_user=None):
         config = self.get_config()
         local_data_state_dir = self.get_state_dir().rstrip("/")
         self._state["local_data_path"] = local_data_state_dir
@@ -1462,7 +1523,7 @@ class SlackConnector(phantom.BaseConnector):
         ]
         params = {"channel": user, "attachments": json.dumps(answer_json), "as_user": True}
 
-        ret_val, _resp_json = self._make_slack_rest_call(action_result, SLACK_SEND_MESSAGE, params)
+        ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_SEND_MESSAGE, params)
         if not ret_val:
             message = action_result.get_message()
             if message:
@@ -1470,6 +1531,26 @@ class SlackConnector(phantom.BaseConnector):
             else:
                 error_message = SLACK_ERROR_ASKING_QUESTION
             return action_result.set_status(phantom.APP_ERROR, error_message), None
+
+        posted_channel = resp_json.get("channel")
+        if not posted_channel:
+            return action_result.set_status(phantom.APP_ERROR, f"{SLACK_ERROR_ASKING_QUESTION}: Slack returned no channel ID"), None
+
+        question_path = f"{local_data_state_dir}/{qid}_question.json"
+        if not _is_safe_path(local_data_state_dir, question_path):
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_INVALID_FILE_PATH), None
+
+        question_data = {
+            "choices": given_answers,
+            "channel": posted_channel,
+            "user": expected_user,
+        }
+        try:
+            with open(question_path, "w") as question_file:  # nosemgrep
+                question_file.write(json.dumps(question_data))
+        except Exception as e:
+            self.debug_print(f"Unable to save question metadata: {self._get_error_message_from_exception(e)}")
+            return action_result.set_status(phantom.APP_ERROR, "Unable to save question metadata"), None
 
         data = {"qid": qid, "answer_path": answer_path}
         return action_result.set_status(phantom.APP_SUCCESS), data
@@ -1500,7 +1581,13 @@ class SlackConnector(phantom.BaseConnector):
             # Don't want to send question to channels because then we would not know who was answering
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_CHANNEL)
 
-        ret_val, resp_json = self._handle_ask_question(action_result, param, user)
+        expected_user = user if user.startswith(("U", "W")) else None
+        if expected_user is None and not user.startswith("D"):
+            expected_user = self._get_user_id_from_name(action_result, user)
+            if not expected_user:
+                return action_result.get_status()
+
+        ret_val, resp_json = self._handle_ask_question(action_result, param, user, expected_user)
 
         if phantom.is_fail(ret_val):
             return action_result.get_status()
@@ -1523,6 +1610,7 @@ class SlackConnector(phantom.BaseConnector):
         while True:
             if count >= loop_count:
                 action_result.set_summary({"response_received": False, "question_id": qid})
+                self._remove_question_metadata(os.path.dirname(answer_path), qid)
                 return action_result.set_status(phantom.APP_ERROR, "Question timed out with no response")
 
             try:
@@ -1545,6 +1633,7 @@ class SlackConnector(phantom.BaseConnector):
         action_result.set_summary({"response_received": True, "question_id": qid, "response": payload.get("actions", [{}])[0].get("value")})
 
         os.remove(answer_path)
+        self._remove_question_metadata(os.path.dirname(answer_path), qid)
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
@@ -1572,6 +1661,7 @@ class SlackConnector(phantom.BaseConnector):
 
         action_result.add_data(resp_json)
         action_result.set_summary({"response_received": True})
+        self._remove_question_metadata(state_dir.rstrip("/"), qid)
 
         return action_result.set_status(phantom.APP_SUCCESS)
 

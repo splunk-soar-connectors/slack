@@ -32,7 +32,7 @@ from phantom.base_connector import APPS_STATE_PATH
 from slack_bolt import App as slack_app
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-from slack_connector import _is_safe_path, process_payload
+from slack_connector import _is_safe_path, _validate_answer_payload, process_payload
 from slack_consts import *
 from slack_consts import SLACK_DEFAULT_TIMEOUT
 from slack_security import sanitize_slack_markup
@@ -1091,6 +1091,17 @@ class SlackBot:
                     answer_path = f"{state_dir}/{answer_filename}"
                     if not _is_safe_path(state_dir, answer_path):
                         logging.error("**invalid answer file path, dropping interaction payload")
+                        return
+
+                    question_path = f"{state_dir}/{qid}_question.json"
+                    if not _is_safe_path(state_dir, question_path):
+                        logging.error("**invalid question metadata path, dropping interaction payload")
+                        return
+
+                    is_valid, validation_error = _validate_answer_payload(body, question_path, self.permitted_users)
+                    if not is_valid:
+                        logging.info(f"**rejected answer for qid {qid}: {validation_error}")
+                        respond(f"Unable to accept response: {validation_error}")
                         return
                     logging.debug(f"**going to put answer file here: {answer_path}")
 
