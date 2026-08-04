@@ -21,7 +21,7 @@ import sys
 import time
 import uuid
 from os.path import exists
-from urllib.parse import unquote
+from urllib.parse import quote, unquote
 
 import encryption_helper
 import phantom.app as phantom
@@ -883,7 +883,7 @@ class SlackConnector(phantom.BaseConnector):
 
             if not bot_token:
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_USER_TOKEN_NOT_PROVIDED)
-            endpoint = f"{SLACK_BASE_URL}{SLACK_USER_LOOKUP_BY_EMAIL}?email={email_address}"
+            endpoint = f"{SLACK_BASE_URL}{SLACK_USER_LOOKUP_BY_EMAIL}?email={quote(email_address, safe='')}"
 
             headers = {"Content-Type": "application/json", "Authorization": f"Bearer {bot_token}"}
 
