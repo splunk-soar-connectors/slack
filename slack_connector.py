@@ -683,8 +683,9 @@ class SlackConnector(phantom.BaseConnector):
             body = {}
         body.update({"limit": SLACK_DEFAULT_LIMIT})
         results = {}
+        seen_cursors = set()
 
-        while True:
+        for _ in range(SLACK_MAX_PAGINATION_PAGES):
             ret_val, resp_json = self._make_slack_rest_call(action_result, endpoint, body)
 
             if not ret_val:
@@ -715,8 +716,14 @@ class SlackConnector(phantom.BaseConnector):
 
             if not next_cursor:
                 break
-            else:
-                body.update({"cursor": next_cursor})
+
+            if not key_result_value or next_cursor in seen_cursors:
+                return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_PAGINATION_LIMIT.format(endpoint=endpoint)), None
+
+            seen_cursors.add(next_cursor)
+            body.update({"cursor": next_cursor})
+        else:
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_PAGINATION_LIMIT.format(endpoint=endpoint)), None
 
         return phantom.APP_SUCCESS, results
 
