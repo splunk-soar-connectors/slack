@@ -668,7 +668,7 @@ class SlackConnector(phantom.BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _paginator(self, action_result, endpoint, key, body=None, limit=None):
+    def _paginator(self, action_result, endpoint, key, body=None, limit=None, allow_empty=False):
         """Fetch results from multiple API calls using pagination for the given endpoint
 
         Args:
@@ -694,7 +694,7 @@ class SlackConnector(phantom.BaseConnector):
             key_result_value = resp_json.get(key, [])
 
             if not results:
-                if not key_result_value:
+                if not key_result_value and not allow_empty:
                     return (
                         action_result.set_status(
                             phantom.APP_ERROR, SLACK_ERROR_DATA_NOT_FOUND_IN_OUTPUT.format(key=("users" if key == "members" else key))
@@ -702,6 +702,7 @@ class SlackConnector(phantom.BaseConnector):
                         None,
                     )
                 results = resp_json
+                results.setdefault(key, [])
             else:
                 results[key].extend(key_result_value)
 
@@ -1561,7 +1562,13 @@ class SlackConnector(phantom.BaseConnector):
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_NOT_A_CHANNEL_ID)
 
             self.save_progress(f"Fetching messages from channel {channel_id}...")
-            ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_CONVERSATIONS_HISTORY, {"channel": channel_id})
+            ret_val, resp_json = self._paginator(
+                action_result,
+                SLACK_CONVERSATIONS_HISTORY,
+                "messages",
+                body={"channel": channel_id},
+                allow_empty=True,
+            )
 
             if not ret_val:
                 message = action_result.get_message()
@@ -1578,7 +1585,9 @@ class SlackConnector(phantom.BaseConnector):
             self.debug_print(message_timestamps)
             for timestamp in message_timestamps:
                 self.save_progress(f"Fetching message history for {timestamp}...")
-                ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_THREADS_HISTORY, {"channel": channel_id, "ts": timestamp})
+                ret_val, resp_json = self._paginator(
+                    action_result, SLACK_THREADS_HISTORY, "messages", body={"channel": channel_id, "ts": timestamp}
+                )
 
                 if not ret_val:
                     message = action_result.get_message()
@@ -1596,9 +1605,11 @@ class SlackConnector(phantom.BaseConnector):
         # If user specified bot Channel ID and Message ts (getting messages from specific thread)
         else:
             self.save_progress(f"Fetching message history for {message_ts}...")
-            ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_THREADS_HISTORY, {"channel": channel_id, "ts": message_ts})
+            ret_val, resp_json = self._paginator(
+                action_result, SLACK_THREADS_HISTORY, "messages", body={"channel": channel_id, "ts": message_ts}
+            )
 
-            if not resp_json:
+            if not ret_val or not resp_json:
                 error_message = SLACK_ERROR_THREAD_NOT_FOUND
                 return action_result.set_status(phantom.APP_ERROR, error_message)
 
