@@ -433,7 +433,7 @@ to the **Webhook Settings** tab on the Slack asset, enable webhooks and copy the
 webhook** field. Append `/interactive` to the URL and paste it in the **Request URL** field of
 **Slack Apps** . The URL should look something like this:
 
-https://\<soar_host>:3500/webhook/slack_1e1618e7-2f70-4fc0-916a-f96facc2d2e4/\<asset_id>/interactive
+https://\<soar_host>:3500/webhook/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/\<asset_id>/interactive
 
 [![](img/slack_enable_interactive_messages.png)](img/slack_enable_interactive_messages.png)
 
