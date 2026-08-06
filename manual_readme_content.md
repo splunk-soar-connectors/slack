@@ -413,11 +413,17 @@ Shortcuts** option.
 NOTE: Slack will only send POST requests to endpoints that have an SSL certificate signed by a
 certificate authority.
 
+NOTE: The Slack app receives the interactive responses over a webhook. Webhooks must be enabled on
+the Splunk SOAR instance and also enabled for the Slack app specifically.
+
 [![](img/slack_interactive_messages.png)](img/slack_interactive_messages.png)
 
-Once on this page, toggle on **Interactivity** . Configure the **Request URL** . To do so just copy
-the value of url provided in the field **POST incoming for Slack to this location** in **Asset
-Settings** of slack asset and paste it in the **Request URL** field of **Slack Apps** .
+Once on this page, toggle on **Interactivity** . Configure the **Request URL** . To do so, navigate
+to the **Webhook Settings** tab on the Slack asset, enable webhooks and copy the **URL for this
+webhook** field. Append `/interactive` to the URL and paste it in the **Request URL** field of
+**Slack Apps** . The URL should look something like this:
+
+https://\<soar_host>:3500/webhook/slack_3ac26c7f-baa4-4583-86ff-5aac82778a86/\<asset_id>/interactive
 
 [![](img/slack_enable_interactive_messages.png)](img/slack_enable_interactive_messages.png)
 

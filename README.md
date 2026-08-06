@@ -423,11 +423,17 @@ Shortcuts** option.
 NOTE: Slack will only send POST requests to endpoints that have an SSL certificate signed by a
 certificate authority.
 
+NOTE: The Slack app receives the interactive responses over a webhook. Webhooks must be enabled on
+the Splunk SOAR instance and also enabled for the Slack app specifically.
+
 [![](img/slack_interactive_messages.png)](img/slack_interactive_messages.png)
 
-Once on this page, toggle on **Interactivity** . Configure the **Request URL** . To do so just copy
-the value of url provided in the field **POST incoming for Slack to this location** in **Asset
-Settings** of slack asset and paste it in the **Request URL** field of **Slack Apps** .
+Once on this page, toggle on **Interactivity** . Configure the **Request URL** . To do so, navigate
+to the **Webhook Settings** tab on the Slack asset, enable webhooks and copy the **URL for this
+webhook** field. Append `/interactive` to the URL and paste it in the **Request URL** field of
+**Slack Apps** . The URL should look something like this:
+
+https://\<soar_host>:3500/webhook/slack_1e1618e7-2f70-4fc0-916a-f96facc2d2e4/\<asset_id>/interactive
 
 [![](img/slack_enable_interactive_messages.png)](img/slack_enable_interactive_messages.png)
 
@@ -679,30 +685,33 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 
 ### Supported Actions
 
-[test connectivity](#action-test-connectivity) - Tests authorization with Slack <br>
-[create channel](#action-create-channel) - Create a new Slack channel <br>
-[list channels](#action-list-channels) - List public channels of a Slack team <br>
-[list users](#action-list-users) - List users of a Slack team <br>
-[get user](#action-get-user) - Get information about a user of a Slack team <br>
-[invite users](#action-invite-users) - Invite user(s) to a Slack channel <br>
-[send message](#action-send-message) - Send a message to Slack <br>
+[test connectivity](#action-test-connectivity) - test connectivity <br>
+[on poll](#action-on-poll) - Start SlackBot and make health checks to it.
+
+The bot runs as a separate long lived process so that it can keep a socket mode
+connection open, which means this action never ingests any containers. <br>
 [add reaction](#action-add-reaction) - React to a message in Slack <br>
-[upload file](#action-upload-file) - Upload file to Slack <br>
 [ask question](#action-ask-question) - Ask a question to a Slack user <br>
 [ask question channel](#action-ask-question-channel) - Ask a question in slack channel <br>
+[create channel](#action-create-channel) - Create a new Slack channel <br>
+[get history](#action-get-history) - Get conversation history from specific Slack channel <br>
 [get response](#action-get-response) - Get the response to a previously asked question <br>
-[on poll](#action-on-poll) - Start SlackBot and make health checks to it <br>
+[get user](#action-get-user) - Get information about a user of a Slack team <br>
+[invite users](#action-invite-users) - Invite user(s) to a Slack channel <br>
+[list channels](#action-list-channels) - List public channels of a Slack team <br>
+[list users](#action-list-users) - List users of a Slack team <br>
+[send message](#action-send-message) - Send a message to Slack <br>
 [stop bot](#action-stop-bot) - Stop SlackBot <br>
-[get history](#action-get-history) - Get conversation history from specific Slack channel
+[upload file](#action-upload-file) - Upload file to Slack
 
 ## action: 'test connectivity'
 
-Tests authorization with Slack
+test connectivity
 
 Type: **test** <br>
 Read only: **True**
 
-Checks that the provided bot token is valid and grabs information about the configured bot user.
+Basic test for app.
 
 #### Action Parameters
 
@@ -710,482 +719,38 @@ No parameters are required for this action
 
 #### Action Output
 
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failure |
+action_result.message | string | | |
+summary.total_objects | numeric | | 1 |
+summary.total_objects_successful | numeric | | 1 |
+
+## action: 'on poll'
+
+Start SlackBot and make health checks to it.
+
+The bot runs as a separate long lived process so that it can keep a socket mode
+connection open, which means this action never ingests any containers.
+
+Type: **ingest** <br>
+Read only: **True**
+
+Callback action for the on_poll ingest functionality
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**start_time** | optional | Start of time range, in epoch time (milliseconds). | numeric | |
+**end_time** | optional | End of time range, in epoch time (milliseconds). | numeric | |
+**container_count** | optional | Maximum number of container records to query for. | numeric | |
+**artifact_count** | optional | Maximum number of artifact records to query for. | numeric | |
+**container_id** | optional | Comma-separated list of container IDs to limit the ingestion to. | string | |
+
+#### Action Output
+
 No Output
-
-## action: 'create channel'
-
-Create a new Slack channel
-
-Type: **generic** <br>
-Read only: **False**
-
-To create a private channel, use the 'channel_type' selection parameter. This action requires a User OAuth Token defined in the asset. For naming conventions, see https://api.slack.com/methods/conversations.create.
-
-#### Action Parameters
-
-PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
---------- | -------- | ----------- | ---- | --------
-**name** | required | Name of channel | string | |
-**channel_type** | optional | Type of channel to create (public or private) | string | |
-
-#### Action Output
-
-DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
---------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.parameter.channel_type | string | | public |
-action_result.parameter.name | string | | name |
-action_result.data.\*.channel.context_team_id | string | | T02Q675CX6W |
-action_result.data.\*.channel.created | numeric | | 1595502058 |
-action_result.data.\*.channel.creator | string | | UEVKZ9ZLL |
-action_result.data.\*.channel.id | string | | C017K3XMNTF |
-action_result.data.\*.channel.is_archived | boolean | | True False |
-action_result.data.\*.channel.is_channel | boolean | | True False |
-action_result.data.\*.channel.is_ext_shared | boolean | | True False |
-action_result.data.\*.channel.is_general | boolean | | True False |
-action_result.data.\*.channel.is_group | boolean | | True False |
-action_result.data.\*.channel.is_im | boolean | | True False |
-action_result.data.\*.channel.is_member | boolean | | True False |
-action_result.data.\*.channel.is_moved | numeric | | 0 |
-action_result.data.\*.channel.is_mpim | boolean | | True False |
-action_result.data.\*.channel.is_open | boolean | | True False |
-action_result.data.\*.channel.is_org_shared | boolean | | True False |
-action_result.data.\*.channel.is_pending_ext_shared | boolean | | True False |
-action_result.data.\*.channel.is_private | boolean | | True False |
-action_result.data.\*.channel.is_shared | boolean | | True False |
-action_result.data.\*.channel.last_read | string | | 0000000000.000000 |
-action_result.data.\*.channel.name | string | `slack channel name` | name |
-action_result.data.\*.channel.name_normalized | string | | name |
-action_result.data.\*.channel.parent_conversation | string | | |
-action_result.data.\*.channel.priority | numeric | | 0 |
-action_result.data.\*.channel.purpose.creator | string | | |
-action_result.data.\*.channel.purpose.last_set | numeric | | 0 |
-action_result.data.\*.channel.purpose.value | string | | |
-action_result.data.\*.channel.shared_team_ids | string | | TEW1DJ485 |
-action_result.data.\*.channel.topic.creator | string | | |
-action_result.data.\*.channel.topic.last_set | numeric | | 0 |
-action_result.data.\*.channel.topic.value | string | | |
-action_result.data.\*.channel.unlinked | numeric | | 0 |
-action_result.data.\*.channel.updated | numeric | | 1683204339510 |
-action_result.data.\*.ok | boolean | | True False |
-action_result.data.\*.response_metadata.warnings | string | | missing_charset |
-action_result.data.\*.warning | string | | missing_charset |
-action_result.summary | string | | |
-action_result.message | string | | Channel created successfully |
-summary.total_objects | numeric | | 1 |
-summary.total_objects_successful | numeric | | 1 |
-
-## action: 'list channels'
-
-List public channels of a Slack team
-
-Type: **investigate** <br>
-Read only: **True**
-
-The output of this action is a list of all public channels in the configured Slack team. The channels will be listed with their corresponding channel IDs.
-
-#### Action Parameters
-
-PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
---------- | -------- | ----------- | ---- | --------
-**limit** | optional | Specify the maximum number of results to return. Default is 100 | numeric | |
-
-#### Action Output
-
-DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
---------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.parameter.limit | numeric | | 1000 |
-action_result.data.\*.channels.\*.context_team_id | string | | T02Q675CX6W |
-action_result.data.\*.channels.\*.created | numeric | | 1545061069 |
-action_result.data.\*.channels.\*.creator | string | | UEVKZ9ZLL |
-action_result.data.\*.channels.\*.id | string | `slack channel id` | |
-action_result.data.\*.channels.\*.is_archived | boolean | | True False |
-action_result.data.\*.channels.\*.is_channel | boolean | | True False |
-action_result.data.\*.channels.\*.is_ext_shared | boolean | | True False |
-action_result.data.\*.channels.\*.is_general | boolean | | True False |
-action_result.data.\*.channels.\*.is_group | boolean | | True False |
-action_result.data.\*.channels.\*.is_im | boolean | | True False |
-action_result.data.\*.channels.\*.is_member | boolean | | True False |
-action_result.data.\*.channels.\*.is_moved | numeric | | 0 |
-action_result.data.\*.channels.\*.is_mpim | boolean | | True False |
-action_result.data.\*.channels.\*.is_org_shared | boolean | | True False |
-action_result.data.\*.channels.\*.is_pending_ext_shared | boolean | | True False |
-action_result.data.\*.channels.\*.is_private | boolean | | True False |
-action_result.data.\*.channels.\*.is_shared | boolean | | True False |
-action_result.data.\*.channels.\*.members | string | | |
-action_result.data.\*.channels.\*.name | string | `slack channel name` | |
-action_result.data.\*.channels.\*.name_normalized | string | | general |
-action_result.data.\*.channels.\*.num_members | numeric | | 23 |
-action_result.data.\*.channels.\*.parent_conversation | string | | |
-action_result.data.\*.channels.\*.purpose.creator | string | | UEVKZ9ZLL |
-action_result.data.\*.channels.\*.purpose.last_set | numeric | | 1545061069 |
-action_result.data.\*.channels.\*.purpose.value | string | | This channel is for workspace-wide communication and announcements. All members are in this channel. |
-action_result.data.\*.channels.\*.topic.creator | string | | UEVKZ9ZLL |
-action_result.data.\*.channels.\*.topic.last_set | numeric | | 1545061069 |
-action_result.data.\*.channels.\*.topic.value | string | | Non-work banter and water cooler conversation |
-action_result.data.\*.channels.\*.unlinked | numeric | | 0 |
-action_result.data.\*.channels.\*.updated | numeric | | 1639075392157 |
-action_result.data.\*.ok | boolean | | True False |
-action_result.data.\*.response_metadata.next_cursor | string | | dGVhbTpDMDE3WENOQVE4TA== |
-action_result.summary | string | | |
-action_result.summary.num_public_channels | numeric | | 10 |
-action_result.message | string | | Num public channels: 100 |
-summary.total_objects | numeric | | 1 |
-summary.total_objects_successful | numeric | | 1 |
-
-## action: 'list users'
-
-List users of a Slack team
-
-Type: **investigate** <br>
-Read only: **True**
-
-#### Action Parameters
-
-PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
---------- | -------- | ----------- | ---- | --------
-**limit** | optional | Specify the maximum number of results to return. Default is 100 | numeric | |
-
-#### Action Output
-
-DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
---------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.parameter.limit | numeric | | 1000 |
-action_result.data.\*.cache_ts | numeric | | |
-action_result.data.\*.members.\*.color | string | | |
-action_result.data.\*.members.\*.deleted | boolean | | True False |
-action_result.data.\*.members.\*.enterprise_user.enterprise_id | string | | E02PYRE04SJ |
-action_result.data.\*.members.\*.enterprise_user.enterprise_name | string | | Test Soar Sandbox |
-action_result.data.\*.members.\*.enterprise_user.id | string | | U02QJ5JLTNV |
-action_result.data.\*.members.\*.enterprise_user.is_admin | boolean | | True False |
-action_result.data.\*.members.\*.enterprise_user.is_owner | boolean | | True False |
-action_result.data.\*.members.\*.enterprise_user.is_primary_owner | boolean | | True False |
-action_result.data.\*.members.\*.id | string | `slack user id` | |
-action_result.data.\*.members.\*.is_admin | boolean | | True False |
-action_result.data.\*.members.\*.is_app_user | boolean | | True False |
-action_result.data.\*.members.\*.is_bot | boolean | | True False |
-action_result.data.\*.members.\*.is_email_confirmed | boolean | | True False |
-action_result.data.\*.members.\*.is_invited_user | boolean | | True False |
-action_result.data.\*.members.\*.is_owner | boolean | | True False |
-action_result.data.\*.members.\*.is_primary_owner | boolean | | True False |
-action_result.data.\*.members.\*.is_restricted | boolean | | True False |
-action_result.data.\*.members.\*.is_ultra_restricted | boolean | | True False |
-action_result.data.\*.members.\*.name | string | `slack user name` | |
-action_result.data.\*.members.\*.profile.always_active | boolean | | True False |
-action_result.data.\*.members.\*.profile.api_app_id | string | | AEVNKT17D |
-action_result.data.\*.members.\*.profile.avatar_hash | string | | g6f8c4b87d3e |
-action_result.data.\*.members.\*.profile.bot_id | string | | BEV82RKAM |
-action_result.data.\*.members.\*.profile.display_name | string | | Slackbot |
-action_result.data.\*.members.\*.profile.display_name_normalized | string | | Slackbot |
-action_result.data.\*.members.\*.profile.email | string | `email` | slackbot@test.com |
-action_result.data.\*.members.\*.profile.fields | string | | |
-action_result.data.\*.members.\*.profile.first_name | string | | slackbot |
-action_result.data.\*.members.\*.profile.image_1024 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_1024.png |
-action_result.data.\*.members.\*.profile.image_192 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_192.png |
-action_result.data.\*.members.\*.profile.image_24 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_24.png |
-action_result.data.\*.members.\*.profile.image_32 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_32.png |
-action_result.data.\*.members.\*.profile.image_48 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_48.png |
-action_result.data.\*.members.\*.profile.image_512 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_512.png |
-action_result.data.\*.members.\*.profile.image_72 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_72.png |
-action_result.data.\*.members.\*.profile.image_original | string | `url` | |
-action_result.data.\*.members.\*.profile.is_custom_image | boolean | | True False |
-action_result.data.\*.members.\*.profile.last_name | string | | Slackbot |
-action_result.data.\*.members.\*.profile.phone | string | | |
-action_result.data.\*.members.\*.profile.real_name | string | | Slackbot |
-action_result.data.\*.members.\*.profile.real_name_normalized | string | | Slackbot |
-action_result.data.\*.members.\*.profile.skype | string | | |
-action_result.data.\*.members.\*.profile.status_emoji | string | | |
-action_result.data.\*.members.\*.profile.status_expiration | numeric | | 0 |
-action_result.data.\*.members.\*.profile.status_text | string | | |
-action_result.data.\*.members.\*.profile.status_text_canonical | string | | |
-action_result.data.\*.members.\*.profile.team | string | | TEW1DJ485 |
-action_result.data.\*.members.\*.profile.title | string | | |
-action_result.data.\*.members.\*.profile.who_can_share_contact_card | string | | NO_ONE |
-action_result.data.\*.members.\*.real_name | string | | Test Invite Bot |
-action_result.data.\*.members.\*.team_id | string | | TEW1DJ485 |
-action_result.data.\*.members.\*.tz | string | | America/Los_Angeles |
-action_result.data.\*.members.\*.tz_label | string | | Pacific Standard Time |
-action_result.data.\*.members.\*.tz_offset | numeric | | -28800 |
-action_result.data.\*.members.\*.updated | numeric | | 1569140077 |
-action_result.data.\*.members.\*.who_can_share_contact_card | string | | EVERYONE |
-action_result.data.\*.ok | boolean | | True False |
-action_result.data.\*.response_metadata.next_cursor | string | | |
-action_result.summary.num_users | numeric | | 28 |
-action_result.message | string | | Num users: 28 |
-summary.total_objects | numeric | | 1 |
-summary.total_objects_successful | numeric | | 1 |
-
-## action: 'get user'
-
-Get information about a user of a Slack team
-
-Type: **investigate** <br>
-Read only: **True**
-
-This action will ignore email_address parameter when user_id parameter is provided.
-
-#### Action Parameters
-
-PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
---------- | -------- | ----------- | ---- | --------
-**user_id** | optional | Unique ID of user to get info of | string | `slack user id` |
-**email_address** | optional | Email address of user to get info of. Will not be used if User ID is specified | string | `email` |
-
-#### Action Output
-
-DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
---------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.parameter.email_address | string | `email` | |
-action_result.parameter.user_id | string | `slack user id` | |
-action_result.data.\*.ok | boolean | | True False |
-action_result.data.\*.user.color | string | | 4bbe2e |
-action_result.data.\*.user.deleted | boolean | | True False |
-action_result.data.\*.user.enterprise_user.enterprise_id | string | | E02PYRE04SJ |
-action_result.data.\*.user.enterprise_user.enterprise_name | string | | Test Soar Sandbox |
-action_result.data.\*.user.enterprise_user.id | string | | U03DU1BA9ML |
-action_result.data.\*.user.enterprise_user.is_admin | boolean | | True False |
-action_result.data.\*.user.enterprise_user.is_owner | boolean | | True False |
-action_result.data.\*.user.enterprise_user.is_primary_owner | boolean | | True False |
-action_result.data.\*.user.id | string | `slack user id` | UEV44MD9N |
-action_result.data.\*.user.is_admin | boolean | | True False |
-action_result.data.\*.user.is_app_user | boolean | | True False |
-action_result.data.\*.user.is_bot | boolean | | True False |
-action_result.data.\*.user.is_email_confirmed | boolean | | True False |
-action_result.data.\*.user.is_owner | boolean | | True False |
-action_result.data.\*.user.is_primary_owner | boolean | | True False |
-action_result.data.\*.user.is_restricted | boolean | | True False |
-action_result.data.\*.user.is_ultra_restricted | boolean | | True False |
-action_result.data.\*.user.name | string | `slack user name` | @testinvite-noreply |
-action_result.data.\*.user.profile.always_active | boolean | | True False |
-action_result.data.\*.user.profile.api_app_id | string | | A017K8386N9 |
-action_result.data.\*.user.profile.avatar_hash | string | | g6f8c4b87d3e |
-action_result.data.\*.user.profile.bot_id | string | | B017LK9BYTC |
-action_result.data.\*.user.profile.display_name | string | | Slackbot |
-action_result.data.\*.user.profile.display_name_normalized | string | | Slackbot |
-action_result.data.\*.user.profile.email | string | `email` | slackbot@test.com |
-action_result.data.\*.user.profile.fields | string | | |
-action_result.data.\*.user.profile.first_name | string | | Slackbot |
-action_result.data.\*.user.profile.image_192 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_192.png |
-action_result.data.\*.user.profile.image_24 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_24.png |
-action_result.data.\*.user.profile.image_32 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_32.png |
-action_result.data.\*.user.profile.image_48 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_48.png |
-action_result.data.\*.user.profile.image_512 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_512.png |
-action_result.data.\*.user.profile.image_72 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_72.png |
-action_result.data.\*.user.profile.is_custom_image | boolean | | True False |
-action_result.data.\*.user.profile.last_name | string | | Slackbot |
-action_result.data.\*.user.profile.phone | string | | |
-action_result.data.\*.user.profile.real_name | string | | Slackbot |
-action_result.data.\*.user.profile.real_name_normalized | string | | Test Invite Bot |
-action_result.data.\*.user.profile.skype | string | | |
-action_result.data.\*.user.profile.status_emoji | string | | |
-action_result.data.\*.user.profile.status_expiration | numeric | | 0 |
-action_result.data.\*.user.profile.status_text | string | | |
-action_result.data.\*.user.profile.status_text_canonical | string | | |
-action_result.data.\*.user.profile.team | string | | TEW1DJ485 |
-action_result.data.\*.user.profile.title | string | | |
-action_result.data.\*.user.real_name | string | | Slackbot |
-action_result.data.\*.user.team_id | string | | TEW1DJ485 |
-action_result.data.\*.user.tz | string | | America/Los_Angeles |
-action_result.data.\*.user.tz_label | string | | Pacific Standard Time |
-action_result.data.\*.user.tz_offset | numeric | | -28800 |
-action_result.data.\*.user.updated | numeric | | 1569140077 |
-action_result.data.\*.user.who_can_share_contact_card | string | | EVERYONE |
-action_result.summary | string | | |
-action_result.message | string | | User data successfully retrieved |
-summary.total_objects | numeric | | 1 |
-summary.total_objects_successful | numeric | | 1 |
-
-## action: 'invite users'
-
-Invite user(s) to a Slack channel
-
-Type: **generic** <br>
-Read only: **False**
-
-Up to 1000 users may be added at one time. This action requires a User OAuth Token defined in the asset. For permissions, see: https://api.slack.com/methods/conversations.invite.
-
-#### Action Parameters
-
-PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
---------- | -------- | ----------- | ---- | --------
-**channel_id** | required | ID of channel | string | `slack channel id` |
-**users** | required | Comma-separated list of users (IDs) to invite | string | |
-
-#### Action Output
-
-DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
---------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.parameter.channel_id | string | `slack channel id` | CLBC12T3R |
-action_result.parameter.users | string | | U6YJX1H24 |
-action_result.data.\*.channel.context_team_id | string | | T02Q675CX6W |
-action_result.data.\*.channel.created | numeric | | 1562715284 |
-action_result.data.\*.channel.creator | string | | U6ZA4J17F |
-action_result.data.\*.channel.id | string | | CLBC12T3R |
-action_result.data.\*.channel.is_archived | boolean | | True False |
-action_result.data.\*.channel.is_channel | boolean | | True False |
-action_result.data.\*.channel.is_ext_shared | boolean | | True False |
-action_result.data.\*.channel.is_general | boolean | | True False |
-action_result.data.\*.channel.is_group | boolean | | True False |
-action_result.data.\*.channel.is_im | boolean | | True False |
-action_result.data.\*.channel.is_member | boolean | | True False |
-action_result.data.\*.channel.is_moved | numeric | | 0 |
-action_result.data.\*.channel.is_mpim | boolean | | True False |
-action_result.data.\*.channel.is_open | boolean | | True False |
-action_result.data.\*.channel.is_org_shared | boolean | | True False |
-action_result.data.\*.channel.is_pending_ext_shared | boolean | | True False |
-action_result.data.\*.channel.is_private | boolean | | True False |
-action_result.data.\*.channel.is_shared | boolean | | True False |
-action_result.data.\*.channel.last_read | string | | 1562715284.000200 |
-action_result.data.\*.channel.name | string | `slack channel name` | channel1 |
-action_result.data.\*.channel.name_normalized | string | | channel1 |
-action_result.data.\*.channel.parent_conversation | string | | |
-action_result.data.\*.channel.purpose.creator | string | | |
-action_result.data.\*.channel.purpose.last_set | numeric | | 0 |
-action_result.data.\*.channel.purpose.value | string | | |
-action_result.data.\*.channel.shared_team_ids | string | | T6YGC45LY |
-action_result.data.\*.channel.topic.creator | string | | |
-action_result.data.\*.channel.topic.last_set | numeric | | 0 |
-action_result.data.\*.channel.topic.value | string | | |
-action_result.data.\*.channel.unlinked | numeric | | 0 |
-action_result.data.\*.channel.updated | numeric | | 1683204116915 |
-action_result.data.\*.ok | boolean | | True False |
-action_result.data.\*.response_metadata.warnings | string | | missing_charset |
-action_result.data.\*.warning | string | | missing_charset |
-action_result.summary | string | | |
-action_result.message | string | | Invite sent to user(s) |
-summary.total_objects | numeric | | 1 |
-summary.total_objects_successful | numeric | | 1 |
-
-## action: 'send message'
-
-Send a message to Slack
-
-Type: **generic** <br>
-Read only: **False**
-
-The <b>destination</b> parameter can be a channel ID (e.g. C1A1A1AAA), a channel name (e.g. #general). When sending a message to a channel, the configured bot user must have been added to the channel. Slack recommends limiting messages to 4000 characters but the enforced limit is 40000 characters. Passing a "username" as a channel value is deprecated, along with the whole concept of usernames on Slack. Please always use channel-like IDs instead to make sure your message gets to where it's going.
-
-#### Action Parameters
-
-PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
---------- | -------- | ----------- | ---- | --------
-**destination** | required | Channel (e.g. #channel or C1A1A1AAA) | string | `slack channel name` `slack channel id` `slack user name` `slack user id` |
-**message** | optional | Message to send, required if 'blocks' is not set. If 'blocks' is set, this is used as fallback text | string | |
-**blocks** | optional | Blocks to send, required if 'message' is not set | string | |
-**parent_message_ts** | optional | Parent message timestamp to reply in thread | string | `slack message ts` |
-**reply_broadcast** | optional | Used in conjunction with 'parent_message_ts' and indicates whether reply should be made visible to everyone in the channel or conversation | boolean | |
-**link_names** | optional | Check this if you want to enable announcements in your Slack messages using mentions. E.g.: Use @someone or @channel in your message in combination with this check to notify people | boolean | |
-
-#### Action Output
-
-DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
---------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.parameter.blocks | string | | [{"type": "section", "text": {"type": "plain_text", "text": "Hello world"}}] |
-action_result.parameter.destination | string | `slack channel name` `slack channel id` `slack user name` `slack user id` | #channel_test |
-action_result.parameter.link_names | boolean | | False True |
-action_result.parameter.message | string | | hello world |
-action_result.parameter.parent_message_ts | string | `slack message ts` | 1653377851.521129 |
-action_result.parameter.reply_broadcast | boolean | | False True |
-action_result.data.\*.channel | string | `slack channel id` | |
-action_result.data.\*.message.app_id | string | | A03B9SMKUS2 |
-action_result.data.\*.message.blocks.\*.block_id | string | | K60o |
-action_result.data.\*.message.blocks.\*.elements.\*.elements.\*.channel_id | string | | C0183RKACNM |
-action_result.data.\*.message.blocks.\*.elements.\*.elements.\*.range | string | | here |
-action_result.data.\*.message.blocks.\*.elements.\*.elements.\*.text | string | | This is the reply on this timestamp. |
-action_result.data.\*.message.blocks.\*.elements.\*.elements.\*.type | string | | text |
-action_result.data.\*.message.blocks.\*.elements.\*.elements.\*.user_id | string | | UPK123P74AGG |
-action_result.data.\*.message.blocks.\*.elements.\*.type | string | | rich_text_section |
-action_result.data.\*.message.blocks.\*.fields.\*.text | string | | \*Type:\* Paid Time Off |
-action_result.data.\*.message.blocks.\*.fields.\*.type | string | | mrkdwn |
-action_result.data.\*.message.blocks.\*.fields.\*.verbatim | boolean | | True False |
-action_result.data.\*.message.blocks.\*.text.emoji | boolean | | True False |
-action_result.data.\*.message.blocks.\*.text.text | string | | New request |
-action_result.data.\*.message.blocks.\*.text.type | string | | plain_text |
-action_result.data.\*.message.blocks.\*.text.verbatim | boolean | | True False |
-action_result.data.\*.message.blocks.\*.type | string | | rich_text |
-action_result.data.\*.message.bot_id | string | | |
-action_result.data.\*.message.bot_profile.app_id | string | | A017E1NAPSR |
-action_result.data.\*.message.bot_profile.deleted | boolean | | True False |
-action_result.data.\*.message.bot_profile.icons.image_36 | string | | https://a.slack-edge.com/80588/img/plugins/app/bot_36.png |
-action_result.data.\*.message.bot_profile.icons.image_48 | string | | https://a.slack-edge.com/80588/img/plugins/app/bot_48.png |
-action_result.data.\*.message.bot_profile.icons.image_72 | string | | https://a.slack-edge.com/80588/img/plugins/app/service_72.png |
-action_result.data.\*.message.bot_profile.id | string | | B017U24BH25 |
-action_result.data.\*.message.bot_profile.name | string | | Test_Playbook |
-action_result.data.\*.message.bot_profile.team_id | string | | TEW1DJ485 |
-action_result.data.\*.message.bot_profile.updated | numeric | | 1595596858 |
-action_result.data.\*.message.parent_user_id | string | | U017MJM0352 |
-action_result.data.\*.message.root.bot_id | string | | B017U24BH25 |
-action_result.data.\*.message.root.bot_profile.app_id | string | | A017E1NAPSR |
-action_result.data.\*.message.root.bot_profile.deleted | boolean | | True False |
-action_result.data.\*.message.root.bot_profile.icons.image_36 | string | | https://a.slack-edge.com/80588/img/plugins/app/bot_36.png |
-action_result.data.\*.message.root.bot_profile.icons.image_48 | string | | https://a.slack-edge.com/80588/img/plugins/app/bot_48.png |
-action_result.data.\*.message.root.bot_profile.icons.image_72 | string | | https://a.slack-edge.com/80588/img/plugins/app/service_72.png |
-action_result.data.\*.message.root.bot_profile.id | string | | B017U24BH25 |
-action_result.data.\*.message.root.bot_profile.name | string | | Test_Playbook |
-action_result.data.\*.message.root.bot_profile.team_id | string | | TEW1DJ485 |
-action_result.data.\*.message.root.bot_profile.updated | numeric | | 1595596858 |
-action_result.data.\*.message.root.display_as_bot | boolean | | True False |
-action_result.data.\*.message.root.files.\*.created | numeric | | 1613560453 |
-action_result.data.\*.message.root.files.\*.display_as_bot | boolean | | True False |
-action_result.data.\*.message.root.files.\*.edit_link | string | | https://test.slack.com/files/U017MJM0352/F01ND14T56W/adb3e6f532264cee9ccf4589808bb489/edit |
-action_result.data.\*.message.root.files.\*.editable | boolean | | True False |
-action_result.data.\*.message.root.files.\*.external_type | string | | |
-action_result.data.\*.message.root.files.\*.filetype | string | | text |
-action_result.data.\*.message.root.files.\*.has_rich_preview | boolean | | True False |
-action_result.data.\*.message.root.files.\*.id | string | | F01ND14T56W |
-action_result.data.\*.message.root.files.\*.is_external | boolean | | True False |
-action_result.data.\*.message.root.files.\*.is_public | boolean | | True False |
-action_result.data.\*.message.root.files.\*.is_starred | boolean | | True False |
-action_result.data.\*.message.root.files.\*.lines | numeric | | 5 |
-action_result.data.\*.message.root.files.\*.lines_more | numeric | | 0 |
-action_result.data.\*.message.root.files.\*.mimetype | string | | text/plain |
-action_result.data.\*.message.root.files.\*.mode | string | | snippet |
-action_result.data.\*.message.root.files.\*.name | string | | adb3e6f532264cee9ccf4589808bb489 |
-action_result.data.\*.message.root.files.\*.permalink | string | | https://test.slack.com/files/U017MJM0352/F01ND14T56W/adb3e6f532264cee9ccf4589808bb489 |
-action_result.data.\*.message.root.files.\*.permalink_public | string | | https://slack-files.com/TEW1DJ485-F01ND14T56W-d68a8bf630 |
-action_result.data.\*.message.root.files.\*.pretty_type | string | | Plain Text |
-action_result.data.\*.message.root.files.\*.preview | string | | This is test Text File...!!!
-
-Malicious....Me....Not at all...!!!!! |
-action_result.data.\*.message.root.files.\*.preview_highlight | string | | <div class="CodeMirror cm-s-default CodeMirrorServer" oncopy="if(event.clipboardData){event.clipboardData.setData('text/plain',window.getSelection().toString().replace(/\\u200b/g,''));event.preventDefault();event.stopPropagation();}"> <div class="CodeMirror-code"> <div><pre>This is test Text File...!!!</pre></div> <div><pre></pre></div> <div><pre>Malicious....Me....Not at all...!!!!!</pre></div> <div><pre></pre></div> <div><pre></pre></div> </div> </div> |
-action_result.data.\*.message.root.files.\*.preview_is_truncated | boolean | | True False |
-action_result.data.\*.message.root.files.\*.public_url_shared | boolean | | True False |
-action_result.data.\*.message.root.files.\*.size | numeric | | 73 |
-action_result.data.\*.message.root.files.\*.timestamp | numeric | | 1613560453 |
-action_result.data.\*.message.root.files.\*.title | string | | adb3e6f532264cee9ccf4589808bb489 |
-action_result.data.\*.message.root.files.\*.url_private | string | | https://files.slack.com/files-pri/TEW1DJ485-F01ND14T56W/adb3e6f532264cee9ccf4589808bb489 |
-action_result.data.\*.message.root.files.\*.url_private_download | string | | https://files.slack.com/files-pri/TEW1DJ485-F01ND14T56W/download/adb3e6f532264cee9ccf4589808bb489 |
-action_result.data.\*.message.root.files.\*.user | string | | U017MJM0352 |
-action_result.data.\*.message.root.files.\*.username | string | | |
-action_result.data.\*.message.root.latest_reply | string | | 1613564048.001700 |
-action_result.data.\*.message.root.reply_count | numeric | | 1 |
-action_result.data.\*.message.root.reply_users_count | numeric | | 1 |
-action_result.data.\*.message.root.subscribed | boolean | | True False |
-action_result.data.\*.message.root.team | string | | TEW1DJ485 |
-action_result.data.\*.message.root.text | string | | This is a message from Playbook to channel_name |
-action_result.data.\*.message.root.thread_ts | string | | 1613561692.001200 |
-action_result.data.\*.message.root.ts | string | | 1613561692.001200 |
-action_result.data.\*.message.root.type | string | | message |
-action_result.data.\*.message.root.upload | boolean | | True False |
-action_result.data.\*.message.root.user | string | | U017MJM0352 |
-action_result.data.\*.message.subtype | string | | thread_broadcast |
-action_result.data.\*.message.team | string | | TEW1DJ485 |
-action_result.data.\*.message.text | string | | |
-action_result.data.\*.message.thread_ts | string | | 1613561693.000300 |
-action_result.data.\*.message.ts | string | `slack message ts` | |
-action_result.data.\*.message.type | string | | |
-action_result.data.\*.message.user | string | | |
-action_result.data.\*.ok | boolean | | True False |
-action_result.data.\*.ts | string | | |
-action_result.summary | string | | |
-action_result.message | string | | Message sent successfully |
-summary.total_objects | numeric | | 1 |
-summary.total_objects_successful | numeric | | 1 |
 
 ## action: 'add reaction'
 
@@ -1208,155 +773,14 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.parameter.destination | string | `slack channel id` | C1A1A1AAA |
-action_result.parameter.emoji | string | | thumbsup |
-action_result.parameter.message_ts | string | `slack message ts` | 1612429747.000100 |
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.parameter.destination | string | `slack channel id` | |
+action_result.parameter.emoji | string | | |
+action_result.parameter.message_ts | string | `slack message ts` | |
+action_result.data.\*.message | string | | Reaction added successfully |
+action_result.data.\*.status | string | | success failed |
 action_result.data.\*.ok | boolean | | True False |
-action_result.summary | string | | |
-action_result.message | string | | Reaction added successfully |
-summary.total_objects | numeric | | 1 |
-summary.total_objects_successful | numeric | | 1 |
-
-## action: 'upload file'
-
-Upload file to Slack
-
-Type: **generic** <br>
-Read only: **False**
-
-The <b>destination</b> parameter can be a channel ID (e.g. C1A1A1AAA), a channel name (e.g. #general). When uploading to a channel, the configured bot user must have been added to the channel. The <b>file</b> parameter takes the vault ID of a file that will be uploaded to Slack. Only files in the vault can be uploaded to Slack.
-
-#### Action Parameters
-
-PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
---------- | -------- | ----------- | ---- | --------
-**destination** | required | Channel (e.g. #channel or C1A1A1AAA) or user (e.g. @user or U1A1A1AAA) to upload to | string | `slack channel name` `slack channel id` `slack user name` `slack user id` |
-**parent_message_ts** | optional | Parent message timestamp to reply in thread | string | `slack message ts` |
-**file** | optional | Vault ID of file to upload | string | `vault id` `sha1` |
-**content** | optional | Contents of the file | string | |
-**caption** | optional | Caption to add to the file | string | |
-**filetype** | optional | A file type identifier (https://docs.slack.dev/reference/objects/file-object/#types) | string | |
-**filename** | optional | Name of the file | string | `file name` |
-
-#### Action Output
-
-DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
---------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.parameter.caption | string | | |
-action_result.parameter.content | string | | |
-action_result.parameter.destination | string | `slack channel name` `slack channel id` `slack user name` `slack user id` | |
-action_result.parameter.file | string | `vault id` `sha1` | |
-action_result.parameter.filename | string | `file name` | |
-action_result.parameter.filetype | string | | |
-action_result.parameter.parent_message_ts | string | `slack message ts` | 1612429747.000100 |
-action_result.data.\*.caption.channel | string | | |
-action_result.data.\*.caption.comment | string | | |
-action_result.data.\*.caption.created | numeric | | |
-action_result.data.\*.caption.id | string | | |
-action_result.data.\*.caption.is_intro | boolean | | True False |
-action_result.data.\*.caption.timestamp | numeric | | |
-action_result.data.\*.caption.user | string | `slack channel name` `slack channel id` `slack user name` `slack user id` | |
-action_result.data.\*.destinations | string | `slack channel name` `slack channel id` `slack user name` `slack user id` | |
-action_result.data.\*.file.comments_count | numeric | | |
-action_result.data.\*.file.created | numeric | | |
-action_result.data.\*.file.display_as_bot | boolean | | True False |
-action_result.data.\*.file.edit_link | string | | https://test.slack.com/files/U017MJM0352/F01NK7Y5LSG/adb3e6f532264cee9ccf4589808bb489/edit |
-action_result.data.\*.file.editable | boolean | | True False |
-action_result.data.\*.file.external_type | string | | |
-action_result.data.\*.file.file_access | string | | visible |
-action_result.data.\*.file.filetype | string | | |
-action_result.data.\*.file.has_more_shares | boolean | | True False |
-action_result.data.\*.file.has_rich_preview | boolean | | True False |
-action_result.data.\*.file.id | string | | |
-action_result.data.\*.file.image_exif_rotation | numeric | | |
-action_result.data.\*.file.is_external | boolean | | True False |
-action_result.data.\*.file.is_public | boolean | | True False |
-action_result.data.\*.file.is_starred | boolean | | True False |
-action_result.data.\*.file.lines | numeric | | 5 |
-action_result.data.\*.file.lines_more | numeric | | 0 |
-action_result.data.\*.file.media_display_type | string | | audio |
-action_result.data.\*.file.mimetype | string | | |
-action_result.data.\*.file.mode | string | | |
-action_result.data.\*.file.name | string | `vault id` | |
-action_result.data.\*.file.original_h | numeric | | |
-action_result.data.\*.file.original_w | numeric | | |
-action_result.data.\*.file.permalink | string | `url` | |
-action_result.data.\*.file.permalink_public | string | `url` | |
-action_result.data.\*.file.pretty_type | string | | |
-action_result.data.\*.file.preview | string | | This is test Text File...!!!
-
-Malicious....Me....Not at all...!!!!! |
-action_result.data.\*.file.preview_highlight | string | | <div class="CodeMirror cm-s-default CodeMirrorServer" oncopy="if(event.clipboardData){event.clipboardData.setData('text/plain',window.getSelection().toString().replace(/\\u200b/g,''));event.preventDefault();event.stopPropagation();}"> <div class="CodeMirror-code"> <div><pre>This is test Text File...!!!</pre></div> <div><pre></pre></div> <div><pre>Malicious....Me....Not at all...!!!!!</pre></div> <div><pre></pre></div> <div><pre></pre></div> </div> </div> |
-action_result.data.\*.file.preview_is_truncated | boolean | | True False |
-action_result.data.\*.file.public_url_shared | boolean | | True False |
-action_result.data.\*.file.shares.private.D0178M2S1F0.\*.reply_count | numeric | | 0 |
-action_result.data.\*.file.shares.private.D0178M2S1F0.\*.reply_users_count | numeric | | 0 |
-action_result.data.\*.file.shares.private.D0178M2S1F0.\*.share_user_id | string | | U017MJM0352 |
-action_result.data.\*.file.shares.private.D0178M2S1F0.\*.ts | string | | 1613561698.000800 |
-action_result.data.\*.file.shares.private.D03B21ZMWUX.\*.reply_count | numeric | | 0 |
-action_result.data.\*.file.shares.private.D03B21ZMWUX.\*.reply_users_count | numeric | | 0 |
-action_result.data.\*.file.shares.private.D03B21ZMWUX.\*.share_user_id | string | | U03BV8FG9QR |
-action_result.data.\*.file.shares.private.D03B21ZMWUX.\*.ts | string | | 1685441595.375099 |
-action_result.data.\*.file.shares.public.C0183RKACNM.\*.channel_name | string | | channel_1 |
-action_result.data.\*.file.shares.public.C0183RKACNM.\*.reply_count | numeric | | 0 |
-action_result.data.\*.file.shares.public.C0183RKACNM.\*.reply_users_count | numeric | | 0 |
-action_result.data.\*.file.shares.public.C0183RKACNM.\*.share_user_id | string | | U017MJM0352 |
-action_result.data.\*.file.shares.public.C0183RKACNM.\*.team_id | string | | TEW1DJ485 |
-action_result.data.\*.file.shares.public.C0183RKACNM.\*.ts | string | | 1613560595.000700 |
-action_result.data.\*.file.shares.public.C02PZGBH162.\*.channel_name | string | | general |
-action_result.data.\*.file.shares.public.C02PZGBH162.\*.latest_reply | string | | 1685441154.232599 |
-action_result.data.\*.file.shares.public.C02PZGBH162.\*.reply_count | numeric | | 278 |
-action_result.data.\*.file.shares.public.C02PZGBH162.\*.reply_users_count | numeric | | 1 |
-action_result.data.\*.file.shares.public.C02PZGBH162.\*.share_user_id | string | | U03BV8FG9QR |
-action_result.data.\*.file.shares.public.C02PZGBH162.\*.team_id | string | | T02Q675CX6W |
-action_result.data.\*.file.shares.public.C02PZGBH162.\*.thread_ts | string | | 1653648742.306039 |
-action_result.data.\*.file.shares.public.C02PZGBH162.\*.ts | string | | 1684848706.077519 |
-action_result.data.\*.file.shares.public.CEVKZACJ0.\*.channel_name | string | | general |
-action_result.data.\*.file.shares.public.CEVKZACJ0.\*.reply_count | numeric | | 0 |
-action_result.data.\*.file.shares.public.CEVKZACJ0.\*.reply_users_count | numeric | | 0 |
-action_result.data.\*.file.shares.public.CEVKZACJ0.\*.share_user_id | string | | U017MJM0352 |
-action_result.data.\*.file.shares.public.CEVKZACJ0.\*.team_id | string | | TEW1DJ485 |
-action_result.data.\*.file.shares.public.CEVKZACJ0.\*.ts | string | | 1613561691.000900 |
-action_result.data.\*.file.size | numeric | | |
-action_result.data.\*.file.timestamp | numeric | | |
-action_result.data.\*.file.title | string | `vault id` | |
-action_result.data.\*.file.url_private | string | `url` | |
-action_result.data.\*.file.url_private_download | string | `url` | |
-action_result.data.\*.file.user_team | string | | E02PYRE04SJ |
-action_result.data.\*.ok | boolean | | True False |
-action_result.data.\*.sender | string | `slack channel name` `slack channel id` `slack user name` `slack user id` | |
-action_result.data.\*.thumbnails.thumb_1024.height | numeric | | |
-action_result.data.\*.thumbnails.thumb_1024.img_url | string | `url` | |
-action_result.data.\*.thumbnails.thumb_1024.width | numeric | | |
-action_result.data.\*.thumbnails.thumb_160.img_url | string | `url` | |
-action_result.data.\*.thumbnails.thumb_360.height | numeric | | |
-action_result.data.\*.thumbnails.thumb_360.img_url | string | `url` | |
-action_result.data.\*.thumbnails.thumb_360.width | numeric | | |
-action_result.data.\*.thumbnails.thumb_480.height | numeric | | |
-action_result.data.\*.thumbnails.thumb_480.img_url | string | `url` | |
-action_result.data.\*.thumbnails.thumb_480.width | numeric | | |
-action_result.data.\*.thumbnails.thumb_64.img_url | string | `url` | |
-action_result.data.\*.thumbnails.thumb_720.height | numeric | | |
-action_result.data.\*.thumbnails.thumb_720.img_url | string | `url` | |
-action_result.data.\*.thumbnails.thumb_720.width | numeric | | |
-action_result.data.\*.thumbnails.thumb_80.img_url | string | `url` | |
-action_result.data.\*.thumbnails.thumb_800.height | numeric | | 500 |
-action_result.data.\*.thumbnails.thumb_800.img_url | string | | https://files.slack.com/files-tmb/T02PYRE04SJ-F05953US9S8-eee172f726/castle_800.jpg |
-action_result.data.\*.thumbnails.thumb_800.width | numeric | | 800 |
-action_result.data.\*.thumbnails.thumb_960.height | numeric | | |
-action_result.data.\*.thumbnails.thumb_960.img_url | string | `url` | |
-action_result.data.\*.thumbnails.thumb_960.width | numeric | | |
-action_result.data.\*.thumbnails.thumb_pdf.height | numeric | | 1210 |
-action_result.data.\*.thumbnails.thumb_pdf.img_url | string | | https://files.slack.com/files-tmb/T02PYRE04SJ-F058N33Q0LF-99144bfa78/test-4.8-user-intro_thumb_pdf.png |
-action_result.data.\*.thumbnails.thumb_pdf.width | numeric | | 935 |
-action_result.data.\*.thumbnails.thumb_tiny.img_url | string | | AwAZABlYEjWLJACjqcck0/dB6N+QqAHFl/20/pUzPKtwI41/d8YGOCK0sZ3FljTyyduR3BHIqh5Ke9W2I2XIU5UEAfnVWmkDZLE6GMxyEhSchh2NSAqF2i6IX02mqcX3KfRuLYmZo0iMcbFixGWIxUG9fUUP9w1XpN2Glc//2Q== |
-action_result.data.\*.thumbnails.thumb_video.height | numeric | | 1080 |
-action_result.data.\*.thumbnails.thumb_video.img_url | string | | https://files.slack.com/files-tmb/T02PYRE04SJ-F0592K186FL-ec41ed9997/mixkit-people-walking-in-front-of-a-building-4169_n9nxlxmf.compressed_thumb_video.jpeg |
-action_result.data.\*.thumbnails.thumb_video.width | numeric | | 1920 |
-action_result.summary | string | | |
-action_result.message | string | | File uploaded successfully |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 
@@ -1382,18 +806,18 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.parameter.confirmation | string | | |
+action_result.status | string | | success failure |
+action_result.message | string | | |
 action_result.parameter.destination | string | `slack user name` `slack user id` | |
 action_result.parameter.question | string | | |
 action_result.parameter.responses | string | | |
-action_result.data.\*.action_ts | string | | |
+action_result.parameter.confirmation | string | | |
+action_result.data.\*.actions.\*.value | string | | |
 action_result.data.\*.actions.\*.name | string | | |
 action_result.data.\*.actions.\*.type | string | | |
-action_result.data.\*.actions.\*.value | string | | |
+action_result.data.\*.action_ts | string | | |
 action_result.data.\*.attachment_id | string | | |
 action_result.data.\*.callback_id | string | | |
-action_result.data.\*.channel | string | `slack channel id` | |
 action_result.data.\*.channel.id | string | | |
 action_result.data.\*.channel.name | string | | |
 action_result.data.\*.enterprise.id | string | | E02PYRE04SJ |
@@ -1417,7 +841,6 @@ action_result.data.\*.message.ts | string | | |
 action_result.data.\*.message.type | string | | |
 action_result.data.\*.message.user | string | | |
 action_result.data.\*.message_ts | string | `slack message ts` | |
-action_result.data.\*.ok | boolean | | True False |
 action_result.data.\*.original_message.app_id | string | | A056963QALF |
 action_result.data.\*.original_message.attachments.\*.actions.\*.id | string | | |
 action_result.data.\*.original_message.attachments.\*.actions.\*.name | string | | |
@@ -1458,9 +881,8 @@ action_result.data.\*.user.id | string | | |
 action_result.data.\*.user.name | string | | |
 action_result.data.\*.user.team_id | string | | T02Q675CX6W |
 action_result.summary.question_id | string | `slack question id` | |
-action_result.summary.response | string | | |
 action_result.summary.response_received | boolean | | True False |
-action_result.message | string | | Response received: True, Question id: c2bc5f7cfbb34e13a7ada4aa6e6bb7b5, Response: yes |
+action_result.summary.response | string | | |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 
@@ -1485,171 +907,77 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
+action_result.status | string | | success failure |
+action_result.message | string | | |
 action_result.parameter.destination | string | `slack user name` `slack user id` | |
 action_result.parameter.question | string | | |
 action_result.parameter.responses | string | | |
-action_result.data.\*.action_ts | string | | |
-action_result.data.\*.actions.\*.name | string | | |
-action_result.data.\*.actions.\*.type | string | | |
-action_result.data.\*.answer_path | string | | /opt/test/local_data/app_states/3ac26c7f-baa4-4583-86ff-5aac82778a86/2d13708f3f0147959880dcbf080147f2.json |
-action_result.data.\*.attachment_id | string | | |
-action_result.data.\*.callback_id | string | | |
-action_result.data.\*.channel | string | `slack channel id` | |
-action_result.data.\*.channel.id | string | | |
-action_result.data.\*.channel.name | string | | |
-action_result.data.\*.is_app_unfurl | boolean | | True False |
-action_result.data.\*.message.attachments.\*.actions.\*.id | string | | |
-action_result.data.\*.message.attachments.\*.actions.\*.name | string | | |
-action_result.data.\*.message.attachments.\*.actions.\*.style | string | | |
-action_result.data.\*.message.attachments.\*.actions.\*.text | string | | |
-action_result.data.\*.message.attachments.\*.actions.\*.type | string | | |
-action_result.data.\*.message.attachments.\*.actions.\*.value | string | | |
-action_result.data.\*.message.attachments.\*.callback_id | string | | |
-action_result.data.\*.message.attachments.\*.color | string | | |
-action_result.data.\*.message.attachments.\*.fallback | string | | |
-action_result.data.\*.message.attachments.\*.id | numeric | | |
-action_result.data.\*.message.attachments.\*.text | string | | |
-action_result.data.\*.message.bot_id | string | | |
-action_result.data.\*.message.text | string | | |
-action_result.data.\*.message.ts | string | | |
-action_result.data.\*.message.type | string | | |
-action_result.data.\*.message.user | string | | |
-action_result.data.\*.message_ts | string | `slack message ts` | |
-action_result.data.\*.ok | boolean | | True False |
-action_result.data.\*.original_message.attachments.\*.actions.\*.id | string | | |
-action_result.data.\*.original_message.attachments.\*.actions.\*.name | string | | |
-action_result.data.\*.original_message.attachments.\*.actions.\*.style | string | | |
-action_result.data.\*.original_message.attachments.\*.actions.\*.text | string | | |
-action_result.data.\*.original_message.attachments.\*.actions.\*.type | string | | |
-action_result.data.\*.original_message.attachments.\*.actions.\*.value | string | | |
-action_result.data.\*.original_message.attachments.\*.callback_id | string | | |
-action_result.data.\*.original_message.attachments.\*.color | string | | |
-action_result.data.\*.original_message.attachments.\*.fallback | string | | |
-action_result.data.\*.original_message.attachments.\*.id | numeric | | |
-action_result.data.\*.original_message.attachments.\*.text | string | | |
-action_result.data.\*.original_message.bot_id | string | | |
-action_result.data.\*.original_message.text | string | | |
-action_result.data.\*.original_message.ts | string | `slack message ts` | |
-action_result.data.\*.original_message.type | string | | |
-action_result.data.\*.original_message.user | string | | |
 action_result.data.\*.qid | string | `slack question id` | |
-action_result.data.\*.response_url | string | | |
-action_result.data.\*.team.domain | string | `domain` | |
-action_result.data.\*.team.id | string | | |
-action_result.data.\*.token | string | | |
-action_result.data.\*.ts | string | | |
-action_result.data.\*.user.id | string | | |
-action_result.data.\*.user.name | string | | |
-action_result.summary.response | string | | |
+action_result.data.\*.answer_path | string | | /opt/test/local_data/app_states/3ac26c7f-baa4-4583-86ff-5aac82778a86/2d13708f3f0147959880dcbf080147f2.json |
 action_result.summary.response_received | boolean | | True False |
-action_result.message | string | | Response received: True, Question id: c2bc5f7cfbb34e13a7ada4aa6e6bb7b5, Response: yes |
+action_result.summary.response | string | | |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 
-## action: 'get response'
+## action: 'create channel'
 
-Get the response to a previously asked question
+Create a new Slack channel
 
-Type: **investigate** <br>
-Read only: **True**
-
-The purpose of the 'get response' action is to get the response of a question, asked using the 'ask question' action, that timed out before it could get the response.<br>The action will check to see if a question has been answered.<br><ul><li>If the user has answered the question, the question id generated in the 'ask question' action can be used to get the response.</li><li>If no response is yet available, the action will fail.</li></ul>
-
-#### Action Parameters
-
-PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
---------- | -------- | ----------- | ---- | --------
-**question_id** | required | Question ID | string | `slack question id` |
-
-#### Action Output
-
-DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
---------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.parameter.question_id | string | `slack question id` | |
-action_result.data.\*.payloads.\*.action_ts | string | | |
-action_result.data.\*.payloads.\*.actions.\*.name | string | | |
-action_result.data.\*.payloads.\*.actions.\*.type | string | | |
-action_result.data.\*.payloads.\*.actions.\*.value | string | | |
-action_result.data.\*.payloads.\*.attachment_id | string | | |
-action_result.data.\*.payloads.\*.callback_id | string | | |
-action_result.data.\*.payloads.\*.channel.id | string | | |
-action_result.data.\*.payloads.\*.channel.name | string | | |
-action_result.data.\*.payloads.\*.is_app_unfurl | boolean | | True False |
-action_result.data.\*.payloads.\*.message_ts | string | `slack message ts` | |
-action_result.data.\*.payloads.\*.original_message.attachments.\*.actions.\*.id | string | | |
-action_result.data.\*.payloads.\*.original_message.attachments.\*.actions.\*.name | string | | |
-action_result.data.\*.payloads.\*.original_message.attachments.\*.actions.\*.style | string | | |
-action_result.data.\*.payloads.\*.original_message.attachments.\*.actions.\*.text | string | | |
-action_result.data.\*.payloads.\*.original_message.attachments.\*.actions.\*.type | string | | |
-action_result.data.\*.payloads.\*.original_message.attachments.\*.actions.\*.value | string | | |
-action_result.data.\*.payloads.\*.original_message.attachments.\*.callback_id | string | | |
-action_result.data.\*.payloads.\*.original_message.attachments.\*.color | string | | |
-action_result.data.\*.payloads.\*.original_message.attachments.\*.fallback | string | | |
-action_result.data.\*.payloads.\*.original_message.attachments.\*.id | numeric | | |
-action_result.data.\*.payloads.\*.original_message.attachments.\*.text | string | | |
-action_result.data.\*.payloads.\*.original_message.bot_id | string | | |
-action_result.data.\*.payloads.\*.original_message.text | string | | |
-action_result.data.\*.payloads.\*.original_message.ts | string | `slack message ts` | |
-action_result.data.\*.payloads.\*.original_message.type | string | | |
-action_result.data.\*.payloads.\*.original_message.user | string | | |
-action_result.data.\*.payloads.\*.response_url | string | | |
-action_result.data.\*.payloads.\*.team.domain | string | `domain` | |
-action_result.data.\*.payloads.\*.team.id | string | | |
-action_result.data.\*.payloads.\*.token | string | | |
-action_result.data.\*.payloads.\*.user.id | string | | |
-action_result.data.\*.payloads.\*.user.name | string | | |
-action_result.summary.response | string | | |
-action_result.summary.response_received | boolean | | True False |
-action_result.message | string | | Response received: True, Response: yes |
-summary.total_objects | numeric | | 1 |
-summary.total_objects_successful | numeric | | 1 |
-
-## action: 'on poll'
-
-Start SlackBot and make health checks to it
-
-Type: **ingest** <br>
-Read only: **True**
-
-Enabling ingestion causes the on poll action to be called every polling interval (configured in ingestion settings). The on poll action will check if SlackBot is running; if it is not, the action will start it. No new containers or artifacts will be created by this action.
-
-#### Action Parameters
-
-PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
---------- | -------- | ----------- | ---- | --------
-**start_time** | optional | Parameter ignored in this app | numeric | |
-**end_time** | optional | Parameter ignored in this app | numeric | |
-**container_id** | optional | Parameter ignored in this app | string | |
-**container_count** | optional | Parameter ignored in this app | numeric | |
-**artifact_count** | optional | Parameter ignored in this app | numeric | |
-
-#### Action Output
-
-No Output
-
-## action: 'stop bot'
-
-Stop SlackBot
-
-Type: **correct** <br>
+Type: **generic** <br>
 Read only: **False**
 
-This action will stop SlackBot if it is running. It will also disable ingestion if it is enabled.
+To create a private channel, use the 'channel_type' selection parameter. This action requires a User OAuth Token defined in the asset. For naming conventions, see https://api.slack.com/methods/conversations.create.
 
 #### Action Parameters
 
-No parameters are required for this action
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**name** | required | Name of channel | string | |
+**channel_type** | optional | Type of channel to create (public or private) | string | |
 
 #### Action Output
 
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.data | string | | |
-action_result.summary | string | | |
-action_result.message | string | | SlackBot isn't running, not going to stop it. Ingestion has been disabled. |
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.parameter.name | string | | |
+action_result.parameter.channel_type | string | | |
+action_result.data.\*.channel.name | string | `slack channel name` | name |
+action_result.data.\*.channel.creator | string | | UEVKZ9ZLL |
+action_result.data.\*.channel.created | numeric | | 1595502058 |
+action_result.data.\*.channel.is_private | boolean | | True False |
+action_result.data.\*.channel.context_team_id | string | | T02Q675CX6W |
+action_result.data.\*.channel.id | string | | C017K3XMNTF |
+action_result.data.\*.channel.is_archived | boolean | | True False |
+action_result.data.\*.channel.is_channel | boolean | | True False |
+action_result.data.\*.channel.is_ext_shared | boolean | | True False |
+action_result.data.\*.channel.is_general | boolean | | True False |
+action_result.data.\*.channel.is_group | boolean | | True False |
+action_result.data.\*.channel.is_im | boolean | | True False |
+action_result.data.\*.channel.is_member | boolean | | True False |
+action_result.data.\*.channel.is_moved | numeric | | 0 |
+action_result.data.\*.channel.is_mpim | boolean | | True False |
+action_result.data.\*.channel.is_open | boolean | | True False |
+action_result.data.\*.channel.is_org_shared | boolean | | True False |
+action_result.data.\*.channel.is_pending_ext_shared | boolean | | True False |
+action_result.data.\*.channel.is_shared | boolean | | True False |
+action_result.data.\*.channel.last_read | string | | 0000000000.000000 |
+action_result.data.\*.channel.name_normalized | string | | name |
+action_result.data.\*.channel.parent_conversation | string | | |
+action_result.data.\*.channel.priority | numeric | | 0 |
+action_result.data.\*.channel.purpose.creator | string | | |
+action_result.data.\*.channel.purpose.last_set | numeric | | 0 |
+action_result.data.\*.channel.purpose.value | string | | |
+action_result.data.\*.channel.shared_team_ids | string | | TEW1DJ485 |
+action_result.data.\*.channel.topic.creator | string | | |
+action_result.data.\*.channel.topic.last_set | numeric | | 0 |
+action_result.data.\*.channel.topic.value | string | | |
+action_result.data.\*.channel.unlinked | numeric | | 0 |
+action_result.data.\*.channel.updated | numeric | | 1683204339510 |
+action_result.data.\*.ok | boolean | | True False |
+action_result.data.\*.response_metadata.warnings | string | | missing_charset |
+action_result.data.\*.warning | string | | missing_charset |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 
@@ -1673,25 +1001,628 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.parameter.channel_id | string | `slack channel id` | C123ABC456 |
-action_result.parameter.message_ts | string | `slack message timestamp` | 1234567890.123456 |
-action_result.data.\*.ok | boolean | | True False |
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.parameter.channel_id | string | `slack channel id` | |
+action_result.parameter.message_ts | string | `slack message timestamp` | |
 action_result.data.\*.messages.\*.type | string | | message |
 action_result.data.\*.messages.\*.user | string | | U123ABC456 |
-action_result.data.\*.messages.\*.team | string | | T06LF49SKJM |
-action_result.data.\*.messages.\*.is_locked | boolean | | True False |
-action_result.data.\*.messages.\*.subscribed | boolean | | True False |
 action_result.data.\*.messages.\*.text | string | | Hello, this is a test message |
-action_result.data.\*.messages.\*.ts | string | | 1512085950.000216 |
-action_result.data.\*.messages.\*.thread_ts | string | | 1512085950.000216 |
 action_result.data.\*.messages.\*.client_msg_id | string | | aa73fcc6-e1d4-480e-a466-3edad41bf011 |
+action_result.data.\*.messages.\*.is_locked | boolean | | True False |
+action_result.data.\*.messages.\*.latest_reply | string | | 1704970971.951549 |
 action_result.data.\*.messages.\*.parent_user_id | string | | U123ABC456 |
 action_result.data.\*.messages.\*.reply_count | numeric | | 1 |
 action_result.data.\*.messages.\*.reply_users_count | numeric | | 1 |
-action_result.data.\*.messages.\*.latest_reply | string | | 1704970971.951549 |
+action_result.data.\*.messages.\*.subscribed | boolean | | True False |
+action_result.data.\*.messages.\*.team | string | | T06LF49SKJM |
+action_result.data.\*.messages.\*.thread_ts | string | | 1512085950.000216 |
+action_result.data.\*.messages.\*.ts | string | | 1512085950.000216 |
+action_result.data.\*.ok | boolean | | True False |
+action_result.summary.num_messages | numeric | | 28 |
+summary.total_objects | numeric | | 1 |
+summary.total_objects_successful | numeric | | 1 |
+
+## action: 'get response'
+
+Get the response to a previously asked question
+
+Type: **investigate** <br>
+Read only: **True**
+
+The purpose of the 'get response' action is to get the response of a question, asked using the 'ask question' action, that timed out before it could get the response.<br>The action will check to see if a question has been answered.<br><ul><li>If the user has answered the question, the question id generated in the 'ask question' action can be used to get the response.</li><li>If no response is yet available, the action will fail.</li></ul>
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**question_id** | required | Question ID | string | `slack question id` |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.parameter.question_id | string | `slack question id` | |
+action_result.data.\*.payloads.\*.original_message.attachments.\*.text | string | | |
+action_result.data.\*.payloads.\*.original_message.attachments.\*.actions.\*.id | string | | |
+action_result.data.\*.payloads.\*.original_message.attachments.\*.actions.\*.name | string | | |
+action_result.data.\*.payloads.\*.original_message.attachments.\*.actions.\*.style | string | | |
+action_result.data.\*.payloads.\*.original_message.attachments.\*.actions.\*.text | string | | |
+action_result.data.\*.payloads.\*.original_message.attachments.\*.actions.\*.type | string | | |
+action_result.data.\*.payloads.\*.original_message.attachments.\*.actions.\*.value | string | | |
+action_result.data.\*.payloads.\*.original_message.attachments.\*.callback_id | string | | |
+action_result.data.\*.payloads.\*.original_message.attachments.\*.color | string | | |
+action_result.data.\*.payloads.\*.original_message.attachments.\*.fallback | string | | |
+action_result.data.\*.payloads.\*.original_message.attachments.\*.id | numeric | | |
+action_result.data.\*.payloads.\*.original_message.bot_id | string | | |
+action_result.data.\*.payloads.\*.original_message.text | string | | |
+action_result.data.\*.payloads.\*.original_message.ts | string | `slack message ts` | |
+action_result.data.\*.payloads.\*.original_message.type | string | | |
+action_result.data.\*.payloads.\*.original_message.user | string | | |
+action_result.data.\*.payloads.\*.actions.\*.value | string | | |
+action_result.data.\*.payloads.\*.actions.\*.name | string | | |
+action_result.data.\*.payloads.\*.actions.\*.type | string | | |
+action_result.data.\*.payloads.\*.user.name | string | | |
+action_result.data.\*.payloads.\*.user.id | string | | |
+action_result.data.\*.payloads.\*.action_ts | string | | |
+action_result.data.\*.payloads.\*.attachment_id | string | | |
+action_result.data.\*.payloads.\*.callback_id | string | | |
+action_result.data.\*.payloads.\*.channel.id | string | | |
+action_result.data.\*.payloads.\*.channel.name | string | | |
+action_result.data.\*.payloads.\*.is_app_unfurl | boolean | | True False |
+action_result.data.\*.payloads.\*.message_ts | string | `slack message ts` | |
+action_result.data.\*.payloads.\*.response_url | string | | |
+action_result.data.\*.payloads.\*.team.domain | string | `domain` | |
+action_result.data.\*.payloads.\*.team.id | string | | |
+action_result.data.\*.payloads.\*.token | string | | |
+action_result.data.\*.question_id | string | `slack question id` | |
+action_result.summary.response_received | boolean | | True False |
+action_result.summary.response | string | | |
+summary.total_objects | numeric | | 1 |
+summary.total_objects_successful | numeric | | 1 |
+
+## action: 'get user'
+
+Get information about a user of a Slack team
+
+Type: **investigate** <br>
+Read only: **True**
+
+This action will ignore email_address parameter when user_id parameter is provided.
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**user_id** | optional | Unique ID of user to get info of | string | `slack user id` |
+**email_address** | optional | Email address of user to get info of. Will not be used if User ID is specified | string | `email` |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.parameter.user_id | string | `slack user id` | |
+action_result.parameter.email_address | string | `email` | |
+action_result.data.\*.ok | boolean | | True False |
+action_result.data.\*.user.id | string | `slack user id` | UEV44MD9N |
+action_result.data.\*.user.name | string | `slack user name` | @testinvite-noreply |
+action_result.data.\*.user.real_name | string | | Slackbot |
+action_result.data.\*.user.profile.email | string | `email` | slackbot@test.com |
+action_result.data.\*.user.profile.always_active | boolean | | True False |
+action_result.data.\*.user.profile.api_app_id | string | | A017K8386N9 |
+action_result.data.\*.user.profile.avatar_hash | string | | g6f8c4b87d3e |
+action_result.data.\*.user.profile.bot_id | string | | B017LK9BYTC |
+action_result.data.\*.user.profile.display_name | string | | Slackbot |
+action_result.data.\*.user.profile.display_name_normalized | string | | Slackbot |
+action_result.data.\*.user.profile.fields | string | | |
+action_result.data.\*.user.profile.first_name | string | | Slackbot |
+action_result.data.\*.user.profile.image_192 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_192.png |
+action_result.data.\*.user.profile.image_24 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_24.png |
+action_result.data.\*.user.profile.image_32 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_32.png |
+action_result.data.\*.user.profile.image_48 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_48.png |
+action_result.data.\*.user.profile.image_512 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_512.png |
+action_result.data.\*.user.profile.image_72 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_72.png |
+action_result.data.\*.user.profile.is_custom_image | boolean | | True False |
+action_result.data.\*.user.profile.last_name | string | | Slackbot |
+action_result.data.\*.user.profile.phone | string | | |
+action_result.data.\*.user.profile.real_name | string | | Slackbot |
+action_result.data.\*.user.profile.real_name_normalized | string | | Test Invite Bot |
+action_result.data.\*.user.profile.skype | string | | |
+action_result.data.\*.user.profile.status_emoji | string | | |
+action_result.data.\*.user.profile.status_expiration | numeric | | 0 |
+action_result.data.\*.user.profile.status_text | string | | |
+action_result.data.\*.user.profile.status_text_canonical | string | | |
+action_result.data.\*.user.profile.team | string | | TEW1DJ485 |
+action_result.data.\*.user.profile.title | string | | |
+action_result.data.\*.user.color | string | | 4bbe2e |
+action_result.data.\*.user.deleted | boolean | | True False |
+action_result.data.\*.user.enterprise_user.enterprise_id | string | | E02PYRE04SJ |
+action_result.data.\*.user.enterprise_user.enterprise_name | string | | Test Soar Sandbox |
+action_result.data.\*.user.enterprise_user.id | string | | U03DU1BA9ML |
+action_result.data.\*.user.enterprise_user.is_admin | boolean | | True False |
+action_result.data.\*.user.enterprise_user.is_owner | boolean | | True False |
+action_result.data.\*.user.enterprise_user.is_primary_owner | boolean | | True False |
+action_result.data.\*.user.is_admin | boolean | | True False |
+action_result.data.\*.user.is_app_user | boolean | | True False |
+action_result.data.\*.user.is_bot | boolean | | True False |
+action_result.data.\*.user.is_email_confirmed | boolean | | True False |
+action_result.data.\*.user.is_owner | boolean | | True False |
+action_result.data.\*.user.is_primary_owner | boolean | | True False |
+action_result.data.\*.user.is_restricted | boolean | | True False |
+action_result.data.\*.user.is_ultra_restricted | boolean | | True False |
+action_result.data.\*.user.team_id | string | | TEW1DJ485 |
+action_result.data.\*.user.tz | string | | America/Los_Angeles |
+action_result.data.\*.user.tz_label | string | | Pacific Standard Time |
+action_result.data.\*.user.tz_offset | numeric | | -28800 |
+action_result.data.\*.user.updated | numeric | | 1569140077 |
+action_result.data.\*.user.who_can_share_contact_card | string | | EVERYONE |
+summary.total_objects | numeric | | 1 |
+summary.total_objects_successful | numeric | | 1 |
+
+## action: 'invite users'
+
+Invite user(s) to a Slack channel
+
+Type: **generic** <br>
+Read only: **False**
+
+Up to 1000 users may be added at one time. This action requires a User OAuth Token defined in the asset. For permissions, see: https://api.slack.com/methods/conversations.invite.
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**channel_id** | required | ID of channel | string | `slack channel id` |
+**users** | required | Comma-separated list of users (IDs) to invite | string | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.parameter.channel_id | string | `slack channel id` | |
+action_result.parameter.users | string | | |
+action_result.data.\*.channel.name | string | `slack channel name` | channel1 |
+action_result.data.\*.channel.creator | string | | U6ZA4J17F |
+action_result.data.\*.channel.context_team_id | string | | T02Q675CX6W |
+action_result.data.\*.channel.created | numeric | | 1562715284 |
+action_result.data.\*.channel.id | string | | CLBC12T3R |
+action_result.data.\*.channel.is_archived | boolean | | True False |
+action_result.data.\*.channel.is_channel | boolean | | True False |
+action_result.data.\*.channel.is_ext_shared | boolean | | True False |
+action_result.data.\*.channel.is_general | boolean | | True False |
+action_result.data.\*.channel.is_group | boolean | | True False |
+action_result.data.\*.channel.is_im | boolean | | True False |
+action_result.data.\*.channel.is_member | boolean | | True False |
+action_result.data.\*.channel.is_moved | numeric | | 0 |
+action_result.data.\*.channel.is_mpim | boolean | | True False |
+action_result.data.\*.channel.is_open | boolean | | True False |
+action_result.data.\*.channel.is_org_shared | boolean | | True False |
+action_result.data.\*.channel.is_pending_ext_shared | boolean | | True False |
+action_result.data.\*.channel.is_private | boolean | | True False |
+action_result.data.\*.channel.is_shared | boolean | | True False |
+action_result.data.\*.channel.last_read | string | | 1562715284.000200 |
+action_result.data.\*.channel.name_normalized | string | | channel1 |
+action_result.data.\*.channel.parent_conversation | string | | |
+action_result.data.\*.channel.purpose.creator | string | | |
+action_result.data.\*.channel.purpose.last_set | numeric | | 0 |
+action_result.data.\*.channel.purpose.value | string | | |
+action_result.data.\*.channel.shared_team_ids | string | | T6YGC45LY |
+action_result.data.\*.channel.topic.creator | string | | |
+action_result.data.\*.channel.topic.last_set | numeric | | 0 |
+action_result.data.\*.channel.topic.value | string | | |
+action_result.data.\*.channel.unlinked | numeric | | 0 |
+action_result.data.\*.channel.updated | numeric | | 1683204116915 |
+action_result.data.\*.ok | boolean | | True False |
+action_result.data.\*.response_metadata.warnings | string | | missing_charset |
+action_result.data.\*.warning | string | | missing_charset |
+summary.total_objects | numeric | | 1 |
+summary.total_objects_successful | numeric | | 1 |
+
+## action: 'list channels'
+
+List public channels of a Slack team
+
+Type: **investigate** <br>
+Read only: **True**
+
+The output of this action is a list of all public channels in the configured Slack team. The channels will be listed with their corresponding channel IDs.
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**limit** | optional | Specify the maximum number of results to return. Default is 100 | numeric | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.parameter.limit | numeric | | |
+action_result.data.\*.channels.\*.name | string | `slack channel name` | |
+action_result.data.\*.channels.\*.id | string | `slack channel id` | |
+action_result.data.\*.channels.\*.context_team_id | string | | T02Q675CX6W |
+action_result.data.\*.channels.\*.created | numeric | | 1545061069 |
+action_result.data.\*.channels.\*.creator | string | | UEVKZ9ZLL |
+action_result.data.\*.channels.\*.is_archived | boolean | | True False |
+action_result.data.\*.channels.\*.is_channel | boolean | | True False |
+action_result.data.\*.channels.\*.is_ext_shared | boolean | | True False |
+action_result.data.\*.channels.\*.is_general | boolean | | True False |
+action_result.data.\*.channels.\*.is_group | boolean | | True False |
+action_result.data.\*.channels.\*.is_im | boolean | | True False |
+action_result.data.\*.channels.\*.is_member | boolean | | True False |
+action_result.data.\*.channels.\*.is_moved | numeric | | 0 |
+action_result.data.\*.channels.\*.is_mpim | boolean | | True False |
+action_result.data.\*.channels.\*.is_org_shared | boolean | | True False |
+action_result.data.\*.channels.\*.is_pending_ext_shared | boolean | | True False |
+action_result.data.\*.channels.\*.is_private | boolean | | True False |
+action_result.data.\*.channels.\*.is_shared | boolean | | True False |
+action_result.data.\*.channels.\*.members | string | | |
+action_result.data.\*.channels.\*.name_normalized | string | | general |
+action_result.data.\*.channels.\*.num_members | numeric | | 23 |
+action_result.data.\*.channels.\*.parent_conversation | string | | |
+action_result.data.\*.channels.\*.purpose.creator | string | | UEVKZ9ZLL |
+action_result.data.\*.channels.\*.purpose.last_set | numeric | | 1545061069 |
+action_result.data.\*.channels.\*.purpose.value | string | | This channel is for workspace-wide communication and announcements. All members are in this channel. |
+action_result.data.\*.channels.\*.topic.creator | string | | UEVKZ9ZLL |
+action_result.data.\*.channels.\*.topic.last_set | numeric | | 1545061069 |
+action_result.data.\*.channels.\*.topic.value | string | | Non-work banter and water cooler conversation |
+action_result.data.\*.channels.\*.unlinked | numeric | | 0 |
+action_result.data.\*.channels.\*.updated | numeric | | 1639075392157 |
+action_result.data.\*.ok | boolean | | True False |
+action_result.data.\*.response_metadata.next_cursor | string | | dGVhbTpDMDE3WENOQVE4TA== |
+action_result.summary.num_public_channels | numeric | | 10 |
+summary.total_objects | numeric | | 1 |
+summary.total_objects_successful | numeric | | 1 |
+
+## action: 'list users'
+
+List users of a Slack team
+
+Type: **investigate** <br>
+Read only: **True**
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**limit** | optional | Specify the maximum number of results to return. Default is 100 | numeric | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.parameter.limit | numeric | | |
+action_result.data.\*.cache_ts | numeric | | |
+action_result.data.\*.members.\*.name | string | `slack user name` | |
+action_result.data.\*.members.\*.profile.real_name | string | | Slackbot |
+action_result.data.\*.members.\*.id | string | `slack user id` | |
+action_result.data.\*.members.\*.profile.email | string | `email` | slackbot@test.com |
+action_result.data.\*.members.\*.color | string | | |
+action_result.data.\*.members.\*.deleted | boolean | | True False |
+action_result.data.\*.members.\*.enterprise_user.enterprise_id | string | | E02PYRE04SJ |
+action_result.data.\*.members.\*.enterprise_user.enterprise_name | string | | Test Soar Sandbox |
+action_result.data.\*.members.\*.enterprise_user.id | string | | U02QJ5JLTNV |
+action_result.data.\*.members.\*.enterprise_user.is_admin | boolean | | True False |
+action_result.data.\*.members.\*.enterprise_user.is_owner | boolean | | True False |
+action_result.data.\*.members.\*.enterprise_user.is_primary_owner | boolean | | True False |
+action_result.data.\*.members.\*.is_admin | boolean | | True False |
+action_result.data.\*.members.\*.is_app_user | boolean | | True False |
+action_result.data.\*.members.\*.is_bot | boolean | | True False |
+action_result.data.\*.members.\*.is_email_confirmed | boolean | | True False |
+action_result.data.\*.members.\*.is_invited_user | boolean | | True False |
+action_result.data.\*.members.\*.is_owner | boolean | | True False |
+action_result.data.\*.members.\*.is_primary_owner | boolean | | True False |
+action_result.data.\*.members.\*.is_restricted | boolean | | True False |
+action_result.data.\*.members.\*.is_ultra_restricted | boolean | | True False |
+action_result.data.\*.members.\*.profile.always_active | boolean | | True False |
+action_result.data.\*.members.\*.profile.api_app_id | string | | AEVNKT17D |
+action_result.data.\*.members.\*.profile.avatar_hash | string | | g6f8c4b87d3e |
+action_result.data.\*.members.\*.profile.bot_id | string | | BEV82RKAM |
+action_result.data.\*.members.\*.profile.display_name | string | | Slackbot |
+action_result.data.\*.members.\*.profile.display_name_normalized | string | | Slackbot |
+action_result.data.\*.members.\*.profile.fields | string | | |
+action_result.data.\*.members.\*.profile.first_name | string | | slackbot |
+action_result.data.\*.members.\*.profile.image_1024 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_1024.png |
+action_result.data.\*.members.\*.profile.image_192 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_192.png |
+action_result.data.\*.members.\*.profile.image_24 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_24.png |
+action_result.data.\*.members.\*.profile.image_32 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_32.png |
+action_result.data.\*.members.\*.profile.image_48 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_48.png |
+action_result.data.\*.members.\*.profile.image_512 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_512.png |
+action_result.data.\*.members.\*.profile.image_72 | string | `url` | https://a.slack-edge.com/80588/img/slackbot_72.png |
+action_result.data.\*.members.\*.profile.image_original | string | `url` | |
+action_result.data.\*.members.\*.profile.is_custom_image | boolean | | True False |
+action_result.data.\*.members.\*.profile.last_name | string | | Slackbot |
+action_result.data.\*.members.\*.profile.phone | string | | |
+action_result.data.\*.members.\*.profile.real_name_normalized | string | | Slackbot |
+action_result.data.\*.members.\*.profile.skype | string | | |
+action_result.data.\*.members.\*.profile.status_emoji | string | | |
+action_result.data.\*.members.\*.profile.status_expiration | numeric | | 0 |
+action_result.data.\*.members.\*.profile.status_text | string | | |
+action_result.data.\*.members.\*.profile.status_text_canonical | string | | |
+action_result.data.\*.members.\*.profile.team | string | | TEW1DJ485 |
+action_result.data.\*.members.\*.profile.title | string | | |
+action_result.data.\*.members.\*.profile.who_can_share_contact_card | string | | NO_ONE |
+action_result.data.\*.members.\*.real_name | string | | Test Invite Bot |
+action_result.data.\*.members.\*.team_id | string | | TEW1DJ485 |
+action_result.data.\*.members.\*.tz | string | | America/Los_Angeles |
+action_result.data.\*.members.\*.tz_label | string | | Pacific Standard Time |
+action_result.data.\*.members.\*.tz_offset | numeric | | -28800 |
+action_result.data.\*.members.\*.updated | numeric | | 1569140077 |
+action_result.data.\*.members.\*.who_can_share_contact_card | string | | EVERYONE |
+action_result.data.\*.ok | boolean | | True False |
+action_result.data.\*.response_metadata.next_cursor | string | | |
 action_result.summary.num_users | numeric | | 28 |
-action_result.message | string | | Num users: 28 |
+summary.total_objects | numeric | | 1 |
+summary.total_objects_successful | numeric | | 1 |
+
+## action: 'send message'
+
+Send a message to Slack
+
+Type: **generic** <br>
+Read only: **False**
+
+The <b>destination</b> parameter can be a channel ID (e.g. C1A1A1AAA), a channel name (e.g. #general). When sending a message to a channel, the configured bot user must have been added to the channel. Slack recommends limiting messages to 4000 characters but the enforced limit is 40000 characters. Passing a "username" as a channel value is deprecated, along with the whole concept of usernames on Slack. Please always use channel-like IDs instead to make sure your message gets to where it's going.
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**destination** | required | Channel (e.g. #channel or C1A1A1AAA) | string | `slack channel name` `slack channel id` `slack user name` `slack user id` |
+**message** | optional | Message to send, required if 'blocks' is not set. If 'blocks' is set, this is used as fallback text | string | |
+**blocks** | optional | Blocks to send, required if 'message' is not set | string | |
+**parent_message_ts** | optional | Parent message timestamp to reply in thread | string | `slack message ts` |
+**reply_broadcast** | optional | Used in conjunction with 'parent_message_ts' and indicates whether reply should be made visible to everyone in the channel or conversation | boolean | |
+**link_names** | optional | Check this if you want to enable announcements in your Slack messages using mentions. E.g.: Use @someone or @channel in your message in combination with this check to notify people | boolean | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.parameter.destination | string | `slack channel name` `slack channel id` `slack user name` `slack user id` | |
+action_result.parameter.message | string | | |
+action_result.parameter.blocks | string | | |
+action_result.parameter.parent_message_ts | string | `slack message ts` | |
+action_result.parameter.reply_broadcast | boolean | | |
+action_result.parameter.link_names | boolean | | |
+action_result.data.\*.status | string | | success failed |
+action_result.data.\*.message.ts | string | `slack message ts` | |
+action_result.data.\*.message.app_id | string | | A03B9SMKUS2 |
+action_result.data.\*.message.blocks.\*.block_id | string | | K60o |
+action_result.data.\*.message.blocks.\*.elements.\*.elements.\*.channel_id | string | | C0183RKACNM |
+action_result.data.\*.message.blocks.\*.elements.\*.elements.\*.range | string | | here |
+action_result.data.\*.message.blocks.\*.elements.\*.elements.\*.text | string | | This is the reply on this timestamp. |
+action_result.data.\*.message.blocks.\*.elements.\*.elements.\*.type | string | | text |
+action_result.data.\*.message.blocks.\*.elements.\*.elements.\*.user_id | string | | UPK123P74AGG |
+action_result.data.\*.message.blocks.\*.elements.\*.type | string | | rich_text_section |
+action_result.data.\*.message.blocks.\*.fields.\*.text | string | | \*Type:\* Paid Time Off |
+action_result.data.\*.message.blocks.\*.fields.\*.type | string | | mrkdwn |
+action_result.data.\*.message.blocks.\*.fields.\*.verbatim | boolean | | True False |
+action_result.data.\*.message.blocks.\*.text.emoji | boolean | | True False |
+action_result.data.\*.message.blocks.\*.text.text | string | | New request |
+action_result.data.\*.message.blocks.\*.text.type | string | | plain_text |
+action_result.data.\*.message.blocks.\*.text.verbatim | boolean | | True False |
+action_result.data.\*.message.blocks.\*.type | string | | rich_text |
+action_result.data.\*.message.bot_id | string | | |
+action_result.data.\*.message.bot_profile.app_id | string | | A017E1NAPSR |
+action_result.data.\*.message.bot_profile.deleted | boolean | | True False |
+action_result.data.\*.message.bot_profile.icons.image_36 | string | | https://a.slack-edge.com/80588/img/plugins/app/bot_36.png |
+action_result.data.\*.message.bot_profile.icons.image_48 | string | | https://a.slack-edge.com/80588/img/plugins/app/bot_48.png |
+action_result.data.\*.message.bot_profile.icons.image_72 | string | | https://a.slack-edge.com/80588/img/plugins/app/service_72.png |
+action_result.data.\*.message.bot_profile.id | string | | B017U24BH25 |
+action_result.data.\*.message.bot_profile.name | string | | Test_Playbook |
+action_result.data.\*.message.bot_profile.team_id | string | | TEW1DJ485 |
+action_result.data.\*.message.bot_profile.updated | numeric | | 1595596858 |
+action_result.data.\*.message.parent_user_id | string | | U017MJM0352 |
+action_result.data.\*.message.root.bot_id | string | | B017U24BH25 |
+action_result.data.\*.message.root.bot_profile.app_id | string | | A017E1NAPSR |
+action_result.data.\*.message.root.bot_profile.deleted | boolean | | True False |
+action_result.data.\*.message.root.bot_profile.icons.image_36 | string | | https://a.slack-edge.com/80588/img/plugins/app/bot_36.png |
+action_result.data.\*.message.root.bot_profile.icons.image_48 | string | | https://a.slack-edge.com/80588/img/plugins/app/bot_48.png |
+action_result.data.\*.message.root.bot_profile.icons.image_72 | string | | https://a.slack-edge.com/80588/img/plugins/app/service_72.png |
+action_result.data.\*.message.root.bot_profile.id | string | | B017U24BH25 |
+action_result.data.\*.message.root.bot_profile.name | string | | Test_Playbook |
+action_result.data.\*.message.root.bot_profile.team_id | string | | TEW1DJ485 |
+action_result.data.\*.message.root.bot_profile.updated | numeric | | 1595596858 |
+action_result.data.\*.message.root.display_as_bot | boolean | | True False |
+action_result.data.\*.message.root.files.\*.created | numeric | | 1613560453 |
+action_result.data.\*.message.root.files.\*.display_as_bot | boolean | | True False |
+action_result.data.\*.message.root.files.\*.edit_link | string | | https://test.slack.com/files/U017MJM0352/F01ND14T56W/adb3e6f532264cee9ccf4589808bb489 |
+action_result.data.\*.message.root.files.\*.editable | boolean | | True False |
+action_result.data.\*.message.root.files.\*.external_type | string | | |
+action_result.data.\*.message.root.files.\*.filetype | string | | text |
+action_result.data.\*.message.root.files.\*.has_rich_preview | boolean | | True False |
+action_result.data.\*.message.root.files.\*.id | string | | F01ND14T56W |
+action_result.data.\*.message.root.files.\*.is_external | boolean | | True False |
+action_result.data.\*.message.root.files.\*.is_public | boolean | | True False |
+action_result.data.\*.message.root.files.\*.is_starred | boolean | | True False |
+action_result.data.\*.message.root.files.\*.lines | numeric | | 5 |
+action_result.data.\*.message.root.files.\*.lines_more | numeric | | 0 |
+action_result.data.\*.message.root.files.\*.mimetype | string | | text/plain |
+action_result.data.\*.message.root.files.\*.mode | string | | snippet |
+action_result.data.\*.message.root.files.\*.name | string | | adb3e6f532264cee9ccf4589808bb489 |
+action_result.data.\*.message.root.files.\*.permalink | string | | https://test.slack.com/files/U017MJM0352/F01ND14T56W/adb3e6f532264cee9ccf4589808bb489 |
+action_result.data.\*.message.root.files.\*.permalink_public | string | | https://slack-files.com/TEW1DJ485-F01ND14T56W-d68a8bf630 |
+action_result.data.\*.message.root.files.\*.pretty_type | string | | Plain Text |
+action_result.data.\*.message.root.files.\*.preview | string | | |
+action_result.data.\*.message.root.files.\*.preview_highlight | string | | |
+action_result.data.\*.message.root.files.\*.preview_is_truncated | boolean | | True False |
+action_result.data.\*.message.root.files.\*.public_url_shared | boolean | | True False |
+action_result.data.\*.message.root.files.\*.size | numeric | | 73 |
+action_result.data.\*.message.root.files.\*.timestamp | numeric | | 1613560453 |
+action_result.data.\*.message.root.files.\*.title | string | | adb3e6f532264cee9ccf4589808bb489 |
+action_result.data.\*.message.root.files.\*.url_private | string | | |
+action_result.data.\*.message.root.files.\*.url_private_download | string | | |
+action_result.data.\*.message.root.files.\*.user | string | | U017MJM0352 |
+action_result.data.\*.message.root.files.\*.username | string | | |
+action_result.data.\*.message.root.latest_reply | string | | 1613564048.001700 |
+action_result.data.\*.message.root.reply_count | numeric | | 1 |
+action_result.data.\*.message.root.reply_users_count | numeric | | 1 |
+action_result.data.\*.message.root.subscribed | boolean | | True False |
+action_result.data.\*.message.root.team | string | | TEW1DJ485 |
+action_result.data.\*.message.root.text | string | | This is a message from Playbook to channel_name |
+action_result.data.\*.message.root.thread_ts | string | | 1613561692.001200 |
+action_result.data.\*.message.root.ts | string | | 1613561692.001200 |
+action_result.data.\*.message.root.type | string | | message |
+action_result.data.\*.message.root.upload | boolean | | True False |
+action_result.data.\*.message.root.user | string | | U017MJM0352 |
+action_result.data.\*.message.subtype | string | | thread_broadcast |
+action_result.data.\*.message.team | string | | TEW1DJ485 |
+action_result.data.\*.message.text | string | | |
+action_result.data.\*.message.thread_ts | string | | 1613561693.000300 |
+action_result.data.\*.message.type | string | | |
+action_result.data.\*.message.user | string | | |
+action_result.data.\*.channel | string | `slack channel id` | |
+action_result.data.\*.ok | boolean | | True False |
+action_result.data.\*.ts | string | | |
+summary.total_objects | numeric | | 1 |
+summary.total_objects_successful | numeric | | 1 |
+
+## action: 'stop bot'
+
+Stop SlackBot
+
+Type: **correct** <br>
+Read only: **False**
+
+This action will stop SlackBot if it is running. It will also disable ingestion if it is enabled.
+
+#### Action Parameters
+
+No parameters are required for this action
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.data.\*.status | string | | success failed |
+action_result.data.\*.message | string | | SlackBot has been stopped. |
+summary.total_objects | numeric | | 1 |
+summary.total_objects_successful | numeric | | 1 |
+
+## action: 'upload file'
+
+Upload file to Slack
+
+Type: **generic** <br>
+Read only: **False**
+
+The <b>destination</b> parameter can be a channel ID (e.g. C1A1A1AAA), a channel name (e.g. #general). When uploading to a channel, the configured bot user must have been added to the channel. The <b>file</b> parameter takes the vault ID of a file that will be uploaded to Slack. Only files in the vault can be uploaded to Slack.
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**destination** | required | Channel (e.g. #channel or C1A1A1AAA) or user (e.g. @user or U1A1A1AAA) to upload to | string | `slack channel name` `slack channel id` `slack user name` `slack user id` |
+**parent_message_ts** | optional | Parent message timestamp to reply in thread | string | `slack message ts` |
+**file** | optional | Vault ID of file to upload | string | `vault id` `sha1` |
+**content** | optional | Contents of the file | string | |
+**caption** | optional | Caption to add to the file | string | |
+**filetype** | optional | A file type identifier (https://docs.slack.dev/reference/objects/file-object/#types) | string | |
+**filename** | optional | Name of the file | string | `file name` |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.parameter.destination | string | `slack channel name` `slack channel id` `slack user name` `slack user id` | |
+action_result.parameter.parent_message_ts | string | `slack message ts` | |
+action_result.parameter.file | string | `vault id` `sha1` | |
+action_result.parameter.content | string | | |
+action_result.parameter.caption | string | | |
+action_result.parameter.filetype | string | | |
+action_result.parameter.filename | string | `file name` | |
+action_result.data.\*.caption.channel | string | | |
+action_result.data.\*.caption.comment | string | | |
+action_result.data.\*.caption.created | numeric | | |
+action_result.data.\*.caption.id | string | | |
+action_result.data.\*.caption.is_intro | boolean | | True False |
+action_result.data.\*.caption.timestamp | numeric | | |
+action_result.data.\*.caption.user | string | `slack channel name` `slack channel id` `slack user name` `slack user id` | |
+action_result.data.\*.destinations | string | `slack channel name` `slack channel id` `slack user name` `slack user id` | |
+action_result.data.\*.file.comments_count | numeric | | |
+action_result.data.\*.file.created | numeric | | |
+action_result.data.\*.file.display_as_bot | boolean | | True False |
+action_result.data.\*.file.edit_link | string | | https://test.slack.com/files/U017MJM0352/F01NK7Y8LTU/adb3e6f532264cee9ccf4589808bb489 |
+action_result.data.\*.file.editable | boolean | | True False |
+action_result.data.\*.file.external_type | string | | |
+action_result.data.\*.file.file_access | string | | visible |
+action_result.data.\*.file.filetype | string | | |
+action_result.data.\*.file.has_more_shares | boolean | | True False |
+action_result.data.\*.file.has_rich_preview | boolean | | True False |
+action_result.data.\*.file.id | string | | |
+action_result.data.\*.file.image_exif_rotation | numeric | | |
+action_result.data.\*.file.is_external | boolean | | True False |
+action_result.data.\*.file.is_public | boolean | | True False |
+action_result.data.\*.file.is_starred | boolean | | True False |
+action_result.data.\*.file.lines | numeric | | 5 |
+action_result.data.\*.file.lines_more | numeric | | 0 |
+action_result.data.\*.file.media_display_type | string | | audio |
+action_result.data.\*.file.mimetype | string | | |
+action_result.data.\*.file.mode | string | | |
+action_result.data.\*.file.name | string | `vault id` | |
+action_result.data.\*.file.original_h | numeric | | |
+action_result.data.\*.file.original_w | numeric | | |
+action_result.data.\*.file.permalink | string | `url` | |
+action_result.data.\*.file.permalink_public | string | `url` | |
+action_result.data.\*.file.pretty_type | string | | |
+action_result.data.\*.file.preview | string | | |
+action_result.data.\*.file.preview_highlight | string | | |
+action_result.data.\*.file.preview_is_truncated | boolean | | True False |
+action_result.data.\*.file.public_url_shared | boolean | | True False |
+action_result.data.\*.file.size | numeric | | |
+action_result.data.\*.file.timestamp | numeric | | |
+action_result.data.\*.file.title | string | `vault id` | |
+action_result.data.\*.file.url_private | string | `url` | |
+action_result.data.\*.file.url_private_download | string | `url` | |
+action_result.data.\*.file.user_team | string | | E02PYRE04SJ |
+action_result.data.\*.ok | boolean | | True False |
+action_result.data.\*.sender | string | `slack channel name` `slack channel id` `slack user name` `slack user id` | |
+action_result.data.\*.thumbnails.thumb_1024.height | numeric | | |
+action_result.data.\*.thumbnails.thumb_1024.img_url | string | `url` | |
+action_result.data.\*.thumbnails.thumb_1024.width | numeric | | |
+action_result.data.\*.thumbnails.thumb_160.img_url | string | `url` | |
+action_result.data.\*.thumbnails.thumb_360.height | numeric | | |
+action_result.data.\*.thumbnails.thumb_360.img_url | string | `url` | |
+action_result.data.\*.thumbnails.thumb_360.width | numeric | | |
+action_result.data.\*.thumbnails.thumb_480.height | numeric | | |
+action_result.data.\*.thumbnails.thumb_480.img_url | string | `url` | |
+action_result.data.\*.thumbnails.thumb_480.width | numeric | | |
+action_result.data.\*.thumbnails.thumb_64.img_url | string | `url` | |
+action_result.data.\*.thumbnails.thumb_720.height | numeric | | |
+action_result.data.\*.thumbnails.thumb_720.img_url | string | `url` | |
+action_result.data.\*.thumbnails.thumb_720.width | numeric | | |
+action_result.data.\*.thumbnails.thumb_80.img_url | string | `url` | |
+action_result.data.\*.thumbnails.thumb_800.height | numeric | | |
+action_result.data.\*.thumbnails.thumb_800.img_url | string | `url` | |
+action_result.data.\*.thumbnails.thumb_800.width | numeric | | |
+action_result.data.\*.thumbnails.thumb_960.height | numeric | | |
+action_result.data.\*.thumbnails.thumb_960.img_url | string | `url` | |
+action_result.data.\*.thumbnails.thumb_960.width | numeric | | |
+action_result.data.\*.thumbnails.thumb_pdf.height | numeric | | |
+action_result.data.\*.thumbnails.thumb_pdf.img_url | string | `url` | |
+action_result.data.\*.thumbnails.thumb_pdf.width | numeric | | |
+action_result.data.\*.thumbnails.thumb_tiny.img_url | string | `url` | |
+action_result.data.\*.thumbnails.thumb_video.height | numeric | | |
+action_result.data.\*.thumbnails.thumb_video.img_url | string | `url` | |
+action_result.data.\*.thumbnails.thumb_video.width | numeric | | |
+action_result.data.\*.status | string | | success failed |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 
