@@ -134,7 +134,7 @@ SLACK_INGESTION_NOT_ENABLED = (
 )
 SLACK_INGESTION_DISABLED = "{message} Ingestion has been disabled."
 SLACK_ERROR_CHANNEL_NOT_FOUND = "Channel '{name}' not found in workspace"
-SLACK_ERROR_PAGINATION_LIMIT = "Aborting pagination of '{endpoint}': page limit exceeded or a repeated cursor was returned"
+SLACK_ERROR_PAGINATION_LIMIT = "Aborting pagination of '{endpoint}': page limit exceeded or the response made no progress"
 SLACK_ERROR_USER_NOT_FOUND = "User '{name}' not found in workspace"
 SLACK_ERROR_OPENING_DM_CHANNEL = "Error opening direct message channel with user"
 SLACK_ERROR_COULD_NOT_GET_BOT_ID = "Could not get bot ID from Slack"

@@ -1,6 +1,6 @@
 [project]
 name = "slack"
-version = "2.10.3"
+version = "2.10.4"
 description = "Integrate with Slack to post messages and attachments to channels"
 license = "Copyright (c) 2016-2026 Splunk Inc."
 requires-python = ">=3.13, <3.15"
