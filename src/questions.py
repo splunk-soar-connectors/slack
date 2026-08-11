@@ -26,18 +26,19 @@ from .consts import (
     SLACK_ERROR_CONFIRMATION_TOO_LONG,
     SLACK_ERROR_LENGTH_LIMIT_EXCEEDED,
     SLACK_ERROR_QUESTION_TOO_LONG,
+    SLACK_ERROR_SAVING_QUESTION_METADATA,
     SLACK_ERROR_UNABLE_TO_PARSE_RESPONSE,
     SLACK_MESSAGE_LIMIT,
     SLACK_SEND_MESSAGE,
 )
 from .helper import SlackFailure, slack_rest_call
-from .interactive import answer_path
+from .interactive import answer_path, write_question_metadata
 
 logger = getLogger()
 
 
-def _response_buttons(responses: str | None) -> list[dict]:
-    """Build the interactive message buttons for the configured responses."""
+def _response_choices(responses: str | None) -> list[str]:
+    """Return the ordered, de-duplicated response values a question offers."""
     given_answers = [x.strip().lower() for x in (responses or "yes,no").split(",")]
 
     ordered_answers: list[str] = []
@@ -45,13 +46,7 @@ def _response_buttons(responses: str | None) -> list[dict]:
         if answer and answer not in ordered_answers:
             ordered_answers.append(answer)
 
-    if not ordered_answers:
-        ordered_answers = ["yes", "no"]
-
-    return [
-        {"name": answer, "text": answer, "value": answer, "type": "button"}
-        for answer in ordered_answers
-    ]
+    return ordered_answers or ["yes", "no"]
 
 
 def ask_question_in_slack(
@@ -61,6 +56,7 @@ def ask_question_in_slack(
     question: str,
     responses: str | None,
     confirmation: str = " ",
+    expected_user: str | None = None,
 ) -> dict:
     """Post a question with response buttons and return its ID and answer file path."""
     if len(question) > SLACK_MESSAGE_LIMIT:
@@ -88,6 +84,8 @@ def ask_question_in_slack(
 
     logger.progress(f"Asking question with ID: {qid}")
 
+    choices = _response_choices(responses)
+
     attachments = [
         {
             "text": question,
@@ -95,7 +93,10 @@ def ask_question_in_slack(
             "callback_id": callback_id,
             "color": "#422E61",
             "attachment_type": "default",
-            "actions": _response_buttons(responses),
+            "actions": [
+                {"name": choice, "text": choice, "value": choice, "type": "button"}
+                for choice in choices
+            ],
         }
     ]
 
@@ -106,9 +107,23 @@ def ask_question_in_slack(
     }
 
     try:
-        slack_rest_call(bot_token, SLACK_SEND_MESSAGE, body)
+        resp_json = slack_rest_call(bot_token, SLACK_SEND_MESSAGE, body)
     except SlackFailure as e:
         raise SlackFailure(f"{SLACK_ERROR_ASKING_QUESTION}: {e.message}") from e
+
+    posted_channel = resp_json.get("channel")
+
+    if not posted_channel:
+        raise SlackFailure(
+            f"{SLACK_ERROR_ASKING_QUESTION}: Slack returned no channel ID"
+        )
+
+    # Answers are validated against this metadata, so a question that cannot be
+    # recorded must not be left pending.
+    try:
+        write_question_metadata(qid, choices, posted_channel, expected_user)
+    except (OSError, ValueError) as e:
+        raise SlackFailure(SLACK_ERROR_SAVING_QUESTION_METADATA) from e
 
     return {"qid": qid, "answer_path": str(answer_path(qid))}
 

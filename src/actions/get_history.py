@@ -29,7 +29,7 @@ from ..consts import (
     SLACK_SUCCESSFULLY_CONVERSATION_HISTORY_DATA_RETRIEVED,
     SLACK_THREADS_HISTORY,
 )
-from ..helper import SlackFailure, slack_rest_call
+from ..helper import SlackFailure, paginate
 
 logger = getLogger()
 
@@ -78,8 +78,11 @@ class GetHistorySummary(ActionOutput):
 
 def _fetch_thread(bot_token: str, channel_id: str, timestamp: str) -> dict:
     try:
-        return slack_rest_call(
-            bot_token, SLACK_THREADS_HISTORY, {"channel": channel_id, "ts": timestamp}
+        return paginate(
+            bot_token,
+            SLACK_THREADS_HISTORY,
+            "messages",
+            body={"channel": channel_id, "ts": timestamp},
         )
     except SlackFailure as e:
         raise SlackFailure(
@@ -101,9 +104,14 @@ def get_history(
     logger.debug(f"Executing Get History action for channel {params.channel_id}")
 
     if params.message_ts:
-        resp_json = _fetch_thread(asset.bot_token, params.channel_id, params.message_ts)
+        try:
+            resp_json = _fetch_thread(
+                asset.bot_token, params.channel_id, params.message_ts
+            )
+        except SlackFailure as e:
+            raise SlackFailure(SLACK_ERROR_THREAD_NOT_FOUND) from e
 
-        if not resp_json:
+        if not resp_json.get("messages"):
             raise SlackFailure(SLACK_ERROR_THREAD_NOT_FOUND)
 
     else:
@@ -111,10 +119,12 @@ def get_history(
             raise SlackFailure(SLACK_ERROR_NOT_A_CHANNEL_ID)
 
         try:
-            channel_history = slack_rest_call(
+            channel_history = paginate(
                 asset.bot_token,
                 SLACK_CONVERSATIONS_HISTORY,
-                {"channel": params.channel_id},
+                "messages",
+                body={"channel": params.channel_id},
+                allow_empty=True,
             )
         except SlackFailure as e:
             raise SlackFailure(

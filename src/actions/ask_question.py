@@ -29,7 +29,8 @@ from ..consts import (
     SLACK_ERROR_QUESTION_TIMED_OUT,
     SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_CHANNEL,
 )
-from ..helper import SlackFailure
+from ..helper import SlackFailure, get_user_id_from_name
+from ..interactive import remove_question_metadata
 from ..questions import ask_question_in_slack, read_answer_file
 
 logger = getLogger()
@@ -185,6 +186,15 @@ def ask_question(
         # was answering
         raise SlackFailure(SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_CHANNEL)
 
+    # Only the user the question was sent to may answer it, so resolve who that is.
+    # A DM channel ID names no single user, so nothing can be bound in that case.
+    expected_user = (
+        params.destination if params.destination.startswith(("U", "W")) else None
+    )
+
+    if expected_user is None and not params.destination.startswith("D"):
+        expected_user = get_user_id_from_name(asset.bot_token, params.destination)
+
     question_data = ask_question_in_slack(
         asset.bot_token,
         soar.get_asset_id(),
@@ -192,6 +202,7 @@ def ask_question(
         params.question,
         params.responses,
         params.confirmation or " ",
+        expected_user,
     )
 
     qid = question_data["qid"]
@@ -216,6 +227,7 @@ def ask_question(
         time.sleep(interval)
     else:
         soar.set_summary(AskQuestionSummary(question_id=qid, response_received=False))
+        remove_question_metadata(qid)
         raise SlackFailure(SLACK_ERROR_QUESTION_TIMED_OUT)
 
     payload = resp_json["payloads"][0]
@@ -229,5 +241,6 @@ def ask_question(
     )
 
     path.unlink()
+    remove_question_metadata(qid)
 
     return AskQuestionOutput(**payload)

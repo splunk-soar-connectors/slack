@@ -12,6 +12,8 @@
 # and limitations under the License.
 
 import json
+import shlex
+from pathlib import PurePath
 from typing import Any
 
 import requests
@@ -80,8 +82,11 @@ def _process_json_response(response: requests.Response) -> dict:
             SLACK_ERROR_UNABLE_TO_PARSE_JSON_RESPONSE.format(error=e)
         ) from e
 
-    # The 'ok' parameter in a response from slack says if the call passed or failed
-    if resp_json.get("ok", "") is not False:
+    if not isinstance(resp_json, dict):
+        raise SlackFailure(SLACK_ERROR_UNABLE_TO_DECODE_JSON_RESPONSE)
+
+    # Slack Web API success requires both a successful HTTP status and ok=true.
+    if 200 <= response.status_code < 300 and resp_json.get("ok") is True:
         return resp_json
 
     error = resp_json.get("error", "")
@@ -90,7 +95,7 @@ def _process_json_response(response: requests.Response) -> dict:
     elif error == "not_in_channel":
         error = SLACK_ERROR_NOT_IN_CHANNEL
     elif not error:
-        error = SLACK_ERROR_FROM_SERVER
+        error = f"{SLACK_ERROR_FROM_SERVER} (HTTP status {response.status_code})"
 
     raise SlackFailure(error)
 
@@ -177,6 +182,9 @@ def rest_call(
     except Exception as e:
         raise SlackFailure(SLACK_ERROR_UNABLE_TO_DECODE_JSON_RESPONSE) from e
 
+    if not isinstance(resp_json, dict):
+        raise SlackFailure(SLACK_ERROR_UNABLE_TO_DECODE_JSON_RESPONSE)
+
     if "failed" in resp_json:
         raise SlackFailure(
             "{}. Message: {}".format(
@@ -220,25 +228,28 @@ def paginate(
     key: str,
     body: dict | None = None,
     limit: int | None = None,
+    allow_empty: bool = False,
 ) -> dict:
     """Fetch results from multiple API calls using pagination for the given endpoint."""
     body = dict(body or {})
     body["limit"] = SLACK_DEFAULT_LIMIT
     results: dict[str, Any] = {}
+    seen_cursors: set[str] = set()
 
-    while True:
+    for _ in range(SLACK_MAX_PAGINATION_PAGES):
         resp_json = slack_rest_call(bot_token, endpoint, body)
 
         key_result_value = resp_json.get(key, [])
 
         if not results:
-            if not key_result_value:
+            if not key_result_value and not allow_empty:
                 raise SlackFailure(
                     SLACK_ERROR_DATA_NOT_FOUND_IN_OUTPUT.format(
                         key=("users" if key == "members" else key)
                     )
                 )
             results = resp_json
+            results.setdefault(key, [])
         else:
             results[key].extend(key_result_value)
 
@@ -251,9 +262,49 @@ def paginate(
         if not next_cursor:
             break
 
+        if not key_result_value or next_cursor in seen_cursors:
+            raise SlackFailure(SLACK_ERROR_PAGINATION_LIMIT.format(endpoint=endpoint))
+
+        seen_cursors.add(next_cursor)
         body["cursor"] = next_cursor
+    else:
+        raise SlackFailure(SLACK_ERROR_PAGINATION_LIMIT.format(endpoint=endpoint))
 
     return results
+
+
+def find_slack_bot_process(
+    ps_output: Any, asset_id: str, expected_pid: str | int | None = None
+) -> tuple[str | None, str | None]:
+    """Return the PID and command line for this asset's SlackBot process.
+
+    Matching on the bare string 'slack_bot.py' would also match another asset's
+    bot, so require the asset ID and the script name to appear as whole tokens.
+    """
+    asset_id = str(asset_id)
+    expected = str(expected_pid) if expected_pid is not None else None
+
+    for line in str(ps_output).splitlines():
+        try:
+            tokens = shlex.split(line)
+        except ValueError:
+            continue
+
+        if len(tokens) < 2 or asset_id not in tokens:
+            continue
+
+        if not any(PurePath(token).name == "slack_bot.py" for token in tokens):
+            continue
+
+        if expected is not None:
+            if expected not in tokens[:2]:
+                continue
+            return expected, line
+
+        if tokens[1].isdigit():
+            return tokens[1], line
+
+    return None, None
 
 
 def is_channel_id(destination: str) -> bool:

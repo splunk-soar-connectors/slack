@@ -236,9 +236,6 @@ def send_message(
     if params.message is not None:
         message = params.message
 
-        if "\\" in message:
-            message = bytes(message, "utf-8").decode("unicode_escape")
-
         if len(message) > SLACK_MESSAGE_LIMIT:
             raise SlackFailure(
                 SLACK_ERROR_MESSAGE_TOO_LONG.format(limit=SLACK_MESSAGE_LIMIT)

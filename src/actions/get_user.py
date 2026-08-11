@@ -177,7 +177,7 @@ def get_user(params: GetUserParams, soar: SOARClient, asset: Asset) -> GetUserOu
                 asset.bot_token, SLACK_USER_INFO, {"user": params.user_id}
             )
         else:
-            email = urllib.parse.quote(params.email_address or "")
+            email = urllib.parse.quote(params.email_address or "", safe="")
             logger.debug("Making rest call to lookup user")
 
             resp_json = rest_call(

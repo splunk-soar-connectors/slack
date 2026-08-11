@@ -42,7 +42,7 @@ class StopBotOutput(PermissiveActionOutput):
     render_as="table",
 )
 def stop_bot(params: StopBotParams, soar: SOARClient, asset: Asset) -> StopBotOutput:
-    message = stop_slack_bot(asset)
+    message = stop_slack_bot(asset, soar.get_asset_id())
 
     soar.set_message(message)
 

@@ -158,9 +158,7 @@ SLACK_ERROR_BLOCKS_OR_MESSAGE_REQD = (
 SLACK_ERROR_COMMAND_NOT_PERMITTED = (
     "This command is not permitted to be run on this asset"
 )
-SLACK_ERROR_RESPONDER_NOT_PERMITTED = (
-    "The user that responded to the question is not permitted"
-)
+SLACK_ERROR_SAVING_QUESTION_METADATA = "Unable to save question metadata"
 
 SLACK_RESP_POLL_INTERVAL_KEY = (
     "'How often to poll for a response (in seconds)' configuration"

@@ -43,8 +43,10 @@ from interactive import (
     answer_path,
     is_safe_path,
     process_payload,
+    question_path,
     sanitize_slack_markup,
     state_dir,
+    validate_answer_payload,
 )
 
 
@@ -1138,6 +1140,18 @@ class SlackBot:
                     confirmation_message = callback_json.get("confirmation")
 
                     path = answer_path(qid, self.app_id)
+                    metadata_path = question_path(qid, self.app_id)
+
+                    validation_error = validate_answer_payload(
+                        body, metadata_path, self.permitted_users
+                    )
+                    if validation_error:
+                        logging.info(
+                            f"**rejected answer for qid {qid}: {validation_error}"
+                        )
+                        respond(f"Unable to accept response: {validation_error}")
+                        return
+
                     logging.debug(f"**going to put answer file here: {path}")
 
                     final_payload = process_payload(body, path)

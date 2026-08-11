@@ -26,7 +26,7 @@ from ..consts import (
     SLACK_ERROR_QUESTION_RESPONSE_NOT_AVAILABLE,
 )
 from ..helper import SlackFailure
-from ..interactive import answer_path
+from ..interactive import answer_path, remove_question_metadata
 from ..questions import read_answer_file
 
 logger = getLogger()
@@ -145,5 +145,6 @@ def get_response(
 
     soar.set_summary(GetResponseSummary(response_received=True))
     soar.set_message("Response received: True")
+    remove_question_metadata(params.question_id)
 
     return GetResponseOutput(question_id=params.question_id, **resp_json)

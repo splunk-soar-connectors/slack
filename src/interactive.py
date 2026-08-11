@@ -18,12 +18,19 @@ relative imports so that ``slack_bot.py``, which the on poll action spawns as a
 separate process, can import it without the ``src`` package being installed.
 """
 
+import contextlib
 import json
 import os
 from pathlib import Path
 from typing import Any
 
 APP_ID = "3ac26c7f-baa4-4583-86ff-5aac82778a86"
+
+# Defined here rather than in consts.py because this module is also imported by the
+# standalone SlackBot process, which cannot resolve the src package.
+SLACK_ERROR_RESPONDER_NOT_PERMITTED = (
+    "The user that responded to the question is not permitted"
+)
 
 
 def state_dir(app_id: str = APP_ID) -> Path:
@@ -46,6 +53,96 @@ def answer_path(qid: str, app_id: str = APP_ID) -> Path:
         raise ValueError("The file path is invalid")
 
     return path
+
+
+def question_path(qid: str, app_id: str = APP_ID) -> Path:
+    """Return the path of a question's metadata file, validating the question ID."""
+    base = state_dir(app_id)
+    path = base / f"{qid}_question.json"
+
+    if not is_safe_path(base, path):
+        raise ValueError("The file path is invalid")
+
+    return path
+
+
+def write_question_metadata(
+    qid: str,
+    choices: list[str],
+    channel: str,
+    user: str | None,
+    app_id: str = APP_ID,
+) -> None:
+    """Record the choices, conversation and intended user a question was posted with."""
+    path = question_path(qid, app_id)
+    state_dir(app_id).mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"choices": choices, "channel": channel, "user": user}))
+
+
+def remove_question_metadata(qid: str, app_id: str = APP_ID) -> None:
+    """Delete a question's metadata once it has been answered or has timed out."""
+    with contextlib.suppress(OSError, ValueError):
+        question_path(qid, app_id).unlink(missing_ok=True)
+
+
+def validate_answer_payload(
+    payload: dict, path: Path, permitted_users: str | None = None
+) -> str | None:
+    """Return why an interaction does not match its pending question, or None if it does.
+
+    Nothing about the payload Slack posts back is trustworthy on its own, so the answer,
+    the conversation it came from and the responder are all checked against what the
+    question was actually posted with.
+    """
+    try:
+        question = json.loads(path.read_text())
+    except Exception:
+        return "No pending question was found for this question ID"
+
+    if not isinstance(payload, dict) or not isinstance(question, dict):
+        return "The question response payload is invalid"
+
+    stored_choices = question.get("choices")
+
+    if not isinstance(stored_choices, list):
+        return "The pending question metadata is invalid"
+
+    choices = {choice for choice in stored_choices if isinstance(choice, str)}
+    actions = payload.get("actions")
+
+    if not isinstance(actions, list) or not actions:
+        return "The question response contains no answer"
+
+    if any(
+        not isinstance(action, dict) or action.get("value") not in choices
+        for action in actions
+    ):
+        return "The answer is not one of the offered choices"
+
+    channel = payload.get("channel")
+    channel_id = channel.get("id") if isinstance(channel, dict) else None
+
+    if question.get("channel") and channel_id != question["channel"]:
+        return "The response came from a different Slack conversation"
+
+    user = payload.get("user")
+    user_id = user.get("id") if isinstance(user, dict) else None
+
+    if not user_id:
+        return "The question response does not identify a Slack user"
+
+    if question.get("user") and user_id != question["user"]:
+        return "The response did not come from the intended Slack user"
+
+    if permitted_users:
+        allowed_users = {
+            value.strip() for value in str(permitted_users).split(",") if value.strip()
+        }
+
+        if user_id not in allowed_users:
+            return SLACK_ERROR_RESPONDER_NOT_PERMITTED
+
+    return None
 
 
 def sanitize_slack_markup(value: str) -> str:

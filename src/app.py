@@ -13,7 +13,6 @@
 
 import json
 import os
-import shlex
 import shutil
 import subprocess
 import urllib.parse
@@ -57,8 +56,19 @@ from .consts import (
     SLACK_SUCCESSFULLY_SLACKBOT_STOPPED,
     SLACK_SUCCESSFULLY_TEST_CONNECTIVITY_PASSED,
 )
-from .helper import SlackFailure, slack_bearer_call, slack_rest_call
-from .interactive import answer_path, process_payload, state_dir
+from .helper import (
+    SlackFailure,
+    find_slack_bot_process,
+    slack_bearer_call,
+    slack_rest_call,
+)
+from .interactive import (
+    answer_path,
+    process_payload,
+    question_path,
+    state_dir,
+    validate_answer_payload,
+)
 
 logger = getLogger()
 
@@ -188,46 +198,51 @@ def on_poll(
     _stage_bot_state(soar, asset, bot_id, resp_json.get("user"))
 
     container_count = int(params.container_count or 0)
+    asset_id = soar.get_asset_id()
     pid = asset.cache_state.get("pid")
 
     if pid:
         try:
-            if params.is_manual_poll():
-                logger.progress(f"Container Count: {container_count}")
-                if container_count == 1234:
-                    sh.kill(pid)
-                    logger.progress(
-                        f"Container count set to 1234, stopping slack_bot.py at pid {pid}"
-                    )
-                elif container_count == int(pid):
-                    sh.kill(pid)
-                    logger.progress("pid passed in as container count, stopping bot")
-                    soar.set_message("bot has been stopped")
-                    return
-                else:
-                    logger.progress(
-                        "HINT: Set Maximum Containers to 1234 to restart slackbot, or set to PID to stop slackbot"
-                    )
+            if not find_slack_bot_process(sh.ps("ww", pid), asset_id, pid)[0]:
+                logger.debug("Stored pid does not belong to this asset's SlackBot")
+            else:
+                if params.is_manual_poll():
+                    logger.progress(f"Container Count: {container_count}")
+                    if container_count == 1234:
+                        sh.kill(pid)
+                        logger.progress(
+                            f"Container count set to 1234, stopping slack_bot.py at pid {pid}"
+                        )
+                    elif container_count == int(pid):
+                        sh.kill(pid)
+                        logger.progress(
+                            "pid passed in as container count, stopping bot"
+                        )
+                        soar.set_message("bot has been stopped")
+                        return
+                    else:
+                        logger.progress(
+                            "HINT: Set Maximum Containers to 1234 to restart slackbot, or set to PID to stop slackbot"
+                        )
 
-            if "slack_bot.py" in sh.ps("ww", pid):
-                logger.progress(f"Detected SlackBot running with pid {pid}")
-                soar.set_message(SLACK_SUCCESSFULLY_SLACKBOT_RUNNING)
-                return
+                if find_slack_bot_process(sh.ps("ww", pid), asset_id, pid)[0]:
+                    logger.progress(f"Detected SlackBot running with pid {pid}")
+                    soar.set_message(SLACK_SUCCESSFULLY_SLACKBOT_RUNNING)
+                    return
         except Exception:
             logger.debug("Found no SlackBot running with the stored pid")
 
-    asset_id = soar.get_asset_id()
     app_version = str(app.app_meta_info["app_version"])
 
     try:
         ps_out = str(sh.grep(sh.ps("ww", "aux"), "slack_bot.py"))
-        old_pid = shlex.split(ps_out)[1]
-        if app_version not in ps_out:
+        old_pid, process_line = find_slack_bot_process(ps_out, asset_id)
+        if old_pid and app_version not in (process_line or ""):
             logger.progress(
                 f"Found an old version of slackbot running with pid {old_pid}, going to kill it"
             )
             sh.kill(old_pid)
-        elif asset_id in ps_out:
+        elif old_pid:
             asset.cache_state["pid"] = int(old_pid)
             soar.set_message(SLACK_ERROR_SLACKBOT_RUNNING_WITH_SAME_BOT_TOKEN)
             return
@@ -312,7 +327,7 @@ def _stage_bot_state(
     asset.cache_state.put_all(state)
 
 
-def stop_slack_bot(asset: Asset) -> str:
+def stop_slack_bot(asset: Asset, asset_id: str) -> str:
     """Terminate the SlackBot process, returning the message to report."""
     import sh  # noqa: PLC0415
 
@@ -322,7 +337,7 @@ def stop_slack_bot(asset: Asset) -> str:
     if pid:
         del asset.cache_state["pid"]
         try:
-            running = "slack_bot.py" in sh.ps("ww", pid)
+            running = bool(find_slack_bot_process(sh.ps("ww", pid), asset_id, pid)[0])
         except Exception as e:
             raise SlackFailure(SLACK_ERROR_SLACKBOT_NOT_RUNNING) from e
 
@@ -331,9 +346,12 @@ def stop_slack_bot(asset: Asset) -> str:
     else:
         try:
             ps_out = sh.grep(sh.ps("ww", "aux"), "slack_bot.py")
-            pid = shlex.split(str(ps_out))[1]
+            pid, _ = find_slack_bot_process(ps_out, asset_id)
         except Exception as e:
             raise SlackFailure(SLACK_ERROR_SLACKBOT_NOT_RUNNING) from e
+
+        if not pid:
+            raise SlackFailure(SLACK_ERROR_SLACKBOT_NOT_RUNNING)
 
     try:
         sh.kill(pid)
@@ -386,8 +404,16 @@ def handle_interactive_message(request: WebhookRequest[Asset]) -> WebhookRespons
 
         try:
             path = answer_path(qid)
+            metadata_path = question_path(qid)
         except ValueError:
             return WebhookResponse.text_response(SLACK_ERROR_INVALID_FILE_PATH, 400)
+
+        validation_error = validate_answer_payload(
+            payload, metadata_path, request.asset.permitted_bot_users
+        )
+
+        if validation_error:
+            return WebhookResponse.text_response(validation_error, 400)
 
         try:
             state_dir().mkdir(parents=True, exist_ok=True)
