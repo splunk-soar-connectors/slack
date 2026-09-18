@@ -1,1 +1,3 @@
 **Unreleased**
+
+* Read Slack ask-question responses from the normalized state directory.

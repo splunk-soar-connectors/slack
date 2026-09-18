@@ -1641,7 +1641,7 @@ class SlackConnector(phantom.BaseConnector):
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         qid = param["question_id"]
-        state_dir = self.get_state_dir()
+        state_dir = self.get_state_dir().rstrip("/")
         answer_path = f"{state_dir}/{qid}.json"
         self.debug_print(f"answer path : {answer_path}")
         if not _is_safe_path(state_dir, answer_path):
