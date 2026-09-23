@@ -5123,6 +5123,10 @@
     "pip_dependencies": {
         "wheel": [
             {
+                "module": "sh",
+                "input_file": "wheels/shared/sh-1.14.3-py2.py3-none-any.whl"
+            },
+            {
                 "module": "slack_bolt",
                 "input_file": "wheels/shared/slack_bolt-1.14.0-py2.py3-none-any.whl"
             },
@@ -5139,6 +5143,10 @@
     "pip39_dependencies": {
         "wheel": [
             {
+                "module": "sh",
+                "input_file": "wheels/shared/sh-1.14.3-py2.py3-none-any.whl"
+            },
+            {
                 "module": "slack_bolt",
                 "input_file": "wheels/shared/slack_bolt-1.23.0-py2.py3-none-any.whl"
             },
@@ -5154,6 +5162,10 @@
     },
     "pip313_dependencies": {
         "wheel": [
+            {
+                "module": "sh",
+                "input_file": "wheels/shared/sh-1.14.3-py2.py3-none-any.whl"
+            },
             {
                 "module": "slack_bolt",
                 "input_file": "wheels/shared/slack_bolt-1.23.0-py2.py3-none-any.whl"
