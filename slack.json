@@ -5124,7 +5124,7 @@
         "wheel": [
             {
                 "module": "sh",
-                "input_file": "wheels/shared/sh-1.14.3-py2.py3-none-any.whl"
+                "input_file": "wheels/py3/sh-2.3.0-py3-none-any.whl"
             },
             {
                 "module": "slack_bolt",
@@ -5144,7 +5144,7 @@
         "wheel": [
             {
                 "module": "sh",
-                "input_file": "wheels/shared/sh-1.14.3-py2.py3-none-any.whl"
+                "input_file": "wheels/py3/sh-2.3.0-py3-none-any.whl"
             },
             {
                 "module": "slack_bolt",
@@ -5164,7 +5164,7 @@
         "wheel": [
             {
                 "module": "sh",
-                "input_file": "wheels/shared/sh-1.14.3-py2.py3-none-any.whl"
+                "input_file": "wheels/py3/sh-2.3.0-py3-none-any.whl"
             },
             {
                 "module": "slack_bolt",

@@ -1,3 +1,3 @@
 **Unreleased**
 
-* Explicitly package the `sh` dependency required by Slack actions.
+* Explicitly package `sh` 2.3.0, required by Slack actions.
