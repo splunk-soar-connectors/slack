@@ -1,1 +1,3 @@
 **Unreleased**
+
+* Package `sh` 2.3.0 and use its v2-compatible process lookup for Slack actions.

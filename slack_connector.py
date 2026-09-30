@@ -1323,7 +1323,7 @@ class SlackConnector(phantom.BaseConnector):
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_SLACKBOT_NOT_RUNNING)
         else:
             try:
-                ps_out = sh.grep(sh.ps("ww", "aux"), "slack_bot.py")  # pylint: disable=E1101  # type: ignore[attr-defined]
+                ps_out = sh.ps("ww", "aux")  # pylint: disable=E1101  # type: ignore[attr-defined]
                 pid, _ = _find_slack_bot_process(ps_out, self.get_asset_id())
                 if not pid:
                     return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_SLACKBOT_NOT_RUNNING)
@@ -1386,7 +1386,7 @@ class SlackConnector(phantom.BaseConnector):
         app_id = self.get_app_id()
 
         try:
-            ps_out = sh.grep(sh.ps("ww", "aux"), "slack_bot.py")  # pylint: disable=E1101  # type: ignore[attr-defined]
+            ps_out = sh.ps("ww", "aux")  # pylint: disable=E1101  # type: ignore[attr-defined]
             old_pid, process_line = _find_slack_bot_process(ps_out, asset_id)
             if old_pid and app_version not in process_line:
                 self.save_progress(f"Found an old version of slackbot running with pid {old_pid}, going to kill it")
