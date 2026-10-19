@@ -1596,7 +1596,15 @@ class SlackConnector(phantom.BaseConnector):
         answer_path = resp_json.get("answer_path")
         qid = resp_json.get("qid")
 
-        timeout_in_seconds = self._timeout * 60
+        timeout = param.get("timeout")
+        if timeout is None:
+            timeout = self._timeout
+        else:
+            timeout = self._validate_integers(action_result, timeout, SLACK_TIMEOUT_KEY)
+            if timeout is None:
+                return action_result.get_status()
+
+        timeout_in_seconds = timeout * 60
 
         if self._interval > timeout_in_seconds:
             self.debug_print("uestion timeout is greater than the polling interval")

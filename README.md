@@ -669,7 +669,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 **user_token** | optional | password | User OAuth Token |
 **socket_token** | optional | password | Socket Token |
 **ph_auth_token** | optional | password | Automation User Auth Token |
-**timeout** | optional | numeric | Question timeout (in minutes) |
+**timeout** | optional | numeric | Default question timeout (in minutes) |
 **response_poll_interval** | optional | numeric | How often to poll for a response (in seconds) |
 **permit_bot_act** | optional | boolean | Permit 'act' commands on Bot (I.E. @SOARbot act 'list channels' --container 123 --asset slack) |
 **permit_bot_playbook** | optional | boolean | Permit 'run_playbook' commands on Bot (I.E. @SOARbot run_playbook \<playbook_id> \<container_id>) |
@@ -1377,6 +1377,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **question** | required | Question to ask | string | |
 **responses** | optional | Comma separated string values for responses. (Maximum responses allowed are 5) | string | |
 **confirmation** | optional | Message to user after response | string | |
+**timeout** | optional | Question timeout (in minutes). Overrides the asset-level timeout for this action. If not set, the asset timeout is used | numeric | |
 
 #### Action Output
 
@@ -1384,6 +1385,7 @@ DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
 action_result.status | string | | success failed |
 action_result.parameter.confirmation | string | | |
+action_result.parameter.timeout | numeric | | |
 action_result.parameter.destination | string | `slack user name` `slack user id` | |
 action_result.parameter.question | string | | |
 action_result.parameter.responses | string | | |

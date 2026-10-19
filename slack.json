@@ -59,7 +59,7 @@
             "order": 4
         },
         "timeout": {
-            "description": "Question timeout (in minutes)",
+            "description": "Default question timeout (in minutes)",
             "data_type": "numeric",
             "default": 30,
             "order": 5
@@ -3812,6 +3812,11 @@
                     "description": "Message to user after response",
                     "data_type": "string",
                     "order": 3
+                },
+                "timeout": {
+                    "description": "Question timeout (in minutes). Overrides the asset-level timeout for this action. If not set, the asset timeout is used",
+                    "data_type": "numeric",
+                    "order": 4
                 }
             },
             "output": [
@@ -3826,6 +3831,10 @@
                 {
                     "data_path": "action_result.parameter.confirmation",
                     "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.timeout",
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.parameter.destination",
