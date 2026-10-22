@@ -1555,7 +1555,7 @@ Ask a question in a slack channel using Block Kit blocks for the message body
 Type: **generic** <br>
 Read only: **False**
 
-Posts a Block Kit message to a channel and returns a question ID that <b>get response</b> can use to retrieve the click. The <b>blocks</b> parameter takes the same JSON array format as <b>send message</b>. If the blocks include a <code>type: actions</code> block with buttons, each button's <code>action_id</code> becomes a valid response choice and SOAR tags that block with <code>block_id = soar_qid:&lt;qid&gt;:&lt;asset_id&gt;</code> so the click is correlated back to the pending question. If the blocks do not include an actions block, SOAR appends one built from the <b>responses</b> parameter (defaults to <code>yes,no</code>). The posted message does not use legacy attachments, so clicks arrive as modern <code>block_actions</code> payloads over Socket Mode (if enabled) or the Interactivity Request URL. <b>Note:</b> To use the bot in a private channel you need to invite the bot into the channel first.
+Posts a Block Kit message to a channel and returns a question ID that <b>get response</b> can use to retrieve the click. The <b>blocks</b> parameter takes the same JSON array format as <b>send message</b>. If the blocks include a <code>type: actions</code> block with buttons, each button's <code>action_id</code> becomes a valid response choice and SOAR tags that block with <code>block_id = soar_qid:QID:ASSET_ID</code> so the click is correlated back to the pending question. Additional actions blocks get a numeric suffix so each block ID is unique. If the blocks do not include an actions block, SOAR appends one built from the <b>responses</b> parameter (defaults to <code>yes,no</code>). The posted message does not use legacy attachments, so clicks arrive as modern <code>block_actions</code> payloads over Socket Mode (if enabled) or the Interactivity Request URL. <b>Note:</b> To use the bot in a private channel you need to invite the bot into the channel first.
 
 #### Action Parameters
 
@@ -1587,8 +1587,6 @@ action_result.data.\*.channel | string | `slack channel id` | |
 action_result.data.\*.message_ts | string | `slack message ts` | |
 action_result.data.\*.ok | boolean | | True False |
 action_result.data.\*.ts | string | | |
-action_result.summary.response | string | | |
-action_result.summary.response_received | boolean | | True False |
 action_result.message | string | | Asked question in channel successfully |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |

@@ -18,6 +18,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import uuid
 from os.path import exists
@@ -242,8 +243,8 @@ def handle_request(request, path):
 
         # Modern Block Kit buttons posted by ask_question_channel_with_blocks come in as
         # `block_actions` with no callback_id. The action tags its actions block at post time
-        # with `block_id = soar_qid:<qid>:<asset_id>` so we can correlate the click back to
-        # the pending question.
+        # with `block_id = soar_qid:<qid>:<asset_id>` (plus a suffix for extra rows)
+        # so we can correlate the click back to the pending question.
         if payload.get("type") == "block_actions":
             actions = payload.get("actions") or []
             if not actions or not isinstance(actions[0], dict):
@@ -252,10 +253,10 @@ def handle_request(request, path):
             if not block_id.startswith("soar_qid:"):
                 # Not one of ours — ack with 200 so Slack doesn't surface a warning icon
                 return HttpResponse("", content_type="text/plain", status=200)
-            try:
-                _, qid, asset_id = block_id.split(":", 2)
-            except ValueError:
+            block_id_parts = block_id.split(":")
+            if len(block_id_parts) not in (3, 4):
                 return HttpResponse("Malformed soar_qid block_id", content_type="text/plain", status=400)
+            _, qid, asset_id = block_id_parts[:3]
             callback_json = {}
         else:
             callback_id = payload.get("callback_id")
@@ -1613,7 +1614,7 @@ class SlackConnector(phantom.BaseConnector):
         Caller supplies a full Block Kit `blocks` JSON array (same format as `send message`).
         If the blocks already contain one or more `type: actions` blocks with buttons,
         each button's `action_id` becomes a valid response choice and SOAR tags the
-        actions block with `block_id = soar_qid:<qid>:<asset_id>` so clicks route back
+        actions blocks with distinct IDs based on `soar_qid:<qid>:<asset_id>` so clicks route back
         through `handle_request`'s `block_actions` path. If the blocks have no actions
         block, SOAR appends one built from the `responses` param (defaulting to yes/no).
 
@@ -1693,10 +1694,10 @@ class SlackConnector(phantom.BaseConnector):
 
         qid = uuid.uuid4().hex
         asset_id = str(self.get_asset_id())
-        # handle_request's block_actions branch parses `soar_qid:<qid>:<asset_id>` (3 parts) to
-        # find the right state file and answer path — tag every actions block the same way.
-        for ab in actions_blocks:
-            ab["block_id"] = f"soar_qid:{qid}:{asset_id}"
+        # Keep the existing ID for one row and give additional rows unique suffixes.
+        block_id = f"soar_qid:{qid}:{asset_id}"
+        for index, ab in enumerate(actions_blocks):
+            ab["block_id"] = f"{block_id}:{index}" if index else block_id
 
         fallback = param.get("question") or _derive_fallback_from_blocks(block_list) or "You have a question from Splunk SOAR"
         slack_params = {
@@ -1709,9 +1710,31 @@ class SlackConnector(phantom.BaseConnector):
             if param.get("reply_broadcast") is not None:
                 slack_params["reply_broadcast"] = bool(param.get("reply_broadcast"))
 
+        question_path = f"{local_data_state_dir}/{qid}_question.json"
+        if not _is_safe_path(local_data_state_dir, question_path):
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_INVALID_FILE_PATH)
+        replace_on_response = param.get("replace_on_response", True)
+        if isinstance(replace_on_response, str):
+            replace_on_response = replace_on_response.strip().lower() not in ("false", "0", "no", "off", "")
+        # A channel name resolves to an ID only after Slack accepts the post.
+        question_data = {
+            "choices": choices,
+            "channel": destination if destination.startswith(("C", "G", "D")) else None,
+            "block_actions": True,
+            "replace_on_response": bool(replace_on_response),
+        }
+        try:
+            with open(question_path, "w") as qf:  # nosemgrep
+                qf.write(json.dumps(question_data))
+        except Exception as e:
+            self._remove_question_metadata(local_data_state_dir, qid)
+            self.debug_print(f"Unable to save question metadata: {self._get_error_message_from_exception(e)}")
+            return action_result.set_status(phantom.APP_ERROR, "Unable to save question metadata")
+
         self.save_progress(f"Asking question with ID: {qid}")
         ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_SEND_MESSAGE, slack_params)
         if not ret_val:
+            self._remove_question_metadata(local_data_state_dir, qid)
             message = action_result.get_message()
             return action_result.set_status(
                 phantom.APP_ERROR,
@@ -1720,24 +1743,24 @@ class SlackConnector(phantom.BaseConnector):
 
         posted_channel = resp_json.get("channel")
         if not posted_channel:
+            self._remove_question_metadata(local_data_state_dir, qid)
             return action_result.set_status(phantom.APP_ERROR, f"{SLACK_ERROR_ASKING_QUESTION}: Slack returned no channel ID")
 
-        question_path = f"{local_data_state_dir}/{qid}_question.json"
-        if not _is_safe_path(local_data_state_dir, question_path):
-            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_INVALID_FILE_PATH)
-        replace_on_response = param.get("replace_on_response", True)
-        if isinstance(replace_on_response, str):
-            replace_on_response = replace_on_response.strip().lower() not in ("false", "0", "no", "off", "")
-        question_data = {
-            "choices": choices,
-            "channel": posted_channel,
-            "block_actions": True,
-            "replace_on_response": bool(replace_on_response),
-        }
+        # Replace the file atomically so a click cannot read partially updated metadata.
+        question_data["channel"] = posted_channel
+        updated_path = None
         try:
-            with open(question_path, "w") as qf:  # nosemgrep
+            with tempfile.NamedTemporaryFile(mode="w", dir=local_data_state_dir, prefix=f"{qid}_question_", suffix=".json", delete=False) as qf:
+                updated_path = qf.name
                 qf.write(json.dumps(question_data))
+            os.chmod(updated_path, os.stat(question_path).st_mode & 0o777)
+            os.replace(updated_path, question_path)
         except Exception as e:
+            if updated_path:
+                try:
+                    os.remove(updated_path)
+                except OSError:
+                    pass
             self.debug_print(f"Unable to save question metadata: {self._get_error_message_from_exception(e)}")
             return action_result.set_status(phantom.APP_ERROR, "Unable to save question metadata")
 

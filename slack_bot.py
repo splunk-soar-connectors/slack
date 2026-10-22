@@ -1117,7 +1117,8 @@ class SlackBot:
                 print(f"Unknown exception occured while processing answer response. Exception: {e}")
 
         # Block Kit buttons posted by ask_question_channel_with_blocks come in as block_actions.
-        # The posting action tags its actions block with `block_id = soar_qid:<qid>:<asset_id>`;
+        # The posting action tags its actions blocks with `soar_qid:<qid>:<asset_id>`
+        # and adds a suffix for extra rows;
         # this handler correlates the click back to the pending question, writes the answer file
         # (same shape as the interactive_message handler so `get response` keeps working), and
         # updates the posted message in-place.
@@ -1177,12 +1178,7 @@ class SlackBot:
                         if channel_id and message_ts:
                             original_blocks = message.get("blocks") or []
                             clicked = actions[0]
-                            clicked_text = (
-                                (clicked.get("text") or {}).get("text")
-                                or clicked.get("value")
-                                or clicked.get("action_id")
-                                or ""
-                            )
+                            clicked_text = (clicked.get("text") or {}).get("text") or clicked.get("value") or clicked.get("action_id") or ""
                             user = body.get("user") or {}
                             user_id = user.get("id")
                             mention = f"<@{user_id}>" if user_id else (user.get("username") or user.get("name") or "unknown user")

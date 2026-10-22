@@ -4602,7 +4602,7 @@
         {
             "action": "ask question channel with blocks",
             "description": "Ask a question in a slack channel using Block Kit blocks for the message body",
-            "verbose": "Posts a Block Kit message to a channel and returns a question ID that <b>get response</b> can use to retrieve the click. The <b>blocks</b> parameter takes the same JSON array format as <b>send message</b>. If the blocks include a <code>type: actions</code> block with buttons, each button's <code>action_id</code> becomes a valid response choice and SOAR tags that block with <code>block_id = soar_qid:&lt;qid&gt;:&lt;asset_id&gt;</code> so the click is correlated back to the pending question. If the blocks do not include an actions block, SOAR appends one built from the <b>responses</b> parameter (defaults to <code>yes,no</code>). The posted message does not use legacy attachments, so clicks arrive as modern <code>block_actions</code> payloads over Socket Mode (if enabled) or the Interactivity Request URL. <b>Note:</b> To use the bot in a private channel you need to invite the bot into the channel first.",
+            "verbose": "Posts a Block Kit message to a channel and returns a question ID that <b>get response</b> can use to retrieve the click. The <b>blocks</b> parameter takes the same JSON array format as <b>send message</b>. If the blocks include a <code>type: actions</code> block with buttons, each button's <code>action_id</code> becomes a valid response choice and SOAR tags that block with <code>block_id = soar_qid:QID:ASSET_ID</code> so the click is correlated back to the pending question. Additional actions blocks get a numeric suffix so each block ID is unique. If the blocks do not include an actions block, SOAR appends one built from the <b>responses</b> parameter (defaults to <code>yes,no</code>). The posted message does not use legacy attachments, so clicks arrive as modern <code>block_actions</code> payloads over Socket Mode (if enabled) or the Interactivity Request URL. <b>Note:</b> To use the bot in a private channel you need to invite the bot into the channel first.",
             "type": "generic",
             "identifier": "ask_question_channel_with_blocks",
             "read_only": false,
@@ -4651,7 +4651,7 @@
                     "order": 5
                 },
                 "replace_on_response": {
-                    "description": "After a user clicks a response button, replace the posted message in-place â€” drop the actions block and append a context block showing which button was pressed and by whom. Defaults to true.",
+                    "description": "After a user clicks a response button, replace the posted message in-place — drop the actions block and append a context block showing which button was pressed and by whom. Defaults to true.",
                     "data_type": "boolean",
                     "default": true,
                     "order": 6
@@ -4741,18 +4741,6 @@
                 {
                     "data_path": "action_result.data.*.ts",
                     "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.summary.response",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.summary.response_received",
-                    "data_type": "boolean",
-                    "example_values": [
-                        true,
-                        false
-                    ]
                 },
                 {
                     "data_path": "action_result.message",
