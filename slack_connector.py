@@ -18,6 +18,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import uuid
 from os.path import exists
@@ -114,6 +115,18 @@ def _save_app_state(state, asset_id, app_connector=None):
     return phantom.APP_SUCCESS
 
 
+def _derive_fallback_from_blocks(block_list):
+    """Pull a short notification/accessibility fallback string from the first section/header block."""
+    for b in block_list or []:
+        if not isinstance(b, dict):
+            continue
+        if b.get("type") in ("section", "header"):
+            text = b.get("text")
+            if isinstance(text, dict) and isinstance(text.get("text"), str):
+                return text["text"]
+    return ""
+
+
 def _is_safe_path(basedir, path, follow_symlinks=True):
     """
     This function checks the given file path against the actual app directory
@@ -190,7 +203,10 @@ def _validate_answer_payload(payload, question_path, permitted_users=None):
     actions = payload.get("actions")
     if not isinstance(actions, list) or not actions:
         return False, "The question response contains no answer"
-    if any(not isinstance(action, dict) or action.get("value") not in choices for action in actions):
+    # Legacy interactive_message encodes the answer in `value`; modern block_actions encodes it
+    # in `action_id`. Pick the field that matches the payload type.
+    answer_field = "action_id" if payload.get("type") == "block_actions" else "value"
+    if any(not isinstance(action, dict) or action.get(answer_field) not in choices for action in actions):
         return False, "The answer is not one of the offered choices"
 
     channel = payload.get("channel")
@@ -225,20 +241,37 @@ def handle_request(request, path):
         if not payload:
             return HttpResponse(SLACK_ERROR_PAYLOAD_NOT_FOUND, content_type="text/plain", status=400)
 
-        callback_id = payload.get("callback_id")
+        # Modern Block Kit buttons posted by ask_question_channel_with_blocks come in as
+        # `block_actions` with no callback_id. The action tags its actions block at post time
+        # with `block_id = soar_qid:<qid>:<asset_id>` (plus a suffix for extra rows)
+        # so we can correlate the click back to the pending question.
+        if payload.get("type") == "block_actions":
+            actions = payload.get("actions") or []
+            if not actions or not isinstance(actions[0], dict):
+                return HttpResponse("No action in block_actions payload", content_type="text/plain", status=400)
+            block_id = actions[0].get("block_id") or ""
+            if not block_id.startswith("soar_qid:"):
+                # Not one of ours — ack with 200 so Slack doesn't surface a warning icon
+                return HttpResponse("", content_type="text/plain", status=200)
+            block_id_parts = block_id.split(":")
+            if len(block_id_parts) not in (3, 4):
+                return HttpResponse("Malformed soar_qid block_id", content_type="text/plain", status=400)
+            _, qid, asset_id = block_id_parts[:3]
+            callback_json = {}
+        else:
+            callback_id = payload.get("callback_id")
+            if not callback_id:
+                return HttpResponse(SLACK_ERROR_CALLBACK_ID_NOT_FOUND, content_type="text/plain", status=400)
+            try:
+                callback_json = json.loads(UnicodeDammit(callback_id).unicode_markup)
+            except Exception as e:
+                return HttpResponse(SLACK_ERROR_PARSE_JSON_FROM_CALLBACK_ID.format(error=e), content_type="text/plain", status=400)
+            asset_id = callback_json.get("asset_id")
+            qid = callback_json.get("qid")
 
-        if not callback_id:
-            return HttpResponse(SLACK_ERROR_CALLBACK_ID_NOT_FOUND, content_type="text/plain", status=400)
-
-        try:
-            callback_json = json.loads(UnicodeDammit(callback_id).unicode_markup)
-        except Exception as e:
-            return HttpResponse(SLACK_ERROR_PARSE_JSON_FROM_CALLBACK_ID.format(error=e), content_type="text/plain", status=400)
-
-        asset_id = callback_json.get("asset_id")
         try:
             int(asset_id)
-        except ValueError:
+        except (TypeError, ValueError):
             return HttpResponse(SLACK_ERROR_STATE_FILE_NOT_FOUND, content_type="text/plain", status=400)
 
         state_filename = f"{asset_id}_state.json"
@@ -264,8 +297,6 @@ def handle_request(request, path):
         if not my_token or not their_token or my_token != their_token:
             return HttpResponse(SLACK_ERROR_AUTH_FAILED, content_type="text/plain", status=400)
 
-        qid = callback_json.get("qid")
-
         if not qid:
             return HttpResponse(SLACK_ERROR_ANSWER_FILE_NOT_FOUND, content_type="text/plain", status=400)
 
@@ -289,6 +320,11 @@ def handle_request(request, path):
                 answer_file.write(json.dumps(final_payload))
         except Exception as e:
             return HttpResponse(SLACK_ERROR_WHILE_WRITING_ANSWER_FILE.format(error=e), content_type="text/plain", status=400)
+
+        if payload.get("type") == "block_actions":
+            # Silent ack — the caller's buttons handle their own post-click UX via the Block Kit
+            # pre-click `confirm` dialog, and the message is deliberately not replaced.
+            return HttpResponse("", content_type="text/plain", status=200)
 
         confirmation = callback_json.get("confirmation", "Received response")
         return HttpResponse(f"Response: {confirmation}", content_type="text/plain", status=200)
@@ -1572,6 +1608,175 @@ class SlackConnector(phantom.BaseConnector):
         action_result.add_data(resp_json)
         return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_ASKED_QUESTION)
 
+    def _ask_question_channel_with_blocks(self, param):
+        """Ask a question in a channel using Block Kit for the message body.
+
+        Caller supplies a full Block Kit `blocks` JSON array (same format as `send message`).
+        If the blocks already contain one or more `type: actions` blocks with buttons,
+        each button's `action_id` becomes a valid response choice and SOAR tags the
+        actions blocks with distinct IDs based on `soar_qid:<qid>:<asset_id>` so clicks route back
+        through `handle_request`'s `block_actions` path. Only button elements are supported.
+        If the blocks have no actions
+        block, SOAR appends one built from the `responses` param (defaulting to yes/no).
+
+        Returns a qid in `action_result.data.*.qid` for use with `get response`, matching
+        the shape returned by `ask question channel`.
+        """
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
+        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
+
+        destination = param["destination"]
+        if destination.startswith("@") or destination.startswith("U"):
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_USER)
+
+        blocks = param.get("blocks")
+        if not blocks:
+            return action_result.set_status(phantom.APP_ERROR, "'blocks' is required")
+        try:
+            block_list = json.loads(blocks)
+        except (ValueError, TypeError) as e:
+            return action_result.set_status(phantom.APP_ERROR, f"Invalid 'blocks' JSON: {self._get_error_message_from_exception(e)}")
+        if not isinstance(block_list, list) or not block_list:
+            return action_result.set_status(phantom.APP_ERROR, "'blocks' must be a non-empty JSON array of Block Kit blocks")
+
+        actions_blocks = [b for b in block_list if isinstance(b, dict) and b.get("type") == "actions"]
+        choices = []
+        if actions_blocks:
+            for ab in actions_blocks:
+                for el in ab.get("elements") or []:
+                    if not isinstance(el, dict):
+                        continue
+                    if el.get("type") != "button":
+                        return action_result.set_status(
+                            phantom.APP_ERROR,
+                            "Only button elements are supported in 'type: actions' blocks.",
+                        )
+                    aid = el.get("action_id")
+                    if not aid or not isinstance(aid, str):
+                        return action_result.set_status(
+                            phantom.APP_ERROR,
+                            "Every element in a 'type: actions' block must have an 'action_id' string so clicks can be validated.",
+                        )
+                    choices.append(aid)
+            if not choices:
+                return action_result.set_status(phantom.APP_ERROR, "No clickable elements found inside the 'actions' block(s)")
+        else:
+            given_answers = [x.strip() for x in param.get("responses", "yes,no").split(",")]
+            ordered = []
+            for ans in given_answers:
+                if ans and ans not in ordered:
+                    ordered.append(ans)
+            if not ordered:
+                ordered = ["yes", "no"]
+            appended = {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "action_id": ans,
+                        "text": {"type": "plain_text", "text": ans, "emoji": True},
+                        "value": ans,
+                    }
+                    for ans in ordered
+                ],
+            }
+            block_list.append(appended)
+            actions_blocks = [appended]
+            choices = list(ordered)
+
+        config = self.get_config()
+        local_data_state_dir = self.get_state_dir().rstrip("/")
+        self._state["local_data_path"] = local_data_state_dir
+        if "token" not in self._state or self._state.get("token") != config.get(SLACK_JSON_VERIFICATION_TOKEN):
+            self._verification_token = config[SLACK_JSON_VERIFICATION_TOKEN]
+        try:
+            if self._verification_token:
+                self._state["token"] = self.encrypt_state(self._verification_token, "verification")
+        except Exception as e:
+            self.debug_print(f"{SLACK_ENCRYPTION_ERROR}: {self._get_error_message_from_exception(e)}")
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ENCRYPTION_ERROR)
+        self.save_state(self._state)
+        _save_app_state(self._state, self.get_asset_id(), self)
+
+        qid = uuid.uuid4().hex
+        asset_id = str(self.get_asset_id())
+        # Keep the existing ID for one row and give additional rows unique suffixes.
+        block_id = f"soar_qid:{qid}:{asset_id}"
+        for index, ab in enumerate(actions_blocks):
+            ab["block_id"] = f"{block_id}:{index}" if index else block_id
+
+        fallback = param.get("question") or _derive_fallback_from_blocks(block_list) or "You have a question from Splunk SOAR"
+        slack_params = {
+            "channel": destination,
+            "blocks": json.dumps(block_list),
+            "text": fallback,
+        }
+        if param.get("parent_message_ts"):
+            slack_params["thread_ts"] = param["parent_message_ts"]
+            if param.get("reply_broadcast") is not None:
+                slack_params["reply_broadcast"] = bool(param.get("reply_broadcast"))
+
+        question_path = f"{local_data_state_dir}/{qid}_question.json"
+        if not _is_safe_path(local_data_state_dir, question_path):
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_INVALID_FILE_PATH)
+        replace_on_response = param.get("replace_on_response", True)
+        if isinstance(replace_on_response, str):
+            replace_on_response = replace_on_response.strip().lower() not in ("false", "0", "no", "off", "")
+        # A channel name resolves to an ID only after Slack accepts the post.
+        question_data = {
+            "choices": choices,
+            "channel": destination if destination.startswith(("C", "G", "D")) else None,
+            "block_actions": True,
+            "replace_on_response": bool(replace_on_response),
+        }
+        try:
+            with open(question_path, "w") as qf:  # nosemgrep
+                qf.write(json.dumps(question_data))
+        except Exception as e:
+            self._remove_question_metadata(local_data_state_dir, qid)
+            self.debug_print(f"Unable to save question metadata: {self._get_error_message_from_exception(e)}")
+            return action_result.set_status(phantom.APP_ERROR, "Unable to save question metadata")
+
+        self.save_progress(f"Asking question with ID: {qid}")
+        ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_SEND_MESSAGE, slack_params)
+        if not ret_val:
+            self._remove_question_metadata(local_data_state_dir, qid)
+            message = action_result.get_message()
+            return action_result.set_status(
+                phantom.APP_ERROR,
+                f"{SLACK_ERROR_ASKING_QUESTION}: {message}" if message else SLACK_ERROR_ASKING_QUESTION,
+            )
+
+        posted_channel = resp_json.get("channel")
+        if not posted_channel:
+            self._remove_question_metadata(local_data_state_dir, qid)
+            return action_result.set_status(phantom.APP_ERROR, f"{SLACK_ERROR_ASKING_QUESTION}: Slack returned no channel ID")
+
+        # Replace the file atomically so a click cannot read partially updated metadata.
+        question_data["channel"] = posted_channel
+        updated_path = None
+        try:
+            with tempfile.NamedTemporaryFile(mode="w", dir=local_data_state_dir, prefix=f"{qid}_question_", suffix=".json", delete=False) as qf:
+                updated_path = qf.name
+                qf.write(json.dumps(question_data))
+            os.chmod(updated_path, os.stat(question_path).st_mode & 0o777)
+            os.replace(updated_path, question_path)
+        except Exception as e:
+            if updated_path:
+                try:
+                    os.remove(updated_path)
+                except OSError:
+                    pass
+            self.debug_print(f"Unable to save question metadata: {self._get_error_message_from_exception(e)}")
+            return action_result.set_status(phantom.APP_ERROR, "Unable to save question metadata")
+
+        answer_path = f"{local_data_state_dir}/{qid}.json"
+        resp_json["qid"] = qid
+        resp_json["answer_path"] = answer_path
+        resp_json["message_ts"] = resp_json.get("ts")
+        action_result.add_data(resp_json)
+        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_ASKED_QUESTION)
+
     def _ask_question(self, param):
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
@@ -1759,6 +1964,8 @@ class SlackConnector(phantom.BaseConnector):
             ret_val = self._ask_question(param)
         elif action_id == ACTION_ID_ASK_QUESTION_CHANNLE:
             ret_val = self._ask_question_channel(param)
+        elif action_id == ACTION_ID_ASK_QUESTION_CHANNEL_WITH_BLOCKS:
+            ret_val = self._ask_question_channel_with_blocks(param)
         elif action_id == ACTION_ID_GET_RESPONSE:
             ret_val = self._get_response(param)
         elif action_id == ACTION_ID_UPLOAD_FILE:

@@ -1,7 +1,7 @@
 # Slack
 
 Publisher: Splunk <br>
-Connector Version: 2.10.6 <br>
+Connector Version: 2.11.0 <br>
 Product Vendor: Slack Technologies <br>
 Product Name: Slack <br>
 Minimum Product Version: 6.3.0
@@ -690,6 +690,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 [upload file](#action-upload-file) - Upload file to Slack <br>
 [ask question](#action-ask-question) - Ask a question to a Slack user <br>
 [ask question channel](#action-ask-question-channel) - Ask a question in slack channel <br>
+[ask question channel with blocks](#action-ask-question-channel-with-blocks) - Ask a question in a slack channel using Block Kit blocks for the message body <br>
 [get response](#action-get-response) - Get the response to a previously asked question <br>
 [on poll](#action-on-poll) - Start SlackBot and make health checks to it <br>
 [stop bot](#action-stop-bot) - Stop SlackBot <br>
@@ -1547,6 +1548,51 @@ action_result.message | string | | Response received: True, Question id: c2bc5f7
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 
+## action: 'ask question channel with blocks'
+
+Ask a question in a slack channel using Block Kit blocks for the message body
+
+Type: **generic** <br>
+Read only: **False**
+
+Posts a Block Kit message to a channel and returns a question ID that <b>get response</b> can use to retrieve the click. The <b>blocks</b> parameter takes the same JSON array format as <b>send message</b>. If the blocks include a <code>type: actions</code> block with buttons, each button's <code>action_id</code> becomes a valid response choice and SOAR tags that block with <code>block_id = soar_qid:QID:ASSET_ID</code> so the click is correlated back to the pending question. Only button elements are supported in caller-supplied actions blocks. Additional actions blocks get a numeric suffix so each block ID is unique. If the blocks do not include an actions block, SOAR appends one built from the <b>responses</b> parameter (defaults to <code>yes,no</code>). The posted message does not use legacy attachments, so clicks arrive as modern <code>block_actions</code> payloads over Socket Mode (if enabled) or the Interactivity Request URL. <b>Note:</b> To use the bot in a private channel you need to invite the bot into the channel first.
+
+With <code>replace_on_response</code> enabled, Socket Mode removes the buttons after a response. Interactivity Request URL mode still saves the answer for <b>get response</b>, but leaves the buttons visible in the original message.
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**destination** | required | Channel (e.g. #channel-name or C1A1A1AAA) to ask question in | string | `slack channel name` `slack channel id` |
+**blocks** | required | Block Kit blocks (JSON array string) rendered as the message body. If the blocks do not already contain a 'type: actions' block, SOAR adds response buttons using the 'responses' parameter. | string | |
+**question** | optional | Fallback notification / screenreader text. If omitted, a short string is derived from the first section/header block. | string | |
+**responses** | optional | Comma-separated response button labels; used only if 'blocks' does not already contain a 'type: actions' block. Slack supports up to 25 elements in an actions block. | string | |
+**parent_message_ts** | optional | Parent message timestamp to post the question as a threaded reply | string | `slack message ts` |
+**reply_broadcast** | optional | Used in conjunction with 'parent_message_ts'; makes the threaded reply visible in the channel | boolean | |
+**replace_on_response** | optional | In Socket Mode, replace the posted message after a response by removing the buttons and showing who responded. In Interactivity Request URL mode, the buttons remain visible. Defaults to true. | boolean | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failed |
+action_result.parameter.destination | string | `slack channel name` `slack channel id` | |
+action_result.parameter.blocks | string | | |
+action_result.parameter.question | string | | |
+action_result.parameter.responses | string | | |
+action_result.parameter.replace_on_response | boolean | | |
+action_result.parameter.parent_message_ts | string | `slack message ts` | |
+action_result.parameter.reply_broadcast | boolean | | |
+action_result.data.\*.qid | string | `slack question id` | |
+action_result.data.\*.answer_path | string | | |
+action_result.data.\*.channel | string | `slack channel id` | |
+action_result.data.\*.message_ts | string | `slack message ts` | |
+action_result.data.\*.ok | boolean | | True False |
+action_result.data.\*.ts | string | | |
+action_result.message | string | | Asked question in channel successfully |
+summary.total_objects | numeric | | 1 |
+summary.total_objects_successful | numeric | | 1 |
+
 ## action: 'get response'
 
 Get the response to a previously asked question
@@ -1572,6 +1618,7 @@ action_result.data.\*.payloads.\*.action_ts | string | | |
 action_result.data.\*.payloads.\*.actions.\*.name | string | | |
 action_result.data.\*.payloads.\*.actions.\*.type | string | | |
 action_result.data.\*.payloads.\*.actions.\*.value | string | | |
+action_result.data.\*.payloads.\*.actions.\*.action_id | string | | |
 action_result.data.\*.payloads.\*.attachment_id | string | | |
 action_result.data.\*.payloads.\*.callback_id | string | | |
 action_result.data.\*.payloads.\*.channel.id | string | | |

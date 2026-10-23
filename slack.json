@@ -9,13 +9,16 @@
         },
         {
             "name": "Mhike Funderburk"
+        },
+        {
+            "name": "Chris Hutto"
         }
     ],
     "package_name": "phantom_slack",
     "type": "information",
     "license": "Copyright (c) 2016-2026 Splunk Inc.",
     "main_module": "slack_connector.py",
-    "app_version": "2.10.6",
+    "app_version": "2.11.0",
     "utctime_updated": "2026-09-30T00:11:03.398480Z",
     "product_vendor": "Slack Technologies",
     "product_name": "Slack",
@@ -4597,6 +4600,179 @@
             "versions": "EQ(*)"
         },
         {
+            "action": "ask question channel with blocks",
+            "description": "Ask a question in a slack channel using Block Kit blocks for the message body",
+            "verbose": "Posts a Block Kit message to a channel and returns a question ID that <b>get response</b> can use to retrieve the click. The <b>blocks</b> parameter takes the same JSON array format as <b>send message</b>. If the blocks include a <code>type: actions</code> block with buttons, each button's <code>action_id</code> becomes a valid response choice and SOAR tags that block with <code>block_id = soar_qid:QID:ASSET_ID</code> so the click is correlated back to the pending question. Only button elements are supported in caller-supplied actions blocks. Additional actions blocks get a numeric suffix so each block ID is unique. If the blocks do not include an actions block, SOAR appends one built from the <b>responses</b> parameter (defaults to <code>yes,no</code>). The posted message does not use legacy attachments, so clicks arrive as modern <code>block_actions</code> payloads over Socket Mode (if enabled) or the Interactivity Request URL. <b>Note:</b> To use the bot in a private channel you need to invite the bot into the channel first.\n\nWith <code>replace_on_response</code> enabled, Socket Mode removes the buttons after a response. Interactivity Request URL mode still saves the answer for <b>get response</b>, but leaves the buttons visible in the original message.",
+            "type": "generic",
+            "identifier": "ask_question_channel_with_blocks",
+            "read_only": false,
+            "lock": {
+                "enabled": false
+            },
+            "parameters": {
+                "destination": {
+                    "description": "Channel (e.g. #channel-name or C1A1A1AAA) to ask question in",
+                    "data_type": "string",
+                    "primary": true,
+                    "required": true,
+                    "order": 0,
+                    "contains": [
+                        "slack channel name",
+                        "slack channel id"
+                    ]
+                },
+                "blocks": {
+                    "description": "Block Kit blocks (JSON array string) rendered as the message body. If the blocks do not already contain a 'type: actions' block, SOAR adds response buttons using the 'responses' parameter.",
+                    "data_type": "string",
+                    "required": true,
+                    "order": 1
+                },
+                "question": {
+                    "description": "Fallback notification / screenreader text. If omitted, a short string is derived from the first section/header block.",
+                    "data_type": "string",
+                    "order": 2
+                },
+                "responses": {
+                    "description": "Comma-separated response button labels; used only if 'blocks' does not already contain a 'type: actions' block. Slack supports up to 25 elements in an actions block.",
+                    "data_type": "string",
+                    "order": 3
+                },
+                "parent_message_ts": {
+                    "description": "Parent message timestamp to post the question as a threaded reply",
+                    "data_type": "string",
+                    "order": 4,
+                    "contains": [
+                        "slack message ts"
+                    ]
+                },
+                "reply_broadcast": {
+                    "description": "Used in conjunction with 'parent_message_ts'; makes the threaded reply visible in the channel",
+                    "data_type": "boolean",
+                    "order": 5
+                },
+                "replace_on_response": {
+                    "description": "In Socket Mode, replace the posted message after a response by removing the buttons and showing who responded. In Interactivity Request URL mode, the buttons remain visible. Defaults to true.",
+                    "data_type": "boolean",
+                    "default": true,
+                    "order": 6
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.destination",
+                    "data_type": "string",
+                    "contains": [
+                        "slack channel name",
+                        "slack channel id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.blocks",
+                    "data_type": "string",
+                    "column_name": "Blocks",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.parameter.question",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.responses",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.replace_on_response",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.parameter.parent_message_ts",
+                    "data_type": "string",
+                    "contains": [
+                        "slack message ts"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.reply_broadcast",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.qid",
+                    "data_type": "string",
+                    "column_name": "Question ID",
+                    "column_order": 1,
+                    "contains": [
+                        "slack question id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.answer_path",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.channel",
+                    "data_type": "string",
+                    "contains": [
+                        "slack channel id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.message_ts",
+                    "data_type": "string",
+                    "contains": [
+                        "slack message ts"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.ok",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.ts",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        "Asked question in channel successfully"
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                }
+            ],
+            "render": {
+                "width": 12,
+                "title": "Question (Blocks)",
+                "type": "table",
+                "height": 5
+            },
+            "versions": "EQ(*)"
+        },
+        {
             "action": "get response",
             "description": "Get the response to a previously asked question",
             "verbose": "The purpose of the 'get response' action is to get the response of a question, asked using the 'ask question' action, that timed out before it could get the response.<br>The action will check to see if a question has been answered.<br><ul><li>If the user has answered the question, the question id generated in the 'ask question' action can be used to get the response.</li><li>If no response is yet available, the action will fail.</li></ul>",
@@ -4650,6 +4826,11 @@
                     "data_type": "string",
                     "column_name": "Response",
                     "column_order": 1
+                },
+                {
+                    "data_path": "action_result.data.*.payloads.*.actions.*.action_id",
+                    "data_type": "string",
+                    "column_name": "Action ID"
                 },
                 {
                     "data_path": "action_result.data.*.payloads.*.attachment_id",

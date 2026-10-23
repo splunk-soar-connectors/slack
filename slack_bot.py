@@ -1116,6 +1116,96 @@ class SlackBot:
             except Exception as e:
                 print(f"Unknown exception occured while processing answer response. Exception: {e}")
 
+        # Block Kit buttons posted by ask_question_channel_with_blocks come in as block_actions.
+        # The posting action tags its actions blocks with `soar_qid:<qid>:<asset_id>`
+        # and adds a suffix for extra rows;
+        # this handler correlates the click back to the pending question, writes the answer file
+        # (same shape as the interactive_message handler so `get response` keeps working), and
+        # updates the posted message in-place.
+        @app.action({"block_id": re.compile(r"^soar_qid:")})
+        def block_actions_handler(ack, body, client):
+            ack()
+            try:
+                if not body:
+                    return
+                actions = body.get("actions") or []
+                if not actions or not isinstance(actions[0], dict):
+                    return
+                block_id = actions[0].get("block_id") or ""
+                try:
+                    _, qid, _asset_id = block_id.split(":", 2)
+                except ValueError:
+                    logging.error(f"**malformed soar_qid block_id, dropping: {block_id}")
+                    return
+
+                state_dir = f"{APPS_STATE_PATH}/{self.app_id}"
+                answer_path = f"{state_dir}/{qid}.json"
+                if not _is_safe_path(state_dir, answer_path):
+                    logging.error("**invalid answer file path, dropping block_actions payload")
+                    return
+                question_path = f"{state_dir}/{qid}_question.json"
+                if not _is_safe_path(state_dir, question_path):
+                    logging.error("**invalid question metadata path, dropping block_actions payload")
+                    return
+
+                is_valid, validation_error = _validate_answer_payload(body, question_path, self.permitted_users)
+                if not is_valid:
+                    logging.info(f"**rejected block_actions for qid {qid}: {validation_error}")
+                    return
+
+                final_payload = process_payload(body, answer_path)
+                try:
+                    with open(answer_path, "w") as answer_file:  # nosemgrep
+                        answer_file.write(json.dumps(final_payload))
+                except Exception as e:
+                    logging.error(f"Exception occurred while writing response to {answer_path}. Exception: {e}")
+                    return
+
+                # Replace the posted message in-place: keep the original non-actions blocks,
+                # drop every actions block (so no one else can click), and append a context
+                # block showing which button was pressed and by whom.
+                try:
+                    question_meta = {}
+                    try:
+                        with open(question_path) as qf:  # nosemgrep
+                            question_meta = json.loads(qf.read()) or {}
+                    except Exception:
+                        pass
+                    if question_meta.get("replace_on_response", True):
+                        message = body.get("message") or {}
+                        container = body.get("container") or {}
+                        channel_id = (body.get("channel") or {}).get("id") or container.get("channel_id")
+                        message_ts = container.get("message_ts") or message.get("ts")
+                        if channel_id and message_ts:
+                            original_blocks = message.get("blocks") or []
+                            clicked = actions[0]
+                            clicked_text = (clicked.get("text") or {}).get("text") or clicked.get("value") or clicked.get("action_id") or ""
+                            user = body.get("user") or {}
+                            user_id = user.get("id")
+                            mention = f"<@{user_id}>" if user_id else (user.get("username") or user.get("name") or "unknown user")
+                            new_blocks = [b for b in original_blocks if isinstance(b, dict) and b.get("type") != "actions"]
+                            new_blocks.append(
+                                {
+                                    "type": "context",
+                                    "elements": [
+                                        {
+                                            "type": "mrkdwn",
+                                            "text": f":white_check_mark: *{clicked_text}* — {mention}",
+                                        }
+                                    ],
+                                }
+                            )
+                            client.chat_update(
+                                channel=channel_id,
+                                ts=message_ts,
+                                blocks=new_blocks,
+                                text=f"Response received: {clicked_text}",
+                            )
+                except Exception as e:
+                    logging.info(f"**failed to update message after block_actions click for qid {qid}: {e}")
+            except Exception as e:
+                print(f"Unknown exception occured while processing block_actions response. Exception: {e}")
+
         @app.event("app_mention")
         def mention_handler(body, say):
             """
