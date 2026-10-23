@@ -1377,6 +1377,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **question** | required | Question to ask | string | |
 **responses** | optional | Comma separated string values for responses. (Maximum responses allowed are 5) | string | |
 **confirmation** | optional | Message to user after response | string | |
+**parent_message_ts** | optional | Parent message timestamp to reply in thread | string | `slack message ts` |
 
 #### Action Output
 
@@ -1387,6 +1388,7 @@ action_result.parameter.confirmation | string | | |
 action_result.parameter.destination | string | `slack user name` `slack user id` | |
 action_result.parameter.question | string | | |
 action_result.parameter.responses | string | | |
+action_result.parameter.parent_message_ts | string | `slack message ts` | |
 action_result.data.\*.action_ts | string | | |
 action_result.data.\*.actions.\*.name | string | | |
 action_result.data.\*.actions.\*.type | string | | |
@@ -1480,15 +1482,19 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **destination** | required | Channel (e.g. #channel-name or C1A1A1AAA) to ask question to | string | `slack user name` `slack user id` |
 **question** | required | Question to ask | string | |
 **responses** | optional | Comma separated string values for responses. (Maximum responses allowed are 5) | string | |
+**confirmation** | optional | Message to user after response | string | |
+**parent_message_ts** | optional | Parent message timestamp to reply in thread | string | `slack message ts` |
 
 #### Action Output
 
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
 action_result.status | string | | success failed |
+action_result.parameter.confirmation | string | | |
 action_result.parameter.destination | string | `slack user name` `slack user id` | |
 action_result.parameter.question | string | | |
 action_result.parameter.responses | string | | |
+action_result.parameter.parent_message_ts | string | `slack message ts` | |
 action_result.data.\*.action_ts | string | | |
 action_result.data.\*.actions.\*.name | string | | |
 action_result.data.\*.actions.\*.type | string | | |

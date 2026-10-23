@@ -1523,6 +1523,9 @@ class SlackConnector(phantom.BaseConnector):
         ]
         params = {"channel": user, "attachments": json.dumps(answer_json), "as_user": True}
 
+        if param.get("parent_message_ts"):
+            params["thread_ts"] = param["parent_message_ts"]
+
         ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_SEND_MESSAGE, params)
         if not ret_val:
             message = action_result.get_message()
