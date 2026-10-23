@@ -1615,7 +1615,8 @@ class SlackConnector(phantom.BaseConnector):
         If the blocks already contain one or more `type: actions` blocks with buttons,
         each button's `action_id` becomes a valid response choice and SOAR tags the
         actions blocks with distinct IDs based on `soar_qid:<qid>:<asset_id>` so clicks route back
-        through `handle_request`'s `block_actions` path. If the blocks have no actions
+        through `handle_request`'s `block_actions` path. Only button elements are supported.
+        If the blocks have no actions
         block, SOAR appends one built from the `responses` param (defaulting to yes/no).
 
         Returns a qid in `action_result.data.*.qid` for use with `get response`, matching
@@ -1645,6 +1646,11 @@ class SlackConnector(phantom.BaseConnector):
                 for el in ab.get("elements") or []:
                     if not isinstance(el, dict):
                         continue
+                    if el.get("type") != "button":
+                        return action_result.set_status(
+                            phantom.APP_ERROR,
+                            "Only button elements are supported in 'type: actions' blocks.",
+                        )
                     aid = el.get("action_id")
                     if not aid or not isinstance(aid, str):
                         return action_result.set_status(
@@ -1767,6 +1773,7 @@ class SlackConnector(phantom.BaseConnector):
         answer_path = f"{local_data_state_dir}/{qid}.json"
         resp_json["qid"] = qid
         resp_json["answer_path"] = answer_path
+        resp_json["message_ts"] = resp_json.get("ts")
         action_result.add_data(resp_json)
         return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_ASKED_QUESTION)
 

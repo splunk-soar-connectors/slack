@@ -1158,7 +1158,8 @@ class SlackBot:
                     with open(answer_path, "w") as answer_file:  # nosemgrep
                         answer_file.write(json.dumps(final_payload))
                 except Exception as e:
-                    print(f"Exception occured while writing reponse to {answer_path}. Exception: {e}")
+                    logging.error(f"Exception occurred while writing response to {answer_path}. Exception: {e}")
+                    return
 
                 # Replace the posted message in-place: keep the original non-actions blocks,
                 # drop every actions block (so no one else can click), and append a context
