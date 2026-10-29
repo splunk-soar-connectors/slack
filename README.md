@@ -1,7 +1,7 @@
 # Slack
 
 Publisher: Splunk <br>
-Connector Version: 2.12.0 <br>
+Connector Version: 2.13.0 <br>
 Product Vendor: Slack Technologies <br>
 Product Name: Slack <br>
 Minimum Product Version: 6.3.0
@@ -692,6 +692,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 [ask question channel](#action-ask-question-channel) - Ask a question in slack channel <br>
 [ask question channel with blocks](#action-ask-question-channel-with-blocks) - Ask a question in a slack channel using Block Kit blocks for the message body <br>
 [get response](#action-get-response) - Get the response to a previously asked question <br>
+[expire question channel with blocks](#action-expire-question-channel-with-blocks) - Close an unanswered question asked with 'ask question channel with blocks' and replace its buttons with a timeout message <br>
 [on poll](#action-on-poll) - Start SlackBot and make health checks to it <br>
 [stop bot](#action-stop-bot) - Stop SlackBot <br>
 [get history](#action-get-history) - Get conversation history from specific Slack channel
@@ -1606,13 +1607,14 @@ Get the response to a previously asked question
 Type: **investigate** <br>
 Read only: **True**
 
-The purpose of the 'get response' action is to get the response of a question, asked using the 'ask question' action, that timed out before it could get the response.<br>The action will check to see if a question has been answered.<br><ul><li>If the user has answered the question, the question id generated in the 'ask question' action can be used to get the response.</li><li>If no response is yet available, the action will fail.</li></ul>
+The purpose of the 'get response' action is to get the response of a question, asked using the 'ask question' action, that timed out before it could get the response.<br>The action will check to see if a question has been answered.<br><ul><li>If the user has answered the question, the question id generated in the 'ask question' action can be used to get the response.</li><li>If no response is yet available, the action will fail, unless the <b>allow_missing_response</b> parameter is enabled. In that case the action will succeed with <b>response_received</b> set to false in the summary, so a playbook can poll for the answer without generating action failures. If the question can no longer be answered (it was expired or timed out, or the question id is wrong), the action fails even when <b>allow_missing_response</b> is enabled, so a polling loop doesn't wait forever.</li></ul>
 
 #### Action Parameters
 
 PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 --------- | -------- | ----------- | ---- | --------
 **question_id** | required | Question ID | string | `slack question id` |
+**allow_missing_response** | optional | Return success with response_received set to false when the question has not been answered yet, instead of failing. Defaults to false. | boolean | |
 
 #### Action Output
 
@@ -1620,6 +1622,7 @@ DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
 action_result.status | string | | success failed |
 action_result.parameter.question_id | string | `slack question id` | |
+action_result.parameter.allow_missing_response | boolean | | True False |
 action_result.data.\*.payloads.\*.action_ts | string | | |
 action_result.data.\*.payloads.\*.actions.\*.name | string | | |
 action_result.data.\*.payloads.\*.actions.\*.type | string | | |
@@ -1655,7 +1658,44 @@ action_result.data.\*.payloads.\*.user.id | string | | |
 action_result.data.\*.payloads.\*.user.name | string | | |
 action_result.summary.response | string | | |
 action_result.summary.response_received | boolean | | True False |
-action_result.message | string | | Response received: True, Response: yes |
+action_result.summary.question_id | string | `slack question id` | |
+action_result.message | string | | Response received: True, Response: yes Response to question not available yet |
+summary.total_objects | numeric | | 1 |
+summary.total_objects_successful | numeric | | 1 |
+
+## action: 'expire question channel with blocks'
+
+Close an unanswered question asked with 'ask question channel with blocks' and replace its buttons with a timeout message
+
+Type: **generic** <br>
+Read only: **False**
+
+Use this when a playbook stops waiting for a response to a question asked with 'ask question channel with blocks'. Questions from 'ask question' and 'ask question channel' are not supported; the action fails and leaves them unchanged.<br>The action first marks the question as expired so later button clicks are rejected, then edits the posted message in place: the original blocks are kept, every actions block (the buttons) is removed, and a context block with the <b>message</b> parameter is appended. If the original blocks can't be found, the whole message is replaced with the <b>message</b> text.<br>The question's metadata is removed once the message is updated. If the update fails, the question stays expired and the action can be run again with just the question id.<br>If the question was already answered, the message is left unchanged and <b>summary.already_answered</b> is true.<br><b>destination</b> and <b>message_ts</b> are only needed for questions asked before this action existed; newer questions store both.
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**question_id** | required | Question ID returned by 'ask question channel with blocks' | string | `slack question id` |
+**message** | optional | Text shown in place of the buttons (mrkdwn) | string | |
+**destination** | optional | Channel ID of the question message (fallback only) | string | `slack channel id` |
+**message_ts** | optional | Timestamp of the question message (fallback only) | string | `slack message ts` |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failed |
+action_result.parameter.question_id | string | `slack question id` | |
+action_result.parameter.message | string | | |
+action_result.parameter.destination | string | `slack channel id` | |
+action_result.parameter.message_ts | string | `slack message ts` | |
+action_result.data.\*.channel | string | `slack channel id` | |
+action_result.data.\*.ts | string | `slack message ts` | |
+action_result.summary.expired | boolean | | True False |
+action_result.summary.already_answered | boolean | | True False |
+action_result.summary.kept_original_blocks | boolean | | True False |
+action_result.message | string | | Question expired and message updated Question was already answered; message left unchanged |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 
