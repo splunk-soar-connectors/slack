@@ -31,6 +31,7 @@ ACTION_ID_ON_POLL = "on_poll"
 ACTION_ID_CREATE_CHANNEL = "create_channel"
 ACTION_ID_INVITE_USERS = "invite_users"
 ACTION_ID_GET_HISTORY = "get_history"
+ACTION_ID_EXPIRE_QUESTION = "expire_question_channel_with_blocks"
 
 SLACK_BASE_URL = "https://slack.com/api/"
 SLACK_MESSAGE_LIMIT = 40000
@@ -60,6 +61,7 @@ SLACK_USER_LIST = "users.list"
 SLACK_USER_INFO = "users.info"
 SLACK_USER_LOOKUP_BY_EMAIL = "users.lookupByEmail"
 SLACK_SEND_MESSAGE = "chat.postMessage"
+SLACK_UPDATE_MESSAGE = "chat.update"
 SLACK_GET_UPLOAD_URL = "files.getUploadURLExternal"
 SLACK_COMPLETE_UPLOAD = "files.completeUploadExternal"
 SLACK_UPLOAD_FILE = "files.upload"
@@ -130,6 +132,21 @@ SLACK_ERROR_CONFIRMATION_TOO_LONG = "Confirmation too long. Please limit questio
 SLACK_SUCCESSFULLY_MESSAGE_SENT = "Message sent successfully"
 SLACK_SUCCESSFULLY_REACTION_ADDED = "Reaction added successfully"
 SLACK_SUCCESSFULLY_ASKED_QUESTION = "Asked question in channel successfully"
+SLACK_DEFAULT_EXPIRE_MESSAGE = ":hourglass: Prompt timed out. Please re-submit the request."
+SLACK_SUCCESSFULLY_EXPIRED_QUESTION = "Question expired and message updated"
+SLACK_QUESTION_ALREADY_ANSWERED = "Question was already answered; message left unchanged"
+SLACK_QUESTION_ANSWERED_DURING_EXPIRE = "Question was answered while it was being expired; use 'get response' to retrieve the answer"
+SLACK_ERROR_EXPIRE_NO_MESSAGE = (
+    "No pending question metadata found for this question ID. Pass 'destination' (channel ID) and 'message_ts' to update the message anyway."
+)
+SLACK_ERROR_EXPIRE_NO_MESSAGE_TS = (
+    "The question metadata does not include the message timestamp (the question was asked before this action existed). "
+    "Pass 'message_ts' to update the message."
+)
+SLACK_ERROR_EXPIRE_NOT_BLOCKS_QUESTION = (
+    "Only questions asked with 'ask question channel with blocks' can be expired. The question was left unchanged."
+)
+SLACK_ERROR_UPDATING_MESSAGE = "Error updating message"
 SLACK_ERROR_FILE_OR_CONTENT_NOT_PROVIDED = "Please provide either a 'file' or 'content' to upload"
 SLACK_SUCCESSFULLY_FILE_UPLOAD = "File uploaded successfully"
 SLACK_SUCCESSFULLY_SLACKBOT_STOPPED = "SlackBot has been stopped."
@@ -159,6 +176,10 @@ SLACK_ERROR_UNABLE_TO_SEND_QUESTION_TO_USER = (
 
 SLACK_ERROR_UNABLE_TO_PARSE_RESPONSE = "Error occurred while parsing the response"
 SLACK_ERROR_QUESTION_RESPONSE_NOT_AVAILABLE = "Response to question not available"
+SLACK_QUESTION_RESPONSE_PENDING = "Response to question not available yet"
+SLACK_ERROR_QUESTION_NOT_PENDING = (
+    "No pending question found for this question ID. It may have expired or timed out, or the question ID may be wrong"
+)
 SLACK_ERROR_NO_RESPONSE_FROM_SERVER = "Got no response from the Slack server"
 SLACK_ERROR_INVALID_CHANNEL_TYPE = "Please provide a valid value in the 'channel_type' action parameter"
 SLACK_ERROR_LENGTH_LIMIT_EXCEEDED = (

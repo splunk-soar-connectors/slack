@@ -196,6 +196,9 @@ def _validate_answer_payload(payload, question_path, permitted_users=None):
     if not isinstance(payload, dict) or not isinstance(question, dict):
         return False, "The question response payload is invalid"
 
+    if question.get("expired"):
+        return False, "This question has expired"
+
     stored_choices = question.get("choices")
     if not isinstance(stored_choices, list):
         return False, "The pending question metadata is invalid"
@@ -1756,7 +1759,10 @@ class SlackConnector(phantom.BaseConnector):
             return action_result.set_status(phantom.APP_ERROR, f"{SLACK_ERROR_ASKING_QUESTION}: Slack returned no channel ID")
 
         # Replace the file atomically so a click cannot read partially updated metadata.
+        # message_ts and blocks let `expire question channel with blocks` rebuild the message without the buttons
         question_data["channel"] = posted_channel
+        question_data["message_ts"] = resp_json.get("ts")
+        question_data["blocks"] = block_list
         updated_path = None
         try:
             with tempfile.NamedTemporaryFile(mode="w", dir=local_data_state_dir, prefix=f"{qid}_question_", suffix=".json", delete=False) as qf:
@@ -1849,6 +1855,9 @@ class SlackConnector(phantom.BaseConnector):
         action_result = self.add_action_result(phantom.ActionResult(dict(param)))
 
         qid = param["question_id"]
+        allow_missing_response = param.get("allow_missing_response", False)
+        if isinstance(allow_missing_response, str):
+            allow_missing_response = allow_missing_response.strip().lower() not in ("false", "0", "no", "off", "")
         state_dir = self.get_state_dir().rstrip("/")
         answer_path = f"{state_dir}/{qid}.json"
         self.debug_print(f"answer path : {answer_path}")
@@ -1858,6 +1867,16 @@ class SlackConnector(phantom.BaseConnector):
 
         try:
             answer_file = open(answer_path)
+        except FileNotFoundError:
+            # The answer file is only written once the question has been answered
+            if allow_missing_response:
+                # Only report pending while the question can still be answered; once its metadata is
+                # gone (expired, timed out, or a wrong ID) no answer can arrive and a polling loop would never end
+                action_result.set_summary({"response_received": False, "question_id": qid})
+                if not self._is_question_pending(state_dir, qid):
+                    return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_QUESTION_NOT_PENDING)
+                return action_result.set_status(phantom.APP_SUCCESS, SLACK_QUESTION_RESPONSE_PENDING)
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_QUESTION_RESPONSE_NOT_AVAILABLE)
         except Exception:
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_QUESTION_RESPONSE_NOT_AVAILABLE)
 
@@ -1868,10 +1887,144 @@ class SlackConnector(phantom.BaseConnector):
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_PARSE_RESPONSE)
 
         action_result.add_data(resp_json)
-        action_result.set_summary({"response_received": True})
+        payloads = resp_json.get("payloads") or [{}]
+        actions = payloads[0].get("actions") or [{}]
+        # block_actions clicks carry the answer in action_id; legacy attachment buttons use value
+        answer_field = "action_id" if payloads[0].get("type") == "block_actions" else "value"
+        action_result.set_summary({"response_received": True, "question_id": qid, "response": actions[0].get(answer_field)})
         self._remove_question_metadata(state_dir.rstrip("/"), qid)
 
         return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _is_question_pending(self, state_dir, qid):
+        question_path = f"{state_dir}/{qid}_question.json"
+        if not _is_safe_path(state_dir, question_path):
+            return False
+        try:
+            with open(question_path) as qf:  # nosemgrep
+                question_meta = json.loads(qf.read()) or {}
+        except FileNotFoundError:
+            return False
+        except Exception as e:
+            # Treat unreadable metadata as pending rather than failing a poll that may still get an answer
+            self.debug_print(f"Unable to read question metadata: {self._get_error_message_from_exception(e)}")
+            return True
+        return not question_meta.get("expired")
+
+    def _lock_question_metadata(self, state_dir, qid, question_meta):
+        """Mark the question expired and clear its choices so every click is rejected,
+        while keeping channel, message_ts and blocks for a retry if chat.update fails."""
+        question_path = f"{state_dir}/{qid}_question.json"
+        locked_meta = dict(question_meta, choices=[], expired=True)
+        locked_path = None
+        try:
+            with tempfile.NamedTemporaryFile(mode="w", dir=state_dir, prefix=f"{qid}_question_", suffix=".json", delete=False) as qf:
+                locked_path = qf.name
+                qf.write(json.dumps(locked_meta))
+            os.chmod(locked_path, os.stat(question_path).st_mode & 0o777)
+            os.replace(locked_path, question_path)
+        except Exception as e:
+            if locked_path:
+                try:
+                    os.remove(locked_path)
+                except OSError:
+                    pass
+            self.debug_print(f"Unable to lock question metadata: {self._get_error_message_from_exception(e)}")
+            return False
+        return True
+
+    def _expire_question(self, param):
+        """Close out an unanswered `ask question channel with blocks` prompt.
+
+        Locks the question metadata first (expired, no valid choices), so slack_bot rejects any
+        click from then on, then edits the posted message in place the same way the click handler
+        does: keep the original non-actions blocks, drop every actions block, and append a context
+        block with `message`. If the original blocks can't be found, the whole message is replaced
+        with `message`. The metadata is removed only once the message is updated, so a failed
+        update can be retried. If the question was answered before it expired, nothing is changed.
+        """
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
+        action_result = self.add_action_result(phantom.ActionResult(dict(param)))
+
+        qid = param["question_id"]
+        message = param.get("message") or SLACK_DEFAULT_EXPIRE_MESSAGE
+        state_dir = self.get_state_dir().rstrip("/")
+        question_path = f"{state_dir}/{qid}_question.json"
+        answer_path = f"{state_dir}/{qid}.json"
+        if not _is_safe_path(state_dir, question_path) or not _is_safe_path(state_dir, answer_path):
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_INVALID_FILE_PATH)
+
+        question_meta = {}
+        try:
+            with open(question_path) as qf:  # nosemgrep
+                question_meta = json.loads(qf.read()) or {}
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            self.debug_print(f"Unable to read question metadata: {self._get_error_message_from_exception(e)}")
+
+        # Questions from `ask question` / `ask question channel` use legacy attachment buttons,
+        # which this action can't strip; leave their metadata alone so they stay answerable
+        if question_meta and not question_meta.get("block_actions"):
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_EXPIRE_NOT_BLOCKS_QUESTION)
+
+        # chat.update needs the channel ID, which the metadata has; the params are a fallback
+        # for questions asked before message_ts was stored
+        channel = question_meta.get("channel") or param.get("destination")
+        message_ts = question_meta.get("message_ts") or param.get("message_ts")
+
+        # Fail before removing the metadata so an unexpirable question isn't left with dead buttons
+        if (not channel or not message_ts) and not os.path.exists(answer_path):
+            if question_meta:
+                return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_EXPIRE_NO_MESSAGE_TS)
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_EXPIRE_NO_MESSAGE)
+
+        if question_meta and not self._lock_question_metadata(state_dir, qid, question_meta):
+            # Without the lock, removing the metadata is the only way to reject later clicks
+            self._remove_question_metadata(state_dir, qid)
+
+        if os.path.exists(answer_path):
+            self._remove_question_metadata(state_dir, qid)
+            action_result.set_summary({"expired": False, "already_answered": True})
+            return action_result.set_status(phantom.APP_SUCCESS, SLACK_QUESTION_ALREADY_ANSWERED)
+
+        original_blocks = question_meta.get("blocks")
+        if not original_blocks:
+            # conversations.replies returns the whole thread starting at the parent when message_ts
+            # is a thread reply, so look for the matching ts instead of taking the first message
+            ret_val, resp_json = self._paginator(
+                action_result, SLACK_THREADS_HISTORY, "messages", body={"channel": channel, "ts": message_ts}, allow_empty=True
+            )
+            if ret_val:
+                original = next((m for m in resp_json.get("messages") or [] if m.get("ts") == message_ts), None)
+                if original:
+                    original_blocks = original.get("blocks")
+
+        if original_blocks:
+            new_blocks = [b for b in original_blocks if isinstance(b, dict) and b.get("type") != "actions"]
+            new_blocks.append({"type": "context", "elements": [{"type": "mrkdwn", "text": message}]})
+        else:
+            new_blocks = [{"type": "section", "text": {"type": "mrkdwn", "text": message}}]
+
+        body = {"channel": channel, "ts": message_ts, "blocks": json.dumps(new_blocks), "text": message}
+        ret_val, resp_json = self._make_slack_rest_call(action_result, SLACK_UPDATE_MESSAGE, body)
+        if not ret_val:
+            # The locked metadata stays in place so a retry still has channel, message_ts and blocks
+            error_message = action_result.get_message()
+            return action_result.set_status(
+                phantom.APP_ERROR, f"{SLACK_ERROR_UPDATING_MESSAGE}: {error_message}" if error_message else SLACK_ERROR_UPDATING_MESSAGE
+            )
+
+        self._remove_question_metadata(state_dir, qid)
+        action_result.add_data(resp_json)
+
+        # A click validated just before the lock can still write its answer file
+        if os.path.exists(answer_path):
+            action_result.set_summary({"expired": False, "already_answered": True, "kept_original_blocks": bool(original_blocks)})
+            return action_result.set_status(phantom.APP_SUCCESS, SLACK_QUESTION_ANSWERED_DURING_EXPIRE)
+
+        action_result.set_summary({"expired": True, "already_answered": False, "kept_original_blocks": bool(original_blocks)})
+        return action_result.set_status(phantom.APP_SUCCESS, SLACK_SUCCESSFULLY_EXPIRED_QUESTION)
 
     def _get_history(self, param):
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
@@ -1987,6 +2140,8 @@ class SlackConnector(phantom.BaseConnector):
             ret_val = self._invite_users(param)
         elif action_id == ACTION_ID_GET_HISTORY:
             ret_val = self._get_history(param)
+        elif action_id == ACTION_ID_EXPIRE_QUESTION:
+            ret_val = self._expire_question(param)
 
         return ret_val
 
