@@ -137,8 +137,9 @@ SLACK_SUCCESSFULLY_EXPIRED_QUESTION = "Question expired and message updated"
 SLACK_QUESTION_ALREADY_ANSWERED = "Question was already answered; message left unchanged"
 SLACK_QUESTION_ANSWERED_DURING_EXPIRE = "Question was answered while it was being expired; use 'get response' to retrieve the answer"
 SLACK_ERROR_EXPIRE_NO_MESSAGE = (
-    "No pending question metadata found for this question ID. Pass 'destination' (channel ID) and 'message_ts' to update the message anyway."
+    "No pending question metadata found for this question ID."
 )
+SLACK_ERROR_EXPIRE_METADATA_LOCK = "Unable to lock question metadata; the question was left unchanged. Please retry."
 SLACK_ERROR_EXPIRE_NO_MESSAGE_TS = (
     "The question metadata does not include the message timestamp (the question was asked before this action existed). "
     "Pass 'message_ts' to update the message."
