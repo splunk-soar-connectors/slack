@@ -32,7 +32,7 @@ from phantom.base_connector import APPS_STATE_PATH
 from slack_bolt import App as slack_app
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-from slack_connector import _is_safe_path, _validate_answer_payload, process_payload
+from slack_connector import _is_safe_path, _question_file_lock, _validate_answer_payload, process_payload
 from slack_consts import *
 from slack_consts import SLACK_DEFAULT_TIMEOUT
 from slack_security import sanitize_slack_markup
@@ -1148,18 +1148,19 @@ class SlackBot:
                     logging.error("**invalid question metadata path, dropping block_actions payload")
                     return
 
-                is_valid, validation_error = _validate_answer_payload(body, question_path, self.permitted_users)
-                if not is_valid:
-                    logging.info(f"**rejected block_actions for qid {qid}: {validation_error}")
-                    return
+                with _question_file_lock(state_dir, qid):
+                    is_valid, validation_error = _validate_answer_payload(body, question_path, self.permitted_users)
+                    if not is_valid:
+                        logging.info(f"**rejected block_actions for qid {qid}: {validation_error}")
+                        return
 
-                final_payload = process_payload(body, answer_path)
-                try:
-                    with open(answer_path, "w") as answer_file:  # nosemgrep
-                        answer_file.write(json.dumps(final_payload))
-                except Exception as e:
-                    logging.error(f"Exception occurred while writing response to {answer_path}. Exception: {e}")
-                    return
+                    final_payload = process_payload(body, answer_path)
+                    try:
+                        with open(answer_path, "w") as answer_file:  # nosemgrep
+                            answer_file.write(json.dumps(final_payload))
+                    except Exception as e:
+                        logging.error(f"Exception occurred while writing response to {answer_path}. Exception: {e}")
+                        return
 
                 # Replace the posted message in-place: keep the original non-actions blocks,
                 # drop every actions block (so no one else can click), and append a context
