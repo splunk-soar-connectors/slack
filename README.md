@@ -1670,7 +1670,7 @@ Close an unanswered question asked with 'ask question channel with blocks' and r
 Type: **generic** <br>
 Read only: **False**
 
-Use this when a playbook stops waiting for a response to a question asked with 'ask question channel with blocks'. Questions from 'ask question' and 'ask question channel' are not supported; the action fails and leaves them unchanged.<br>The action first marks the question as expired so later button clicks are rejected, then edits the posted message in place: the original blocks are kept, every actions block (the buttons) is removed, and a context block with the <b>message</b> parameter is appended. If the original blocks can't be found, the whole message is replaced with the <b>message</b> text.<br>The question's metadata is removed once the message is updated. If the update fails, the question stays expired and the action can be run again with just the question id.<br>If the question was already answered, the message is left unchanged and <b>summary.already_answered</b> is true.<br><b>destination</b> and <b>message_ts</b> are only needed for questions asked before this action existed; newer questions store both.
+Use this when a playbook stops waiting for a response to a question asked with 'ask question channel with blocks'. Questions from 'ask question' and 'ask question channel' are not supported; the action fails and leaves them unchanged.<br>The action first marks the question as expired so later button clicks are rejected, then edits the posted message in place: the original blocks are kept, every actions block (the buttons) is removed, and a context block with the <b>message</b> parameter is appended. If the original blocks can't be found, the whole message is replaced with the <b>message</b> text.<br>The question's metadata is removed once the message is updated. If the update fails, the question stays expired and the action can be run again with just the question id.<br>If the question was already answered, the message is left unchanged and <b>summary.already_answered</b> is true.<br>The <b>question_id</b> must refer to an existing pending question. <b>destination</b> and <b>message_ts</b> are optional fallbacks only when the pending metadata does not contain those values; they cannot be used to expire an unknown or metadata-free question.
 
 #### Action Parameters
 
@@ -1678,8 +1678,8 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 --------- | -------- | ----------- | ---- | --------
 **question_id** | required | Question ID returned by 'ask question channel with blocks' | string | `slack question id` |
 **message** | optional | Text shown in place of the buttons (mrkdwn) | string | |
-**destination** | optional | Channel ID of the question message (fallback only) | string | `slack channel id` |
-**message_ts** | optional | Timestamp of the question message (fallback only) | string | `slack message ts` |
+**destination** | optional | Channel ID of the question message; optional fallback when pending metadata lacks the channel | string | `slack channel id` |
+**message_ts** | optional | Timestamp of the question message; optional fallback when pending metadata lacks the timestamp | string | `slack message ts` |
 
 #### Action Output
 

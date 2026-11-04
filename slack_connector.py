@@ -12,6 +12,7 @@
 # the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
+import fcntl
 import json
 import os
 import shlex
@@ -21,6 +22,7 @@ import sys
 import tempfile
 import time
 import uuid
+from contextlib import contextmanager
 from os.path import exists
 from urllib.parse import quote, unquote
 
@@ -137,6 +139,20 @@ def _is_safe_path(basedir, path, follow_symlinks=True):
     else:
         matchpath = os.path.abspath(path)
     return basedir == os.path.commonpath((basedir, matchpath))
+
+
+@contextmanager
+def _question_file_lock(state_dir, qid):
+    """Serialize answer writes and question expiration for one question ID."""
+    lock_path = f"{state_dir}/{qid}.lock"
+    if not _is_safe_path(state_dir, lock_path):
+        raise ValueError("Invalid question lock path")
+    with open(lock_path, "a+") as lock_file:  # nosemgrep
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
 def _find_slack_bot_process(ps_output, asset_id, expected_pid=None):
@@ -312,17 +328,18 @@ def handle_request(request, path):
         if not _is_safe_path(state_dir, question_path):
             return HttpResponse(SLACK_ERROR_INVALID_FILE_PATH, content_type="text/plain", status=400)
 
-        is_valid, validation_error = _validate_answer_payload(payload, question_path, state.get(SLACK_JSON_PERMITTED_USERS))
-        if not is_valid:
-            return HttpResponse(validation_error, content_type="text/plain", status=400)
+        with _question_file_lock(state_dir, qid):
+            is_valid, validation_error = _validate_answer_payload(payload, question_path, state.get(SLACK_JSON_PERMITTED_USERS))
+            if not is_valid:
+                return HttpResponse(validation_error, content_type="text/plain", status=400)
 
-        final_payload = process_payload(payload, answer_path)
+            final_payload = process_payload(payload, answer_path)
 
-        try:
-            with open(answer_path, "w") as answer_file:  # nosemgrep
-                answer_file.write(json.dumps(final_payload))
-        except Exception as e:
-            return HttpResponse(SLACK_ERROR_WHILE_WRITING_ANSWER_FILE.format(error=e), content_type="text/plain", status=400)
+            try:
+                with open(answer_path, "w") as answer_file:  # nosemgrep
+                    answer_file.write(json.dumps(final_payload))
+            except Exception as e:
+                return HttpResponse(SLACK_ERROR_WHILE_WRITING_ANSWER_FILE.format(error=e), content_type="text/plain", status=400)
 
         if payload.get("type") == "block_actions":
             # Silent ack — the caller's buttons handle their own post-click UX via the Block Kit
@@ -1968,6 +1985,11 @@ class SlackConnector(phantom.BaseConnector):
         if question_meta and not question_meta.get("block_actions"):
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_EXPIRE_NOT_BLOCKS_QUESTION)
 
+        # Require metadata for unanswered questions so a wrong QID cannot update an arbitrary
+        # Slack message supplied through the destination/message_ts fallback.
+        if not question_meta and not os.path.exists(answer_path):
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_EXPIRE_NO_MESSAGE)
+
         # chat.update needs the channel ID, which the metadata has; the params are a fallback
         # for questions asked before message_ts was stored
         channel = question_meta.get("channel") or param.get("destination")
@@ -1979,14 +2001,18 @@ class SlackConnector(phantom.BaseConnector):
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_EXPIRE_NO_MESSAGE_TS)
             return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_EXPIRE_NO_MESSAGE)
 
-        if question_meta and not self._lock_question_metadata(state_dir, qid, question_meta):
-            # Without the lock, removing the metadata is the only way to reject later clicks
-            self._remove_question_metadata(state_dir, qid)
+        try:
+            with _question_file_lock(state_dir, qid):
+                if question_meta and not self._lock_question_metadata(state_dir, qid, question_meta):
+                    return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_EXPIRE_METADATA_LOCK)
 
-        if os.path.exists(answer_path):
-            self._remove_question_metadata(state_dir, qid)
-            action_result.set_summary({"expired": False, "already_answered": True})
-            return action_result.set_status(phantom.APP_SUCCESS, SLACK_QUESTION_ALREADY_ANSWERED)
+                if os.path.exists(answer_path):
+                    self._remove_question_metadata(state_dir, qid)
+                    action_result.set_summary({"expired": False, "already_answered": True})
+                    return action_result.set_status(phantom.APP_SUCCESS, SLACK_QUESTION_ALREADY_ANSWERED)
+        except Exception as e:
+            self.debug_print(f"Unable to acquire question lock: {self._get_error_message_from_exception(e)}")
+            return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_EXPIRE_METADATA_LOCK)
 
         original_blocks = question_meta.get("blocks")
         if not original_blocks:

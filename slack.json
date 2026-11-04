@@ -5067,7 +5067,7 @@
         {
             "action": "expire question channel with blocks",
             "description": "Close an unanswered question asked with 'ask question channel with blocks' and replace its buttons with a timeout message",
-            "verbose": "Use this when a playbook stops waiting for a response to a question asked with 'ask question channel with blocks'. Questions from 'ask question' and 'ask question channel' are not supported; the action fails and leaves them unchanged.<br>The action first marks the question as expired so later button clicks are rejected, then edits the posted message in place: the original blocks are kept, every actions block (the buttons) is removed, and a context block with the <b>message</b> parameter is appended. If the original blocks can't be found, the whole message is replaced with the <b>message</b> text.<br>The question's metadata is removed once the message is updated. If the update fails, the question stays expired and the action can be run again with just the question id.<br>If the question was already answered, the message is left unchanged and <b>summary.already_answered</b> is true.<br><b>destination</b> and <b>message_ts</b> are only needed for questions asked before this action existed; newer questions store both.",
+            "verbose": "Use this when a playbook stops waiting for a response to a question asked with 'ask question channel with blocks'. Questions from 'ask question' and 'ask question channel' are not supported; the action fails and leaves them unchanged.<br>The action first marks the question as expired so later button clicks are rejected, then edits the posted message in place: the original blocks are kept, every actions block (the buttons) is removed, and a context block with the <b>message</b> parameter is appended. If the original blocks can't be found, the whole message is replaced with the <b>message</b> text.<br>The question's metadata is removed once the message is updated. If the update fails, the question stays expired and the action can be run again with just the question id.<br>If the question was already answered, the message is left unchanged and <b>summary.already_answered</b> is true.<br>The <b>question_id</b> must refer to an existing pending question. <b>destination</b> and <b>message_ts</b> are optional fallbacks only when the pending metadata does not contain those values; they cannot be used to expire an unknown or metadata-free question.",
             "type": "generic",
             "identifier": "expire_question_channel_with_blocks",
             "read_only": false,
@@ -5089,7 +5089,7 @@
                     "order": 1
                 },
                 "destination": {
-                    "description": "Channel ID of the question message (fallback only)",
+                    "description": "Channel ID of the question message; optional fallback when pending metadata lacks the channel",
                     "data_type": "string",
                     "order": 2,
                     "contains": [
@@ -5097,7 +5097,7 @@
                     ]
                 },
                 "message_ts": {
-                    "description": "Timestamp of the question message (fallback only)",
+                    "description": "Timestamp of the question message; optional fallback when pending metadata lacks the timestamp",
                     "data_type": "string",
                     "order": 3,
                     "contains": [
