@@ -1827,33 +1827,31 @@ class SlackConnector(phantom.BaseConnector):
         answer_path = resp_json.get("answer_path")
         qid = resp_json.get("qid")
 
-        timeout_in_seconds = self._timeout * 60
-
-        if self._interval > timeout_in_seconds:
-            self.debug_print("uestion timeout is greater than the polling interval")
-            self._interval = timeout_in_seconds
-            loop_count = 1
-        else:
-            loop_count = timeout_in_seconds // self._interval
-
-        count = 0
+        deadline = time.monotonic() + self._timeout * 60
 
         while True:
-            if count >= loop_count:
-                action_result.set_summary({"response_received": False, "question_id": qid})
-                self._remove_question_metadata(os.path.dirname(answer_path), qid)
-                return action_result.set_status(phantom.APP_ERROR, "Question timed out with no response")
-
             try:
-                answer_file = open(answer_path)
-            except Exception:
-                count += 1
-                time.sleep(self._interval)
+                with open(answer_path) as answer_file:
+                    resp_json = json.load(answer_file)
+            except FileNotFoundError:
+                if time.monotonic() >= deadline:
+                    action_result.set_summary({"response_received": False, "question_id": qid})
+                    self._remove_question_metadata(os.path.dirname(answer_path), qid)
+                    return action_result.set_status(phantom.APP_SUCCESS, "Question timed out with no response")
+
+                # Keep the configured polling cadence, but report progress during long
+                # sleeps so actiond does not terminate the connector for IPC inactivity.
+                next_poll = min(time.monotonic() + self._interval, deadline)
+                while True:
+                    remaining = next_poll - time.monotonic()
+                    if remaining <= 0:
+                        break
+                    self.save_progress(f"Waiting for response to question with ID: {qid}")
+                    time.sleep(min(SLACK_QUESTION_PROGRESS_INTERVAL, remaining))
                 continue
-
-            try:
-                resp_json = json.loads(answer_file.read())
-                answer_file.close()
+            except OSError as e:
+                self.debug_print(f"Unable to read question response: {self._get_error_message_from_exception(e)}")
+                return action_result.set_status(phantom.APP_ERROR, "Unable to read question response")
             except Exception:
                 return action_result.set_status(phantom.APP_ERROR, SLACK_ERROR_UNABLE_TO_PARSE_RESPONSE)
 
