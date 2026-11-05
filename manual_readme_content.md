@@ -1,5 +1,11 @@
 ## Playbook Backward Compatibility
 
+- The **ask question** action now succeeds when the configured question timeout expires without
+  an answer. Use `action_result.summary.response_received` to distinguish an answer (`true`) from
+  an unanswered timeout (`false`). Playbooks that previously used the action's failure path to
+  handle unanswered questions must check this summary value instead. The question stops accepting
+  responses after its timeout; the returned question ID identifies the expired question.
+
 - The existing action parameters have been modified for the actions given below. Hence, it is
   requested to the end-user to please update their existing playbooks by re-inserting | modifying
   | deleting the corresponding action blocks or by providing appropriate values to these action
