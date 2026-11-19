@@ -1848,7 +1848,12 @@ class SlackConnector(phantom.BaseConnector):
                 answer_file = open(answer_path)
             except Exception:
                 count += 1
-                time.sleep(self._interval)
+                remaining_wait = self._interval
+                while remaining_wait > 0:
+                    self.send_progress(SLACK_PROGRESS_WAITING_FOR_RESPONSE.format(qid=qid))
+                    sleep_interval = min(remaining_wait, SLACK_PROGRESS_UPDATE_INTERVAL)
+                    time.sleep(sleep_interval)
+                    remaining_wait -= sleep_interval
                 continue
 
             try:
