@@ -10,6 +10,12 @@ Integrate with Slack to post messages and attachments to channels
 
 ## Playbook Backward Compatibility
 
+- The **ask question** action now succeeds when the configured question timeout expires without
+  an answer. Use `action_result.summary.response_received` to distinguish an answer (`true`) from
+  an unanswered timeout (`false`). Playbooks that previously used the action's failure path to
+  handle unanswered questions must check this summary value instead. The question stops accepting
+  responses after its timeout; the returned question ID identifies the expired question.
+
 - The existing action parameters have been modified for the actions given below. Hence, it is
   requested to the end-user to please update their existing playbooks by re-inserting | modifying
   | deleting the corresponding action blocks or by providing appropriate values to these action
@@ -1369,7 +1375,7 @@ Ask a question to a Slack user
 Type: **generic** <br>
 Read only: **False**
 
-This action will send a Slack user a direct message containing a question with a series of buttons which represent possible responses. Slack recommends limiting questions to 4000 characters but the enforced limit is 40000 characters. Once the user clicks on one of the responses, Slack will send the response back to Splunk SOAR. The action will succeed and output this response in the action result. If the user fails to respond within the timeout configured in the asset, the action will succeed, and output the <b>question ID</b> in the action result. The question ID can be used as input to the <b>get response</b> action.<br><br>If the <b>responses</b> parameter is not filled out, the response options will be <b>yes</b> and <b>no</b>.<br><br>The <b>confirmation</b> parameter takes a string that will be sent to the user after the user clicks a response. <b>Note:</b> It is recommended to use user ID instead of username since the latter usage has been deprecated by Slack.
+This action will send a Slack user a direct message containing a question with a series of buttons which represent possible responses. Slack recommends limiting questions to 4000 characters but the enforced limit is 40000 characters. Once the user clicks on one of the responses, Slack will send the response back to Splunk SOAR. The action will succeed and output this response in the action result. If the user fails to respond within the timeout configured in the asset, the action will succeed, and output the <b>question ID</b> in the action result. The <b>response_received</b> summary is false when the question times out without an answer. The question stops accepting responses after its timeout.<br><br>If the <b>responses</b> parameter is not filled out, the response options will be <b>yes</b> and <b>no</b>.<br><br>The <b>confirmation</b> parameter takes a string that will be sent to the user after the user clicks a response. <b>Note:</b> It is recommended to use user ID instead of username since the latter usage has been deprecated by Slack.
 
 #### Action Parameters
 
